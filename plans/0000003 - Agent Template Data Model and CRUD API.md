@@ -2,7 +2,7 @@
 
 **Epic**: EPIC-03: Agent Template System
 **Assigned To**: Backend Agent
-**Status**: [ ] Not Started
+**Status**: [~] In Progress
 **PRD Reference**: PRD.md §5.3 (Template Designer), §11 (AIEOS Identity Schema), §2.2 (Agent Instancing)
 **Knowledge Base**: `knowledge-base/02-data-models.md`, `knowledge-base/06-aieos-schema.md`, `knowledge-base/04-agent-roles.md`
 

@@ -32,7 +32,7 @@
 
 | # | Story | Status | Agent |
 |---|-------|--------|-------|
-| [0000003](0000003%20-%20Agent%20Template%20Data%20Model%20and%20CRUD%20API.md) | AgentTemplate Schema and CRUD API | `[ ]` | Backend |
+| [0000003](0000003%20-%20Agent%20Template%20Data%20Model%20and%20CRUD%20API.md) | AgentTemplate Schema and CRUD API | `[~]` | Backend |
 | [0000004](0000004%20-%20Template%20Designer%20UI.md) | Template Designer UI at /templates (Grid, Modal, AIEOS Builder) | `[ ]` | Frontend |
 | [0000027](0000027%20-%20Sync%20Agent%20Instance%20from%20Template.md) | Sync Agent Instance from Template (manual sync button + API) | `[ ]` | Backend + Frontend |
 
