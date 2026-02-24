@@ -21,7 +21,7 @@
 
 | # | Story | Status | Agent |
 |---|-------|--------|-------|
-| [0000002](0000002%20-%20Authentication%20and%20Multi-Tenant%20Middleware.md) | MongoDB Auth + bcrypt + JWT + Multi-Tenant Middleware (Backend) | `[~]` | Backend |
+| [0000002](0000002%20-%20Authentication%20and%20Multi-Tenant%20Middleware.md) | MongoDB Auth + bcrypt + JWT + Multi-Tenant Middleware (Backend) | `[x]` | Backend |
 | [0000024](0000024%20-%20Frontend%20Authentication%20Login%20Page%20and%20Route%20Protection.md) | Frontend Auth - Login Page, httpOnly Cookie, Route Protection, App Shell | `[ ]` | Frontend |
 
 ---
@@ -165,7 +165,7 @@ Stories should be implemented in numbered order (0000001 → 0000026). Dependenc
 | Epic | Total Stories | Completed | In Progress | Not Started |
 |------|--------------|-----------|-------------|-------------|
 | EPIC-01: Foundation | 1 | 1 | 0 | 0 |
-| EPIC-02: Auth | 2 | 0 | 0 | 2 |
+| EPIC-02: Auth | 2 | 1 | 0 | 1 |
 | EPIC-03: Templates | 3 | 0 | 0 | 3 |
 | EPIC-04: Projects | 4 | 0 | 0 | 4 |
 | EPIC-05: ZeroClaw | 3 | 0 | 0 | 3 |
