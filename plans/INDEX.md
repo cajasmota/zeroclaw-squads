@@ -11,7 +11,7 @@
 
 | # | Story | Status | Agent |
 |---|-------|--------|-------|
-| [0000001](0000001%20-%20Project%20Bootstrap%20and%20Monorepo%20Setup.md) | Project Bootstrap and Monorepo Setup (NestJS + Next.js + MongoDB) | `[~]` | Backend + Frontend |
+| [0000001](0000001%20-%20Project%20Bootstrap%20and%20Monorepo%20Setup.md) | Project Bootstrap and Monorepo Setup (NestJS + Next.js + MongoDB) | `[x]` | Backend + Frontend |
 
 ---
 
@@ -164,7 +164,7 @@ Stories should be implemented in numbered order (0000001 → 0000026). Dependenc
 
 | Epic | Total Stories | Completed | In Progress | Not Started |
 |------|--------------|-----------|-------------|-------------|
-| EPIC-01: Foundation | 1 | 0 | 0 | 1 |
+| EPIC-01: Foundation | 1 | 1 | 0 | 0 |
 | EPIC-02: Auth | 2 | 0 | 0 | 2 |
 | EPIC-03: Templates | 3 | 0 | 0 | 3 |
 | EPIC-04: Projects | 4 | 0 | 0 | 4 |

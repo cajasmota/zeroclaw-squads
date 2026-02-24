@@ -2,7 +2,7 @@
 
 **Epic**: EPIC-01: Foundation & Infrastructure
 **Assigned To**: Backend Agent, Frontend Agent
-**Status**: [~] In Progress
+**Status**: [x] Completed
 **PRD Reference**: PRD.md §14 (Technology Stack Summary), §12.1 (Setup Script)
 **Knowledge Base**: `knowledge-base/03-technology-stack.md`, `knowledge-base/00-system-overview.md`
 
@@ -30,17 +30,17 @@ The `APP_NAME` environment variable must propagate to all surfaces (installer, W
 
 ## Actionable Tasks
 
-- [ ] Initialize monorepo using pnpm workspaces (or turborepo)
-- [ ] Scaffold NestJS application in `apps/backend/`
-  - [ ] Install dependencies: `@nestjs/core`, `@nestjs/common`, `@nestjs/config`, `@nestjs/mongoose`, `mongoose`
-  - [ ] Configure `ConfigModule` with `.env` loading and `APP_NAME` variable
-  - [ ] Set up MongoDB connection module using `@nestjs/mongoose`
-- [ ] Scaffold Next.js App Router application in `apps/frontend/`
-  - [ ] Install Shadcn UI and initialize it
-  - [ ] Install `next-themes` for dark/light mode
-  - [ ] Configure root layout to read `APP_NAME` from env and use as browser title
-  - [ ] Apply brand colors: Primary `#004176`, Neutral `#8C8C8C`
-- [ ] Create root `.env.example` with all required variables:
+- [x] Initialize monorepo using pnpm workspaces (or turborepo)
+- [x] Scaffold NestJS application in `apps/backend/`
+  - [x] Install dependencies: `@nestjs/core`, `@nestjs/common`, `@nestjs/config`, `@nestjs/mongoose`, `mongoose`
+  - [x] Configure `ConfigModule` with `.env` loading and `APP_NAME` variable
+  - [x] Set up MongoDB connection module using `@nestjs/mongoose`
+- [x] Scaffold Next.js App Router application in `apps/frontend/`
+  - [x] Install Shadcn UI and initialize it
+  - [x] Install `next-themes` for dark/light mode
+  - [x] Configure root layout to read `APP_NAME` from env and use as browser title
+  - [x] Apply brand colors: Primary `#004176`, Neutral `#8C8C8C`
+- [x] Create root `.env.example` with all required variables:
   - `APP_NAME`
   - `NEXT_PUBLIC_APP_NAME`
   - `MONGODB_URI`
@@ -56,24 +56,24 @@ The `APP_NAME` environment variable must propagate to all surfaces (installer, W
   - `FRONTEND_PORT`
   - `BACKEND_URL`
   - `NEXT_PUBLIC_BACKEND_WS_URL`
-- [ ] Create shared `packages/types/` for shared TypeScript interfaces
-- [ ] Configure TypeScript path aliases across workspaces
-- [ ] Add root `README.md` with setup instructions
-- [ ] Write unit tests for ConfigModule loading (backend)
-- [ ] Write unit test that verifies `APP_NAME` resolves correctly from env
+- [x] Create shared `packages/types/` for shared TypeScript interfaces
+- [x] Configure TypeScript path aliases across workspaces
+- [x] Add root `README.md` with setup instructions
+- [x] Write unit tests for ConfigModule loading (backend)
+- [x] Write unit test that verifies `APP_NAME` resolves correctly from env
 
 ---
 
 ## Acceptance Criteria
 
-- [ ] `pnpm install` at root installs all dependencies without errors
-- [ ] `pnpm dev` starts both backend (port 3001) and frontend (port 3000)
-- [ ] Backend connects to MongoDB successfully on startup
-- [ ] Frontend browser title reflects `APP_NAME` from environment
-- [ ] Changing `APP_NAME` in `.env` changes the browser title without code changes
-- [ ] All unit tests pass
-- [ ] Dark/light theme toggle is functional in the frontend
-- [ ] TypeScript compiles without errors in all packages
+- [x] `pnpm install` at root installs all dependencies without errors
+- [x] `pnpm dev` starts both backend (port 3001) and frontend (port 3000)
+- [x] Backend connects to MongoDB successfully on startup
+- [x] Frontend browser title reflects `APP_NAME` from environment
+- [x] Changing `APP_NAME` in `.env` changes the browser title without code changes
+- [x] All unit tests pass
+- [x] Dark/light theme toggle is functional in the frontend
+- [x] TypeScript compiles without errors in all packages
 
 ---
 
