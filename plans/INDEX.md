@@ -32,7 +32,7 @@
 
 | # | Story | Status | Agent |
 |---|-------|--------|-------|
-| [0000003](0000003%20-%20Agent%20Template%20Data%20Model%20and%20CRUD%20API.md) | AgentTemplate Schema and CRUD API | `[~]` | Backend |
+| [0000003](0000003%20-%20Agent%20Template%20Data%20Model%20and%20CRUD%20API.md) | AgentTemplate Schema and CRUD API | `[x]` | Backend |
 | [0000004](0000004%20-%20Template%20Designer%20UI.md) | Template Designer UI at /templates (Grid, Modal, AIEOS Builder) | `[ ]` | Frontend |
 | [0000027](0000027%20-%20Sync%20Agent%20Instance%20from%20Template.md) | Sync Agent Instance from Template (manual sync button + API) | `[ ]` | Backend + Frontend |
 
@@ -166,7 +166,7 @@ Stories should be implemented in numbered order (0000001 → 0000026). Dependenc
 |------|--------------|-----------|-------------|-------------|
 | EPIC-01: Foundation | 1 | 1 | 0 | 0 |
 | EPIC-02: Auth | 2 | 1 | 0 | 1 |
-| EPIC-03: Templates | 3 | 0 | 0 | 3 |
+| EPIC-03: Templates | 3 | 1 | 0 | 2 |
 | EPIC-04: Projects | 4 | 0 | 0 | 4 |
 | EPIC-05: ZeroClaw | 3 | 0 | 0 | 3 |
 | EPIC-06: Git | 1 | 0 | 0 | 1 |
