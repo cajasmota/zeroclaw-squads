@@ -1,0 +1,83 @@
+# 0000013 - Librarian MCP Server Setup and Docker Containers
+
+**Epic**: EPIC-08: Librarian MCP
+**Assigned To**: Backend Agent, DevOps Agent
+**Status**: [ ] Not Started
+**PRD Reference**: PRD.md §7 (The Librarian MCP)
+**Knowledge Base**: `knowledge-base/01-architecture.md`, `knowledge-base/04-agent-roles.md`, `knowledge-base/07-git-strategy.md`
+
+---
+
+## Title
+Set up Librarian MCP server with Treesitter parser and code graph engine as Docker containers
+
+## Description
+The Librarian is the knowledge authority for the AES system. It runs as an MCP (Model Context Protocol) server backed by three Docker-containerized engines:
+1. **Parser Engine**: Treesitter AST parsing via [CocoIndex MCP Server](https://github.com/aanno/cocoindex-code-mcp-server) + [Drift](https://github.com/dadbodgeoff/drift)
+2. **Graph Engine**: Bidirectional call-graph traversal via [Code Pathfinder](https://github.com/shivasurya/code-pathfinder)
+3. **Standards Engine**: NestJS `StandardsEngineService` — synthesizes `.aes/standards.md`
+
+All three are real open-source tools. Read their READMEs before implementing their Docker service wrappers. This story integrates them and exposes MCP tools for other agents to call.
+
+## Context
+The Librarian MCP enables agents to query the codebase semantically without reading raw files. Developer agents call tools like `find_logic`, `get_component_sample`, and `check_convention_compliance` during their reasoning loops.
+
+---
+
+## Actionable Tasks
+
+- [ ] Read READMEs for all three tools before starting implementation:
+  - [ ] CocoIndex MCP Server: https://github.com/aanno/cocoindex-code-mcp-server
+  - [ ] Drift: https://github.com/dadbodgeoff/drift
+  - [ ] Code Pathfinder: https://github.com/shivasurya/code-pathfinder
+- [ ] Create `docker-compose.librarian.yml` with services:
+  - [ ] `parser-engine`: CocoIndex + Drift containerized (exposes REST/MCP API on port 5001)
+    - [ ] Supports languages: TypeScript, JavaScript, Rust, Python
+    - [ ] Configure per each tool's installation instructions
+  - [ ] `graph-engine`: Code Pathfinder containerized (exposes REST API on port 5002)
+    - [ ] Endpoint: `POST /build-graph` — builds call graph from source files
+    - [ ] Endpoint: `GET /graph/{nodeId}/callers` — find callers of a function
+    - [ ] Endpoint: `GET /graph/{nodeId}/callees` — find callees of a function
+- [ ] Create `LibrarianMcpModule` in NestJS:
+  - [ ] Implements MCP server protocol (or uses existing MCP SDK for Node.js)
+  - [ ] Exposes MCP tools to ZeroClaw agents
+- [ ] Implement MCP tools:
+  - [ ] `find_logic(query: string)` — semantic search for code logic by description
+  - [ ] `ask_question(question: string)` — natural language query about codebase
+  - [ ] `get_type_definition(typeName: string)` — returns type/interface definition
+  - [ ] `get_component_sample(componentName: string)` — returns usage example
+  - [ ] `analyze_impact(filePath: string)` — identifies what would break if file changes
+  - [ ] `check_convention_compliance(filePath: string, content: string)` — checks against `.aes/standards.md`
+- [ ] Create `StandardsEngineService`:
+  - [ ] `generateStandards(projectId: string)`:
+    - [ ] Reads codebase patterns from parser and graph engines
+    - [ ] Synthesizes `.aes/standards.md` in the Librarian workspace
+- [ ] Create `LibrarianIndexerService`:
+  - [ ] `triggerIngestion(projectId: string)` — runs full codebase indexing
+    - [ ] Clones or pulls latest from shared librarian workspace
+    - [ ] Calls parser engine on all source files
+    - [ ] Builds call graph
+    - [ ] Updates standards
+  - [ ] `triggerPostMergeReindex(projectId: string)` — lightweight re-index on PR merge
+- [ ] Listen to `librarian.reindex` event from GitHub webhook handler
+- [ ] Create `GET /projects/:id/librarian/status` endpoint — returns indexing status
+- [ ] Create `POST /projects/:id/librarian/ingest` endpoint — manual trigger
+- [ ] Write unit tests for MCP tool implementations (mock docker services)
+
+---
+
+## Acceptance Criteria
+
+- [ ] `docker-compose up` starts parser-engine and graph-engine containers
+- [ ] Parser engine correctly parses TypeScript files to AST
+- [ ] Graph engine correctly builds call graphs from AST data
+- [ ] All 6 MCP tools return meaningful responses for real codebase queries
+- [ ] `check_convention_compliance` correctly identifies violations against `standards.md`
+- [ ] `triggerIngestion()` completes without error for a sample TypeScript project
+- [ ] Merge webhook triggers automatic re-index
+- [ ] Unit tests pass
+
+---
+
+## Dependencies
+- **Depends on**: 0000008 (Project Initialization), 0000011 (GitHub Integration)

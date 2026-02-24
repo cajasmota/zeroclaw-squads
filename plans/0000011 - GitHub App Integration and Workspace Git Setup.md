@@ -1,0 +1,87 @@
+# 0000011 - GitHub App Integration and Workspace Git Setup
+
+**Epic**: EPIC-06: Workspace & Git Integration
+**Assigned To**: Backend Agent
+**Status**: [ ] Not Started
+**PRD Reference**: PRD.md §6 (Workspace & Git Strategy), §15 (Git Repository Integration)
+**Knowledge Base**: `knowledge-base/07-git-strategy.md`, `knowledge-base/04-agent-roles.md`
+
+---
+
+## Title
+Implement GitHub App authentication, per-agent git clone, and feature branch management
+
+## Description
+Each agent gets its own git workspace with a dedicated clone of the project repository. This story implements:
+- GitHub App authentication (using the project's GitHub App credentials)
+- Per-agent workspace git clone on agent activation
+- Feature branch creation/management per story assignment
+- Lock management to prevent concurrent git operations in the same workspace
+
+## Context
+AES uses a hybrid git approach: GitHub MCP for remote API actions (PRs, comments, issues) and Local Git CLI for local operations (clone, pull, commit, push). Each agent has an isolated workspace to enable parallel development.
+
+---
+
+## Actionable Tasks
+
+- [ ] Create `GitHubAppService`:
+  - [ ] Install: `@octokit/auth-app`, `@octokit/rest`
+  - [ ] `getInstallationToken(project: Project): string` — authenticates via GitHub App and gets installation token
+  - [ ] `getAuthenticatedOctokit(project: Project): Octokit` — returns authenticated Octokit instance
+  - [ ] Decrypts `config.githubApp.privateKey` using `AES256EncryptionService`
+- [ ] Create `GitWorkspaceService`:
+  - [ ] `clone(agentInstance: AgentInstance, project: Project)`:
+    - [ ] Runs: `git clone {repoUrl} {workspacePath}` using installation token for auth
+    - [ ] Sets git user name/email to agent's display name / system email
+  - [ ] `createFeatureBranch(workspacePath, storyId)`:
+    - [ ] Creates and checks out: `feature/{storyId}`
+  - [ ] `commit(workspacePath, message)`:
+    - [ ] Stages all changes and creates atomic commit
+  - [ ] `push(workspacePath, branch)`:
+    - [ ] Pushes branch to remote using installation token
+  - [ ] `pull(workspacePath)`:
+    - [ ] Pulls latest changes from remote
+  - [ ] `acquireLock(workspacePath)`: — creates `.git/aes.lock`
+  - [ ] `releaseLock(workspacePath)`: — removes `.git/aes.lock`
+- [ ] Create `GitHubPRService`:
+  - [ ] `createPullRequest(project, { title, body, branch, base })` — creates PR via GitHub REST API
+  - [ ] `postComment(project, prNumber, body)` — posts comment on PR
+  - [ ] `getPRComments(project, prNumber)` — fetches PR comments for agent feedback injection
+  - [ ] `mergePullRequest(project, prNumber)` — merges PR (triggered by PM or user)
+- [ ] Integrate `GitWorkspaceService.clone()` into `ProjectInitializerService`:
+  - [ ] Each agent workspace is cloned after directory creation
+- [ ] Create `GitHubWebhookController`:
+  - [ ] `POST /webhooks/github` — receives GitHub webhook events
+  - [ ] Verifies webhook signature using `webhookSecret`
+  - [ ] Routes events:
+    - [ ] `pull_request.opened` → signal Reviewer agent
+    - [ ] `issue_comment.created` (on PR) → signal Developer agent + inject feedback via stdin
+    - [ ] `push` (to main) → emit `librarian.reindex` event
+- [ ] Write unit tests for:
+  - [ ] `GitHubAppService.getInstallationToken()` (mock Octokit)
+  - [ ] `GitHubWebhookController` signature verification
+  - [ ] `GitWorkspaceService` operations (mock child_process)
+
+---
+
+## Acceptance Criteria
+
+- [ ] `getInstallationToken()` successfully authenticates using GitHub App private key
+- [ ] Each agent workspace has a working git clone of the project repository
+- [ ] `createFeatureBranch('feature/story-123')` creates the branch in the workspace
+- [ ] GitHub webhook receives `pull_request.opened` and signals the Reviewer agent via SIGUSR1
+- [ ] GitHub webhook receives PR comment and injects feedback via agent stdin
+- [ ] Push to main branch triggers `librarian.reindex` event
+- [ ] Webhook signature verification rejects invalid signatures
+- [ ] Lock management prevents concurrent git operations in one workspace
+- [ ] Unit tests pass
+
+---
+
+## Dependencies
+- **Depends on**: 0000008 (Project Initialization), 0000009 (ZeroClaw Process Manager)
+
+## Notes
+- A GitHub App setup guide is documented in story 0000022 (`docs/github-app-setup.md`)
+- Git auth uses installation tokens (short-lived, auto-refreshed) NOT personal access tokens
