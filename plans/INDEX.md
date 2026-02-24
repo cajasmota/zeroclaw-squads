@@ -21,7 +21,7 @@
 
 | # | Story | Status | Agent |
 |---|-------|--------|-------|
-| [0000002](0000002%20-%20Authentication%20and%20Multi-Tenant%20Middleware.md) | MongoDB Auth + bcrypt + JWT + Multi-Tenant Middleware (Backend) | `[ ]` | Backend |
+| [0000002](0000002%20-%20Authentication%20and%20Multi-Tenant%20Middleware.md) | MongoDB Auth + bcrypt + JWT + Multi-Tenant Middleware (Backend) | `[~]` | Backend |
 | [0000024](0000024%20-%20Frontend%20Authentication%20Login%20Page%20and%20Route%20Protection.md) | Frontend Auth - Login Page, httpOnly Cookie, Route Protection, App Shell | `[ ]` | Frontend |
 
 ---
