@@ -5,6 +5,7 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import { AuthModule } from './auth/auth.module';
 import { TemplatesModule } from './templates/templates.module';
+import { ProjectsModule } from './projects/projects.module';
 import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
 import { TenantMiddleware } from './common/middleware/tenant.middleware';
 
@@ -24,6 +25,7 @@ import { TenantMiddleware } from './common/middleware/tenant.middleware';
     EventEmitterModule.forRoot(),
     AuthModule,
     TemplatesModule,
+    ProjectsModule,
   ],
   providers: [
     {

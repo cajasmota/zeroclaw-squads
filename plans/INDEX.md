@@ -44,7 +44,7 @@
 
 | # | Story | Status | Agent |
 |---|-------|--------|-------|
-| [0000005](0000005%20-%20Project%20Data%20Model%20and%20CRUD%20API.md) | Project Schema and CRUD API with AES-256 encryption | `[~]` | Backend |
+| [0000005](0000005%20-%20Project%20Data%20Model%20and%20CRUD%20API.md) | Project Schema and CRUD API with AES-256 encryption | `[x]` | Backend |
 | [0000006](0000006%20-%20Agent%20Instance%20Snapshot%20Creation.md) | AgentInstance Snapshot Creation on Template Assignment | `[ ]` | Backend |
 | [0000007](0000007%20-%20Project%20List%20and%20New%20Project%20Wizard%20UI.md) | Project List UI and Multi-step New Project Wizard at /projects | `[ ]` | Frontend |
 | [0000008](0000008%20-%20Project%20Initialization%20Sequence%20and%20Slack%20Automation.md) | Project Initialization Sequence (Directory, Slack, Agent Spawn, Greetings) | `[ ]` | Backend |
