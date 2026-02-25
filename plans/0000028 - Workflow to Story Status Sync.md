@@ -26,27 +26,27 @@ A story can be "In Progress" on the Kanban (global status) while the workflow no
 ## Actionable Tasks
 
 - [x] Update `WorkflowNodeExecutorService` (story 0000017) to emit story status events:
-  - [ ] When a node starts: emit `workflow.node.started` with `{ storyId, nodeId, nodeDescription }`
-  - [ ] When a node completes: emit `workflow.node.completed` with `{ storyId, nodeId }`
-  - [ ] When a node fails: emit `workflow.node.failed` with `{ storyId, nodeId, error }`
-  - [ ] When a node requires approval: emit `workflow.node.approval_needed` with `{ storyId, nodeId }`
+  - [x] When a node starts: emit `workflow.node.started` with `{ storyId, nodeId, nodeDescription }`
+  - [x] When a node completes: emit `workflow.node.completed` with `{ storyId, nodeId }`
+  - [x] When a node fails: emit `workflow.node.failed` with `{ storyId, nodeId, error }`
+  - [x] When a node requires approval: emit `workflow.node.approval_needed` with `{ storyId, nodeId }`
 - [x] Create `WorkflowStoryBridgeService`:
-  - [ ] Listens to `workflow.node.started` (payload: `{ storyId, projectId, tenantId, nodeId, nodeDescription, node }`):
-    - [ ] Updates `Story.workflowNodeStatus = nodeDescription` (e.g., "Developer: Implementing feature")
-    - [ ] **Kanban auto-move**: if `node.kanbanStatus` is set AND `node.kanbanStatusTrigger === 'on_start'`, call `StoriesService.updateStatus(storyId, projectId, tenantId, node.kanbanStatus)` → emits `story:status` WebSocket event → Kanban card moves to target column
-    - [ ] Broadcasts `story:workflow_status` WebSocket event to project room (workflow position indicator — independent of Kanban column)
-  - [ ] Listens to `workflow.node.completed` (payload: `{ storyId, projectId, tenantId, nodeId, nodeDescription, node }`):
-    - [ ] Updates `Story.workflowNodeStatus = "Completed: {nodeDescription}"`
-    - [ ] **Kanban auto-move**: if `node.kanbanStatus` is set AND `node.kanbanStatusTrigger === 'on_complete'`, call `StoriesService.updateStatus(storyId, projectId, tenantId, node.kanbanStatus)`
-  - [ ] Listens to `workflow.node.failed`:
-    - [ ] Updates `Story.workflowNodeStatus = "Error: {error}"`
-    - [ ] Calls `StoriesService.updateStatus(storyId, projectId, tenantId, 'backlog')` (always returns to backlog on failure, regardless of `kanbanStatus` config)
-  - [ ] Listens to `workflow.node.approval_needed`:
-    - [ ] Updates `Story.workflowNodeStatus = "Waiting for Approval"`
-    - [ ] Sets `Story.waitingForApproval = true`
+  - [x] Listens to `workflow.node.started` (payload: `{ storyId, projectId, tenantId, nodeId, nodeDescription, node }`):
+    - [x] Updates `Story.workflowNodeStatus = nodeDescription` (e.g., "Developer: Implementing feature")
+    - [x] **Kanban auto-move**: if `node.kanbanStatus` is set AND `node.kanbanStatusTrigger === 'on_start'`, call `StoriesService.updateStatus(storyId, projectId, tenantId, node.kanbanStatus)` → emits `story:status` WebSocket event → Kanban card moves to target column
+    - [x] Broadcasts `story:workflow_status` WebSocket event to project room (workflow position indicator — independent of Kanban column)
+  - [x] Listens to `workflow.node.completed` (payload: `{ storyId, projectId, tenantId, nodeId, nodeDescription, node }`):
+    - [x] Updates `Story.workflowNodeStatus = "Completed: {nodeDescription}"`
+    - [x] **Kanban auto-move**: if `node.kanbanStatus` is set AND `node.kanbanStatusTrigger === 'on_complete'`, call `StoriesService.updateStatus(storyId, projectId, tenantId, node.kanbanStatus)`
+  - [x] Listens to `workflow.node.failed`:
+    - [x] Updates `Story.workflowNodeStatus = "Error: {error}"`
+    - [x] Calls `StoriesService.updateStatus(storyId, projectId, tenantId, 'backlog')` (always returns to backlog on failure, regardless of `kanbanStatus` config)
+  - [x] Listens to `workflow.node.approval_needed`:
+    - [x] Updates `Story.workflowNodeStatus = "Waiting for Approval"`
+    - [x] Sets `Story.waitingForApproval = true`
 - [x] Add `GET /projects/:id/stories/:storyId/workflow-status` endpoint:
-  - [ ] Returns `{ workflowNodeStatus, waitingForApproval, waitingForAnswer, currentNodeId, runId }`
-  - [ ] Used by frontend Ticket Modal to show current workflow position
+  - [x] Returns `{ workflowNodeStatus, waitingForApproval, waitingForAnswer, currentNodeId, runId }`
+  - [x] Used by frontend Ticket Modal to show current workflow position
 - [x] Write unit tests for `WorkflowStoryBridgeService` event handlers
 
 ---

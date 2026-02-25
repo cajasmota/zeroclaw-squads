@@ -67,41 +67,41 @@ Analytics enable users to monitor LLM spending and agent activity patterns. Zero
 
 - [x] Create `AnalyticsModule` in NestJS
 - [x] Create `UsageMonitorService`:
-  - [ ] Uses `chokidar` to watch `/artifacts/**/state/costs.jsonl` (glob pattern)
-  - [ ] On file change: reads all new lines since last read position (use file offset tracking)
-  - [ ] Parses each JSONL line and extracts: `session_id`, `usage.model`, `usage.cost_usd`, `usage.total_tokens`, `usage.timestamp`
-  - [ ] Correlates `session_id` to `AgentInstance` via a lookup in MongoDB (store `session_id` on AgentInstance at spawn time — see story 0000009)
-  - [ ] Ingests usage data into MongoDB `usage_events` collection:
-    - [ ] `{ agentInstanceId, projectId, tenantId, model, totalTokens, costUsd, timestamp }`
-  - [ ] Calculates running cost totals per project
+  - [x] Uses `chokidar` to watch `/artifacts/**/state/costs.jsonl` (glob pattern)
+  - [x] On file change: reads all new lines since last read position (use file offset tracking)
+  - [x] Parses each JSONL line and extracts: `session_id`, `usage.model`, `usage.cost_usd`, `usage.total_tokens`, `usage.timestamp`
+  - [x] Correlates `session_id` to `AgentInstance` via a lookup in MongoDB (store `session_id` on AgentInstance at spawn time — see story 0000009)
+  - [x] Ingests usage data into MongoDB `usage_events` collection:
+    - [x] `{ agentInstanceId, projectId, tenantId, model, totalTokens, costUsd, timestamp }`
+  - [x] Calculates running cost totals per project
 - [x] Create `RuntimeTraceArchiveService`:
-  - [ ] `archiveTrace(agentInstanceId, runId)`:
-    - [ ] Reads `{workspacePath}/state/runtime-trace.jsonl`
-    - [ ] Parses all entries and stores in MongoDB `transcripts` collection:
-      - [ ] `{ agentInstanceId, projectId, runId, tenantId, entries: [...], archivedAt }`
-    - [ ] Clears (truncates) the local `runtime-trace.jsonl` after successful archiving
-  - [ ] Triggered at end of each agent task run (listen to `story.done` or `workflow.node.completed`)
+  - [x] `archiveTrace(agentInstanceId, runId)`:
+    - [x] Reads `{workspacePath}/state/runtime-trace.jsonl`
+    - [x] Parses all entries and stores in MongoDB `transcripts` collection:
+      - [x] `{ agentInstanceId, projectId, runId, tenantId, entries: [...], archivedAt }`
+    - [x] Clears (truncates) the local `runtime-trace.jsonl` after successful archiving
+  - [x] Triggered at end of each agent task run (listen to `story.done` or `workflow.node.completed`)
 - [x] Create REST endpoints for analytics:
-  - [ ] `GET /projects/:id/analytics/burn-rate` — daily cost aggregation from `usage_events`
-  - [ ] `GET /projects/:id/analytics/distribution` — cost/usage grouped by agent role
-  - [ ] `GET /projects/:id/analytics/transcripts` — paginated list of archived runs
-  - [ ] `GET /projects/:id/analytics/transcripts/:runId` — full runtime-trace for a run
+  - [x] `GET /projects/:id/analytics/burn-rate` — daily cost aggregation from `usage_events`
+  - [x] `GET /projects/:id/analytics/distribution` — cost/usage grouped by agent role
+  - [x] `GET /projects/:id/analytics/transcripts` — paginated list of archived runs
+  - [x] `GET /projects/:id/analytics/transcripts/:runId` — full runtime-trace for a run
 
 ### Frontend
 
 - [x] Install `recharts`
 - [x] Create `AnalyticsSection` component (in Dashboard tab, story 0000015):
-  - [ ] **Burn Rate Chart** (Recharts `LineChart` or `AreaChart`):
-    - [ ] X-axis: dates, Y-axis: USD cost
-    - [ ] One line per project or aggregated total
-  - [ ] **Distribution Pie Chart** (Recharts `PieChart`):
-    - [ ] Segments by agent role (Librarian, Architect, PM, Developer, Reviewer, Tester)
-    - [ ] Tooltip shows role name + total cost
-  - [ ] Total cost badge and token count summary
+  - [x] **Burn Rate Chart** (Recharts `LineChart` or `AreaChart`):
+    - [x] X-axis: dates, Y-axis: USD cost
+    - [x] One line per project or aggregated total
+  - [x] **Distribution Pie Chart** (Recharts `PieChart`):
+    - [x] Segments by agent role (Librarian, Architect, PM, Developer, Reviewer, Tester)
+    - [x] Tooltip shows role name + total cost
+  - [x] Total cost badge and token count summary
 - [x] Create `TranscriptViewer` component:
-  - [ ] Accessible from Ticket Modal (Live Activity Logs tab, story 0000016)
-  - [ ] Shows historical runtime-trace entries for a given runId
-  - [ ] Entry types styled: `llm_response` (blue), `tool_call` (yellow), `system` (gray)
+  - [x] Accessible from Ticket Modal (Live Activity Logs tab, story 0000016)
+  - [x] Shows historical runtime-trace entries for a given runId
+  - [x] Entry types styled: `llm_response` (blue), `tool_call` (yellow), `system` (gray)
 
 ---
 

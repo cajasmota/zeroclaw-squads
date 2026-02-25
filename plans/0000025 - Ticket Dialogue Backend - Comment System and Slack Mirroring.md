@@ -29,56 +29,56 @@ The ticket Discussion tab (UI in story 0000016) needs this backend to function. 
 ## Actionable Tasks
 
 - [x] Define `TicketComment` Mongoose schema:
-  - [ ] `storyId` (ObjectId, indexed)
-  - [ ] `projectId`, `tenantId`
-  - [ ] `author` (enum: `human | agent`)
-  - [ ] `authorId` — userId (if human) or agentInstanceId (if agent)
-  - [ ] `authorDisplayName` (string)
-  - [ ] `content` (string)
-  - [ ] `slackThreadTs` (string — Slack thread timestamp for mirroring)
-  - [ ] `type` (enum: `message | approval | answer`)
-  - [ ] Timestamps
+  - [x] `storyId` (ObjectId, indexed)
+  - [x] `projectId`, `tenantId`
+  - [x] `author` (enum: `human | agent`)
+  - [x] `authorId` — userId (if human) or agentInstanceId (if agent)
+  - [x] `authorDisplayName` (string)
+  - [x] `content` (string)
+  - [x] `slackThreadTs` (string — Slack thread timestamp for mirroring)
+  - [x] `type` (enum: `message | approval | answer`)
+  - [x] Timestamps
 - [x] Create `TicketDialogueService`:
-  - [ ] `getComments(storyId, tenantId)` — list all comments for a story (chronological)
-  - [ ] `postHumanComment(storyId, tenantId, userId, content)`:
-    - [ ] Creates `TicketComment` with `author: human`
-    - [ ] Gets story's assigned agent instance
-    - [ ] Sends SIGUSR1 to agent PID
-    - [ ] Injects via stdin: `USER_MESSAGE: {content}`
-    - [ ] Clears `waitingForAnswer = false` if it was set
-    - [ ] Mirrors comment to Slack thread via `SlackService.postThreadReply()`
-    - [ ] Broadcasts new comment via WebSocket (`ticket:comment` event on `project:{projectId}` room)
-  - [ ] `postAgentComment(storyId, content, agentInstanceId)`:
-    - [ ] Called when agent emits a message targeting a ticket (parsed from stdout)
-    - [ ] Creates `TicketComment` with `author: agent`
-    - [ ] Mirrors to Slack thread
-    - [ ] Broadcasts via WebSocket
-  - [ ] `approveStory(storyId, tenantId, userId)`:
-    - [ ] Clears `waitingForApproval = false`
-    - [ ] Triggers PR merge via `GitHubPRService.mergePullRequest()`
-    - [ ] Posts approval comment
-    - [ ] Signals PM agent
-  - [ ] `answerAgent(storyId, tenantId, userId, answer)`:
-    - [ ] Posts human comment with `type: answer`
-    - [ ] Clears `waitingForAnswer = false`
-    - [ ] Injects answer into agent stdin
-  - [ ] `setWaitingForAnswer(storyId, agentInstanceId)`:
-    - [ ] Sets `story.waitingForAnswer = true`
-    - [ ] Called when agent signals it needs clarification (detected from stdout parsing)
-  - [ ] `setWaitingForApproval(storyId, agentInstanceId)`:
-    - [ ] Sets `story.waitingForApproval = true`
+  - [x] `getComments(storyId, tenantId)` — list all comments for a story (chronological)
+  - [x] `postHumanComment(storyId, tenantId, userId, content)`:
+    - [x] Creates `TicketComment` with `author: human`
+    - [x] Gets story's assigned agent instance
+    - [x] Sends SIGUSR1 to agent PID
+    - [x] Injects via stdin: `USER_MESSAGE: {content}`
+    - [x] Clears `waitingForAnswer = false` if it was set
+    - [x] Mirrors comment to Slack thread via `SlackService.postThreadReply()`
+    - [x] Broadcasts new comment via WebSocket (`ticket:comment` event on `project:{projectId}` room)
+  - [x] `postAgentComment(storyId, content, agentInstanceId)`:
+    - [x] Called when agent emits a message targeting a ticket (parsed from stdout)
+    - [x] Creates `TicketComment` with `author: agent`
+    - [x] Mirrors to Slack thread
+    - [x] Broadcasts via WebSocket
+  - [x] `approveStory(storyId, tenantId, userId)`:
+    - [x] Clears `waitingForApproval = false`
+    - [x] Triggers PR merge via `GitHubPRService.mergePullRequest()`
+    - [x] Posts approval comment
+    - [x] Signals PM agent
+  - [x] `answerAgent(storyId, tenantId, userId, answer)`:
+    - [x] Posts human comment with `type: answer`
+    - [x] Clears `waitingForAnswer = false`
+    - [x] Injects answer into agent stdin
+  - [x] `setWaitingForAnswer(storyId, agentInstanceId)`:
+    - [x] Sets `story.waitingForAnswer = true`
+    - [x] Called when agent signals it needs clarification (detected from stdout parsing)
+  - [x] `setWaitingForApproval(storyId, agentInstanceId)`:
+    - [x] Sets `story.waitingForApproval = true`
 - [x] Update `StreamAggregatorService` (from 0000009) to parse agent stdout for special signals:
-  - [ ] Detect `WAITING_FOR_ANSWER:` prefix → calls `setWaitingForAnswer()`
-  - [ ] Detect `WAITING_FOR_APPROVAL:` prefix → calls `setWaitingForApproval()`
-  - [ ] Detect `TICKET_MESSAGE:` prefix → calls `postAgentComment()`
+  - [x] Detect `WAITING_FOR_ANSWER:` prefix → calls `setWaitingForAnswer()`
+  - [x] Detect `WAITING_FOR_APPROVAL:` prefix → calls `setWaitingForApproval()`
+  - [x] Detect `TICKET_MESSAGE:` prefix → calls `postAgentComment()`
 - [x] Create REST endpoints:
-  - [ ] `GET /projects/:id/stories/:storyId/comments` — list comments
-  - [ ] `POST /projects/:id/stories/:storyId/comments` — human posts comment
-  - [ ] `POST /projects/:id/stories/:storyId/approve` — human approves (triggers merge)
-  - [ ] `POST /projects/:id/stories/:storyId/answer` — human answers agent question
+  - [x] `GET /projects/:id/stories/:storyId/comments` — list comments
+  - [x] `POST /projects/:id/stories/:storyId/comments` — human posts comment
+  - [x] `POST /projects/:id/stories/:storyId/approve` — human approves (triggers merge)
+  - [x] `POST /projects/:id/stories/:storyId/answer` — human answers agent question
 - [x] Ensure `SlackService` (from 0000008) stores Slack `thread_ts` on first message per story:
-  - [ ] `storySlackThread` field on Story schema: `{ channelId, threadTs }`
-  - [ ] First message to a story creates the thread; subsequent ones reply in it
+  - [x] `storySlackThread` field on Story schema: `{ channelId, threadTs }`
+  - [x] First message to a story creates the thread; subsequent ones reply in it
 - [x] Write unit tests for `TicketDialogueService` (mock ZeroClaw signals and Slack)
 
 ---

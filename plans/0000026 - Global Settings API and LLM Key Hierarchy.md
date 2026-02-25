@@ -33,63 +33,63 @@ Global Settings also control:
 ### Backend
 
 - [x] Define `GlobalSettings` Mongoose schema:
-  - [ ] `tenantId` (ObjectId, unique index — one document per tenant)
-  - [ ] `appName` (string — can override `APP_NAME` env var at runtime)
-  - [ ] `defaultOllamaModel` (string, default: `qwen2.5-coder:1.5b`)
-  - [ ] `ollamaEndpoint` (string, default: `http://localhost:11434`)
-  - [ ] `globalInviteUsers` (string[] — Slack user IDs for all new projects)
-  - [ ] `providers` (object: `{ openai: enabled, anthropic: enabled, google: enabled, ollama: enabled }`)
-  - [ ] `llmKeys`:
-    - [ ] `openai` (string, AES-256 encrypted)
-    - [ ] `anthropic` (string, AES-256 encrypted)
-    - [ ] `google` (string, AES-256 encrypted)
-  - [ ] Timestamps
+  - [x] `tenantId` (ObjectId, unique index — one document per tenant)
+  - [x] `appName` (string — can override `APP_NAME` env var at runtime)
+  - [x] `defaultOllamaModel` (string, default: `qwen2.5-coder:1.5b`)
+  - [x] `ollamaEndpoint` (string, default: `http://localhost:11434`)
+  - [x] `globalInviteUsers` (string[] — Slack user IDs for all new projects)
+  - [x] `providers` (object: `{ openai: enabled, anthropic: enabled, google: enabled, ollama: enabled }`)
+  - [x] `llmKeys`:
+    - [x] `openai` (string, AES-256 encrypted)
+    - [x] `anthropic` (string, AES-256 encrypted)
+    - [x] `google` (string, AES-256 encrypted)
+  - [x] Timestamps
 - [x] Create `GlobalSettingsService`:
-  - [ ] `get(tenantId)` — fetch or create (upsert) global settings
-  - [ ] `update(tenantId, dto)` — update settings, encrypt sensitive fields
-  - [ ] `resolveLlmKeys(tenantId, project: Project): ResolvedLlmKeys`:
-    - [ ] For each provider (openai, anthropic, google):
-      - [ ] Use `project.config.llmKeys.{provider}` if set (decrypt)
-      - [ ] Fall back to `GlobalSettings.llmKeys.{provider}` (decrypt)
-    - [ ] Returns: `{ openai?: string, anthropic?: string, google?: string, ollamaEndpoint: string }`
-    - [ ] Returns only keys for **enabled** providers
-  - [ ] `resolveInviteUsers(tenantId, project: Project): string[]`:
-    - [ ] Use `project.config.inviteUsers` if non-empty
-    - [ ] Fall back to `GlobalSettings.globalInviteUsers`
+  - [x] `get(tenantId)` — fetch or create (upsert) global settings
+  - [x] `update(tenantId, dto)` — update settings, encrypt sensitive fields
+  - [x] `resolveLlmKeys(tenantId, project: Project): ResolvedLlmKeys`:
+    - [x] For each provider (openai, anthropic, google):
+      - [x] Use `project.config.llmKeys.{provider}` if set (decrypt)
+      - [x] Fall back to `GlobalSettings.llmKeys.{provider}` (decrypt)
+    - [x] Returns: `{ openai?: string, anthropic?: string, google?: string, ollamaEndpoint: string }`
+    - [x] Returns only keys for **enabled** providers
+  - [x] `resolveInviteUsers(tenantId, project: Project): string[]`:
+    - [x] Use `project.config.inviteUsers` if non-empty
+    - [x] Fall back to `GlobalSettings.globalInviteUsers`
 - [x] Update `ZeroClawProcessManagerService` (from 0000009):
-  - [ ] Before spawning, call `GlobalSettingsService.resolveLlmKeys()` to get the correct keys
-  - [ ] Inject resolved keys as env vars (not project keys directly)
+  - [x] Before spawning, call `GlobalSettingsService.resolveLlmKeys()` to get the correct keys
+  - [x] Inject resolved keys as env vars (not project keys directly)
 - [x] Update `ProjectInitializerService` (from 0000008):
-  - [ ] Use `GlobalSettingsService.resolveInviteUsers()` for Slack channel invitations
+  - [x] Use `GlobalSettingsService.resolveInviteUsers()` for Slack channel invitations
 - [x] Create REST endpoints:
-  - [ ] `GET /settings` — get global settings (sensitive fields masked)
-  - [ ] `PATCH /settings` — update global settings
+  - [x] `GET /settings` — get global settings (sensitive fields masked)
+  - [x] `PATCH /settings` — update global settings
 - [x] Remove `GlobalSettingsModule` stub from 0000021 (it now lives here)
 - [x] Write unit tests for `GlobalSettingsService.resolveLlmKeys()`:
-  - [ ] Project key takes priority over global key
-  - [ ] Global key used when project key is empty
-  - [ ] Disabled provider key never returned
+  - [x] Project key takes priority over global key
+  - [x] Global key used when project key is empty
+  - [x] Disabled provider key never returned
 
 ### Frontend
 
 - [x] Create Next.js route `/app/settings/page.tsx` (Global Settings page):
-  - [ ] **App Configuration** section:
-    - [ ] `APP_NAME` display (read-only, from env) + note about how to change via `.env`
-    - [ ] Default Ollama Model input
-    - [ ] Ollama Endpoint URL input
-  - [ ] **Global LLM Keys** section:
-    - [ ] OpenAI API Key (masked input, show/hide toggle)
-    - [ ] Anthropic API Key (masked input, show/hide toggle)
-    - [ ] Google API Key (masked input, show/hide toggle)
-    - [ ] Note: "Project-specific keys override these globally"
-  - [ ] **Global Slack Invitations** section:
-    - [ ] List of Slack user IDs invited to all new project channels
-    - [ ] Add/Remove user IDs
-    - [ ] Note: "Project-specific invite lists override this"
-  - [ ] **Provider Toggles** section (moved here from 0000021):
-    - [ ] Enable/Disable: OpenAI, Anthropic, Google, Ollama
-  - [ ] Save button → `PATCH /settings`
-  - [ ] Show success/error toast on save
+  - [x] **App Configuration** section:
+    - [x] `APP_NAME` display (read-only, from env) + note about how to change via `.env`
+    - [x] Default Ollama Model input
+    - [x] Ollama Endpoint URL input
+  - [x] **Global LLM Keys** section:
+    - [x] OpenAI API Key (masked input, show/hide toggle)
+    - [x] Anthropic API Key (masked input, show/hide toggle)
+    - [x] Google API Key (masked input, show/hide toggle)
+    - [x] Note: "Project-specific keys override these globally"
+  - [x] **Global Slack Invitations** section:
+    - [x] List of Slack user IDs invited to all new project channels
+    - [x] Add/Remove user IDs
+    - [x] Note: "Project-specific invite lists override this"
+  - [x] **Provider Toggles** section (moved here from 0000021):
+    - [x] Enable/Disable: OpenAI, Anthropic, Google, Ollama
+  - [x] Save button → `PATCH /settings`
+  - [x] Show success/error toast on save
 - [x] Add "Settings" link to global navigation (from 0000024 app shell) pointing to `/settings`
 - [x] Write component tests for GlobalSettings form
 

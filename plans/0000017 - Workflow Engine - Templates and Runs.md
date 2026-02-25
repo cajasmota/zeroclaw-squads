@@ -29,43 +29,43 @@ Workflows are the structured automation layer above individual agent tasks. Each
 
 - [x] Create `WorkflowsModule` in NestJS
 - [x] Define `WorkflowTemplate` Mongoose schema:
-  - [ ] `tenantId`, `name`, `description`, `isGlobal` (boolean)
-  - [ ] `nodes[]`: `{ id, type, agentRole, requiresHumanApproval, description, nextNodeId, onSuccessNodeId, onFailNodeId, kanbanStatus?, kanbanStatusTrigger? }`
-    - [ ] `kanbanStatus` (optional enum): `backlog | selected | in_progress | review | done` — when set, moving through this node moves the standard Kanban card to this column
-    - [ ] `kanbanStatusTrigger` (optional enum): `on_start | on_complete` — whether the card moves when this node starts or when it finishes
-  - [ ] `edges[]`: `{ from, to }` (React Flow compatible)
-  - [ ] Pre-seed global templates: Librarian Ingestion, Product Strategy, Feature Development, Hotfix
-    - [ ] **Feature Development** template nodes must be pre-configured with standard kanban mappings:
+  - [x] `tenantId`, `name`, `description`, `isGlobal` (boolean)
+  - [x] `nodes[]`: `{ id, type, agentRole, requiresHumanApproval, description, nextNodeId, onSuccessNodeId, onFailNodeId, kanbanStatus?, kanbanStatusTrigger? }`
+    - [x] `kanbanStatus` (optional enum): `backlog | selected | in_progress | review | done` — when set, moving through this node moves the standard Kanban card to this column
+    - [x] `kanbanStatusTrigger` (optional enum): `on_start | on_complete` — whether the card moves when this node starts or when it finishes
+  - [x] `edges[]`: `{ from, to }` (React Flow compatible)
+  - [x] Pre-seed global templates: Librarian Ingestion, Product Strategy, Feature Development, Hotfix
+    - [x] **Feature Development** template nodes must be pre-configured with standard kanban mappings:
       - `Developer (Implement)` node: `kanbanStatus = in_progress`, `kanbanStatusTrigger = on_start`
       - `Reviewer (Code Review)` node: `kanbanStatus = review`, `kanbanStatusTrigger = on_start`
       - `EndNode` (or final merge step): `kanbanStatus = done`, `kanbanStatusTrigger = on_complete`
 - [x] Define `WorkflowRun` Mongoose schema:
-  - [ ] `workflowTemplateId`, `projectId`, `storyId` (nullable), `tenantId`
-  - [ ] `status` (enum: `running | paused | completed | failed`)
-  - [ ] `currentNodeId`
-  - [ ] `startedAt`, `completedAt`
-  - [ ] `nodeExecutions[]`: `{ nodeId, status, startedAt, completedAt, runId, agentInstanceId }`
+  - [x] `workflowTemplateId`, `projectId`, `storyId` (nullable), `tenantId`
+  - [x] `status` (enum: `running | paused | completed | failed`)
+  - [x] `currentNodeId`
+  - [x] `startedAt`, `completedAt`
+  - [x] `nodeExecutions[]`: `{ nodeId, status, startedAt, completedAt, runId, agentInstanceId }`
 - [x] Create `WorkflowsService`:
-  - [ ] `findAllTemplates(tenantId)` — global + tenant templates
-  - [ ] `createTemplate(tenantId, dto)` — custom workflow
-  - [ ] `triggerWorkflow(projectId, templateId, storyId?)` — creates WorkflowRun, starts first node
-  - [ ] `advanceWorkflow(runId)` — moves to next node after current completes
-  - [ ] `approveNode(runId, nodeId)` — human approves paused node, resumes workflow
-  - [ ] `getRunHistory(projectId)` — list historical runs
+  - [x] `findAllTemplates(tenantId)` — global + tenant templates
+  - [x] `createTemplate(tenantId, dto)` — custom workflow
+  - [x] `triggerWorkflow(projectId, templateId, storyId?)` — creates WorkflowRun, starts first node
+  - [x] `advanceWorkflow(runId)` — moves to next node after current completes
+  - [x] `approveNode(runId, nodeId)` — human approves paused node, resumes workflow
+  - [x] `getRunHistory(projectId)` — list historical runs
 - [x] Create `WorkflowNodeExecutorService`:
-  - [ ] `executeNode(run, node)`:
-    - [ ] Find available agent with matching `agentRole`
-    - [ ] Create Kanban ticket for this node execution
-    - [ ] Signal agent via SIGUSR1 + stdin inject with node context
-    - [ ] If `requiresHumanApproval`: set run status to `paused`, emit `workflow.approval_needed`
-    - [ ] Update `nodeExecution.status` in WorkflowRun
+  - [x] `executeNode(run, node)`:
+    - [x] Find available agent with matching `agentRole`
+    - [x] Create Kanban ticket for this node execution
+    - [x] Signal agent via SIGUSR1 + stdin inject with node context
+    - [x] If `requiresHumanApproval`: set run status to `paused`, emit `workflow.approval_needed`
+    - [x] Update `nodeExecution.status` in WorkflowRun
 - [x] Create REST endpoints:
-  - [ ] `GET /workflows/templates` — list global + tenant templates
-  - [ ] `POST /workflows/templates` — create custom template
-  - [ ] `POST /projects/:id/workflows/trigger` — trigger workflow run
-  - [ ] `GET /projects/:id/workflows/runs` — list runs
-  - [ ] `GET /projects/:id/workflows/runs/:runId` — run detail
-  - [ ] `POST /projects/:id/workflows/runs/:runId/approve` — human approval
+  - [x] `GET /workflows/templates` — list global + tenant templates
+  - [x] `POST /workflows/templates` — create custom template
+  - [x] `POST /projects/:id/workflows/trigger` — trigger workflow run
+  - [x] `GET /projects/:id/workflows/runs` — list runs
+  - [x] `GET /projects/:id/workflows/runs/:runId` — run detail
+  - [x] `POST /projects/:id/workflows/runs/:runId/approve` — human approval
 - [x] Write unit tests for `WorkflowsService` and `WorkflowNodeExecutorService`
 
 ---

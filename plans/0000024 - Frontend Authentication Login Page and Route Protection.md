@@ -31,105 +31,105 @@ The JWT is stored as an **httpOnly cookie** (set by a Next.js API route proxy) s
 ### Auth API Proxy (Next.js API Routes)
 
 - [x] Create `apps/frontend/lib/api/client.ts`:
-  - [ ] Base fetch wrapper that automatically reads JWT from cookie header (for server components/API routes) or includes credentials for client fetch
-  - [ ] `apiGet(path)`, `apiPost(path, body)`, `apiPatch(path, body)`, `apiDelete(path)`
+  - [x] Base fetch wrapper that automatically reads JWT from cookie header (for server components/API routes) or includes credentials for client fetch
+  - [x] `apiGet(path)`, `apiPost(path, body)`, `apiPatch(path, body)`, `apiDelete(path)`
 
 - [x] Create Next.js API route proxies (keeps JWT server-side):
-  - [ ] `app/api/auth/login/route.ts`:
-    - [ ] `POST` — forwards to `{BACKEND_URL}/auth/login`
-    - [ ] On success: sets httpOnly `accessToken` cookie (Secure, SameSite=Strict, path=/)
-    - [ ] Returns `{ user }` to client (NOT the token)
-  - [ ] `app/api/auth/logout/route.ts`:
-    - [ ] `POST` — clears the `accessToken` cookie (maxAge=0)
-    - [ ] Returns `{ ok: true }`
-  - [ ] `app/api/auth/me/route.ts`:
-    - [ ] `GET` — reads cookie, forwards as `Authorization: Bearer {token}` to `{BACKEND_URL}/auth/me`
+  - [x] `app/api/auth/login/route.ts`:
+    - [x] `POST` — forwards to `{BACKEND_URL}/auth/login`
+    - [x] On success: sets httpOnly `accessToken` cookie (Secure, SameSite=Strict, path=/)
+    - [x] Returns `{ user }` to client (NOT the token)
+  - [x] `app/api/auth/logout/route.ts`:
+    - [x] `POST` — clears the `accessToken` cookie (maxAge=0)
+    - [x] Returns `{ ok: true }`
+  - [x] `app/api/auth/me/route.ts`:
+    - [x] `GET` — reads cookie, forwards as `Authorization: Bearer {token}` to `{BACKEND_URL}/auth/me`
 
 ### Route Protection Middleware
 
 - [x] Create `apps/frontend/middleware.ts`:
-  - [ ] Install `jose` for Edge-compatible JWT verification: `pnpm add jose`
-  - [ ] Matcher: all paths EXCEPT `/login`, `/api/auth/*`, `/_next/*`, `/favicon.ico`, `/avatars/*`
-  - [ ] Read `accessToken` cookie from request
-  - [ ] Verify with `jose.jwtVerify(token, JWT_SECRET)` — catch expired/invalid
-  - [ ] If invalid/missing: redirect to `/login?redirect={encodeURIComponent(pathname)}`
-  - [ ] If authenticated and accessing `/login`: redirect to `/projects`
-  - [ ] If authenticated and accessing `/settings/users` with role !== 'admin': redirect to `/projects`
-  - [ ] On success: add `x-user-id` and `x-tenant-id` headers to forwarded request (for server components)
+  - [x] Install `jose` for Edge-compatible JWT verification: `pnpm add jose`
+  - [x] Matcher: all paths EXCEPT `/login`, `/api/auth/*`, `/_next/*`, `/favicon.ico`, `/avatars/*`
+  - [x] Read `accessToken` cookie from request
+  - [x] Verify with `jose.jwtVerify(token, JWT_SECRET)` — catch expired/invalid
+  - [x] If invalid/missing: redirect to `/login?redirect={encodeURIComponent(pathname)}`
+  - [x] If authenticated and accessing `/login`: redirect to `/projects`
+  - [x] If authenticated and accessing `/settings/users` with role !== 'admin': redirect to `/projects`
+  - [x] On success: add `x-user-id` and `x-tenant-id` headers to forwarded request (for server components)
 
 ### Auth State (Client)
 
 - [x] Create `apps/frontend/context/AuthContext.tsx`:
-  - [ ] `AuthProvider` — wraps authenticated layout
-  - [ ] On mount: fetches `GET /api/auth/me` to hydrate user state
-  - [ ] `useAuth()` hook: `{ user, isLoading, logout, isAdmin }`
-  - [ ] `logout()`: calls `POST /api/auth/logout`, redirects to `/login`
-  - [ ] `isAdmin`: `user?.role === 'admin'`
+  - [x] `AuthProvider` — wraps authenticated layout
+  - [x] On mount: fetches `GET /api/auth/me` to hydrate user state
+  - [x] `useAuth()` hook: `{ user, isLoading, logout, isAdmin }`
+  - [x] `logout()`: calls `POST /api/auth/logout`, redirects to `/login`
+  - [x] `isAdmin`: `user?.role === 'admin'`
 
 ### Login Page
 
 - [x] Create `apps/frontend/app/login/page.tsx`:
-  - [ ] AES branding: `APP_NAME` title (from `NEXT_PUBLIC_APP_NAME`), primary color `#004176`
-  - [ ] Email input (Shadcn `Input`, type="email", autocomplete="email")
-  - [ ] Password input (Shadcn `Input`, type="password") with show/hide toggle (`Eye`/`EyeOff` icons)
-  - [ ] "Sign In" button (Shadcn `Button`) — loading spinner on submit
-  - [ ] Error banner (Shadcn `Alert` variant="destructive") for invalid credentials
-  - [ ] **No register link** — users are created by admins
-  - [ ] On success: redirect to `/projects` or `?redirect` param destination
-  - [ ] Handle `?redirect` param: validate it starts with `/` to prevent open redirect
+  - [x] AES branding: `APP_NAME` title (from `NEXT_PUBLIC_APP_NAME`), primary color `#004176`
+  - [x] Email input (Shadcn `Input`, type="email", autocomplete="email")
+  - [x] Password input (Shadcn `Input`, type="password") with show/hide toggle (`Eye`/`EyeOff` icons)
+  - [x] "Sign In" button (Shadcn `Button`) — loading spinner on submit
+  - [x] Error banner (Shadcn `Alert` variant="destructive") for invalid credentials
+  - [x] **No register link** — users are created by admins
+  - [x] On success: redirect to `/projects` or `?redirect` param destination
+  - [x] Handle `?redirect` param: validate it starts with `/` to prevent open redirect
 
 ### Global App Layout (Authenticated Shell)
 
 - [x] Create `apps/frontend/app/(authenticated)/layout.tsx`:
-  - [ ] Wraps all authenticated routes
-  - [ ] Includes `AuthProvider`
-  - [ ] **Sidebar**:
-    - [ ] `APP_NAME` at top (Shadcn `Separator` below)
-    - [ ] Nav links (Shadcn `Button` variant="ghost" with active state):
-      - [ ] Projects → `/projects`
-      - [ ] Templates → `/templates`
-      - [ ] Models → `/settings/models`
-      - [ ] Settings → `/settings`
-      - [ ] Users → `/settings/users` (only shown if `isAdmin`)
-    - [ ] Collapsible on mobile (hamburger toggle)
-  - [ ] **Top bar** (right side):
-    - [ ] `ModeToggle` (dark/light/system — Shadcn standard implementation)
-    - [ ] User avatar (initials-based, Shadcn `Avatar`)
-    - [ ] User name display
-    - [ ] Logout button (Shadcn `Button` variant="ghost" with `LogOut` icon)
-  - [ ] Move all existing routes under `(authenticated)/` folder
+  - [x] Wraps all authenticated routes
+  - [x] Includes `AuthProvider`
+  - [x] **Sidebar**:
+    - [x] `APP_NAME` at top (Shadcn `Separator` below)
+    - [x] Nav links (Shadcn `Button` variant="ghost" with active state):
+      - [x] Projects → `/projects`
+      - [x] Templates → `/templates`
+      - [x] Models → `/settings/models`
+      - [x] Settings → `/settings`
+      - [x] Users → `/settings/users` (only shown if `isAdmin`)
+    - [x] Collapsible on mobile (hamburger toggle)
+  - [x] **Top bar** (right side):
+    - [x] `ModeToggle` (dark/light/system — Shadcn standard implementation)
+    - [x] User avatar (initials-based, Shadcn `Avatar`)
+    - [x] User name display
+    - [x] Logout button (Shadcn `Button` variant="ghost" with `LogOut` icon)
+  - [x] Move all existing routes under `(authenticated)/` folder
 
 - [x] Configure `ThemeProvider` in `apps/frontend/app/layout.tsx`:
-  - [ ] `attribute="class"`, `defaultTheme="system"`, `enableSystem`, `disableTransitionOnChange`
+  - [x] `attribute="class"`, `defaultTheme="system"`, `enableSystem`, `disableTransitionOnChange`
 
 - [x] Set `<title>` and `<meta>` in root layout using `NEXT_PUBLIC_APP_NAME`
 
 ### User Management Page (Admin Only)
 
 - [x] Create `apps/frontend/app/(authenticated)/settings/users/page.tsx`:
-  - [ ] Guard: redirect non-admins to `/projects` (also enforced in middleware)
-  - [ ] **Users table** (Shadcn `Table`):
-    - [ ] Columns: Name, Email, Role badge, Status badge, Created date, Actions
-    - [ ] Role badge: `admin` (primary color), `member` (neutral)
-    - [ ] Status badge: `active` (green), `inactive` (red)
-    - [ ] Actions: Edit role/status (dropdown), Deactivate button
-  - [ ] **"Invite User" button** (top-right) → opens `CreateUserDialog`
-  - [ ] `CreateUserDialog` (Shadcn `Dialog`):
-    - [ ] Name, Email, Password, Role (admin/member) inputs
-    - [ ] Validation: all required, password min 8 chars
-    - [ ] Submit → `POST /api/users` (proxied to backend)
-    - [ ] On success: close dialog, refresh table, show success toast
-  - [ ] **Edit User** inline or via dialog:
-    - [ ] Change role (admin ↔ member) — updates via `PATCH /api/users/:id`
-    - [ ] Deactivate/Reactivate — updates `status` via `PATCH /api/users/:id`
-  - [ ] Add `/api/users/*` proxy routes (forward to backend with JWT)
+  - [x] Guard: redirect non-admins to `/projects` (also enforced in middleware)
+  - [x] **Users table** (Shadcn `Table`):
+    - [x] Columns: Name, Email, Role badge, Status badge, Created date, Actions
+    - [x] Role badge: `admin` (primary color), `member` (neutral)
+    - [x] Status badge: `active` (green), `inactive` (red)
+    - [x] Actions: Edit role/status (dropdown), Deactivate button
+  - [x] **"Invite User" button** (top-right) → opens `CreateUserDialog`
+  - [x] `CreateUserDialog` (Shadcn `Dialog`):
+    - [x] Name, Email, Password, Role (admin/member) inputs
+    - [x] Validation: all required, password min 8 chars
+    - [x] Submit → `POST /api/users` (proxied to backend)
+    - [x] On success: close dialog, refresh table, show success toast
+  - [x] **Edit User** inline or via dialog:
+    - [x] Change role (admin ↔ member) — updates via `PATCH /api/users/:id`
+    - [x] Deactivate/Reactivate — updates `status` via `PATCH /api/users/:id`
+  - [x] Add `/api/users/*` proxy routes (forward to backend with JWT)
 
 ### Tests
 
 - [x] Write component tests:
-  - [ ] Login form: submit fires API call, error state renders, redirect on success
-  - [ ] Middleware: redirects unauthenticated, allows authenticated, blocks non-admin from `/settings/users`
-  - [ ] `CreateUserDialog`: form validation, success/error states
+  - [x] Login form: submit fires API call, error state renders, redirect on success
+  - [x] Middleware: redirects unauthenticated, allows authenticated, blocks non-admin from `/settings/users`
+  - [x] `CreateUserDialog`: form validation, success/error states
 
 ---
 

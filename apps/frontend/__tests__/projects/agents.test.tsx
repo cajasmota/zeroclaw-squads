@@ -213,7 +213,8 @@ describe("AgentProfileModal", () => {
 
   it("Save button calls PATCH /api/projects/:id/agents/:agentId", async () => {
     global.fetch = jest.fn()
-      .mockResolvedValueOnce({ ok: true, json: async () => MOCK_AGENTS })  // initial load
+      .mockResolvedValueOnce({ ok: true, json: async () => MOCK_AGENTS })  // initial agents load
+      .mockResolvedValueOnce({ ok: true, json: async () => [] })           // stories load
       .mockResolvedValueOnce({ ok: true, json: async () => ({}) })         // PATCH call
       .mockResolvedValueOnce({ ok: true, json: async () => MOCK_AGENTS }); // refetch after save
 

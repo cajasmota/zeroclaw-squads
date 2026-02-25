@@ -27,17 +27,17 @@ The Template Designer is the management hub for all agent personalities. Users s
 
 - [x] Create Next.js route `/app/templates/page.tsx`
 - [x] Build `TemplateGrid` component:
-  - [ ] Fetches templates from `GET /templates` with pagination
-  - [ ] Renders responsive grid of `TemplateCard` components
-  - [ ] Filter bar with role dropdown and tags multi-select
-  - [ ] Search input (filters by displayName and tags)
-  - [ ] "New Template" button opens creation modal
+  - [x] Fetches templates from `GET /templates` with pagination
+  - [x] Renders responsive grid of `TemplateCard` components
+  - [x] Filter bar with role dropdown and tags multi-select
+  - [x] Search input (filters by displayName and tags)
+  - [x] "New Template" button opens creation modal
 - [x] Build `TemplateCard` (Shadcn `Card` component):
-  - [ ] Shows: Avatar image, Display Name, Role badge, Tags (Shadcn `Badge`), template stats
-  - [ ] Click → opens `TemplateDetailModal`
+  - [x] Shows: Avatar image, Display Name, Role badge, Tags (Shadcn `Badge`), template stats
+  - [x] Click → opens `TemplateDetailModal`
 - [x] Build `TemplateDetailModal` (full-screen Shadcn `Dialog`):
-  - [ ] **Profile View** (default): Hero-style layout with avatar, role, tags, statistics, bio
-  - [ ] **Edit Mode** toggle (switch button in top-right):
+  - [x] **Profile View** (default): Hero-style layout with avatar, role, tags, statistics, bio
+  - [x] **Edit Mode** toggle (switch button in top-right):
     - Soul editor (Shadcn `Textarea` for Markdown input)
     - Model/Provider dropdowns
     - Tags input (comma-separated or tag input component)
@@ -45,25 +45,25 @@ The Template Designer is the management hub for all agent personalities. Users s
     - `canWriteCode` toggle
     - AIEOS Identity Builder (below)
 - [x] Build `AIEOSBuilder` component (visible in Edit Mode only):
-  - [ ] Section: **Identity** — name fields (full, short, codename), bio textarea, origin input
-  - [ ] Section: **Psychology** — sliders for `logic`, `creativity`, `empathy`, `assertiveness` (0.0–1.0); MBTI dropdown; communication style input
-  - [ ] Section: **Role Meta** — role dropdown, `isSingleton` toggle, `canWriteCode` toggle, preferred languages multi-select
-  - [ ] Validates all required sections before save
+  - [x] Section: **Identity** — name fields (full, short, codename), bio textarea, origin input
+  - [x] Section: **Psychology** — sliders for `logic`, `creativity`, `empathy`, `assertiveness` (0.0–1.0); MBTI dropdown; communication style input
+  - [x] Section: **Role Meta** — role dropdown, `isSingleton` toggle, `canWriteCode` toggle, preferred languages multi-select
+  - [x] Validates all required sections before save
 - [x] Build `ImportExportButtons` component:
-  - [ ] "Export JSON" button — downloads AIEOS JSON file
-  - [ ] "Import JSON" button — file picker, uploads to `POST /templates/import`
+  - [x] "Export JSON" button — downloads AIEOS JSON file
+  - [x] "Import JSON" button — file picker, uploads to `POST /templates/import`
 - [x] Build "AI-Assisted Creation" section (below the AIEOS Builder):
-  - [ ] Displays a copyable "Persona Interviewer" prompt block (static text, read-only `Textarea` with copy button)
-  - [ ] **The Persona Interviewer prompt** instructs an external LLM (ChatGPT, Gemini, Claude, etc.) to:
+  - [x] Displays a copyable "Persona Interviewer" prompt block (static text, read-only `Textarea` with copy button)
+  - [x] **The Persona Interviewer prompt** instructs an external LLM (ChatGPT, Gemini, Claude, etc.) to:
     - Interview the user with questions about the agent's name, personality, role, background story, skills, and communication style
     - Then output a complete, valid AIEOS v1.1 JSON matching the schema at https://github.com/entitai/aieos
     - The JSON must include all 5 sections: identity, psychology, linguistics, history, role_meta
-  - [ ] Below the prompt: a "Paste AIEOS JSON" `Textarea` input
-  - [ ] "Import JSON" button below the paste area:
-    - [ ] Validates pasted JSON against the AIEOS v1.1 schema
-    - [ ] If valid: parses JSON and auto-fills all AIEOS Builder form fields
-    - [ ] If invalid: shows inline validation error with the specific failing field
-  - [ ] The prompt text to display (implementing agent should use this verbatim):
+  - [x] Below the prompt: a "Paste AIEOS JSON" `Textarea` input
+  - [x] "Import JSON" button below the paste area:
+    - [x] Validates pasted JSON against the AIEOS v1.1 schema
+    - [x] If valid: parses JSON and auto-fills all AIEOS Builder form fields
+    - [x] If invalid: shows inline validation error with the specific failing field
+  - [x] The prompt text to display (implementing agent should use this verbatim):
     ```
     You are a Persona Interviewer for an AI agent system. Ask me a series of questions to build
     a complete agent identity. Ask about: the agent's name and codename, their backstory and origin,

@@ -27,38 +27,38 @@ The Librarian MCP enables agents to query the codebase semantically without read
 ## Actionable Tasks
 
 - [x] Read READMEs for all three tools before starting implementation:
-  - [ ] CocoIndex MCP Server: https://github.com/aanno/cocoindex-code-mcp-server
-  - [ ] Drift: https://github.com/dadbodgeoff/drift
-  - [ ] Code Pathfinder: https://github.com/shivasurya/code-pathfinder
+  - [x] CocoIndex MCP Server: https://github.com/aanno/cocoindex-code-mcp-server
+  - [x] Drift: https://github.com/dadbodgeoff/drift
+  - [x] Code Pathfinder: https://github.com/shivasurya/code-pathfinder
 - [x] Create `docker-compose.librarian.yml` with services:
-  - [ ] `parser-engine`: CocoIndex + Drift containerized (exposes REST/MCP API on port 5001)
-    - [ ] Supports languages: TypeScript, JavaScript, Rust, Python
-    - [ ] Configure per each tool's installation instructions
-  - [ ] `graph-engine`: Code Pathfinder containerized (exposes REST API on port 5002)
-    - [ ] Endpoint: `POST /build-graph` — builds call graph from source files
-    - [ ] Endpoint: `GET /graph/{nodeId}/callers` — find callers of a function
-    - [ ] Endpoint: `GET /graph/{nodeId}/callees` — find callees of a function
+  - [x] `parser-engine`: CocoIndex + Drift containerized (exposes REST/MCP API on port 5001)
+    - [x] Supports languages: TypeScript, JavaScript, Rust, Python
+    - [x] Configure per each tool's installation instructions
+  - [x] `graph-engine`: Code Pathfinder containerized (exposes REST API on port 5002)
+    - [x] Endpoint: `POST /build-graph` — builds call graph from source files
+    - [x] Endpoint: `GET /graph/{nodeId}/callers` — find callers of a function
+    - [x] Endpoint: `GET /graph/{nodeId}/callees` — find callees of a function
 - [x] Create `LibrarianMcpModule` in NestJS:
-  - [ ] Implements MCP server protocol (or uses existing MCP SDK for Node.js)
-  - [ ] Exposes MCP tools to ZeroClaw agents
+  - [x] Implements MCP server protocol (or uses existing MCP SDK for Node.js)
+  - [x] Exposes MCP tools to ZeroClaw agents
 - [x] Implement MCP tools:
-  - [ ] `find_logic(query: string)` — semantic search for code logic by description
-  - [ ] `ask_question(question: string)` — natural language query about codebase
-  - [ ] `get_type_definition(typeName: string)` — returns type/interface definition
-  - [ ] `get_component_sample(componentName: string)` — returns usage example
-  - [ ] `analyze_impact(filePath: string)` — identifies what would break if file changes
-  - [ ] `check_convention_compliance(filePath: string, content: string)` — checks against `.aes/standards.md`
+  - [x] `find_logic(query: string)` — semantic search for code logic by description
+  - [x] `ask_question(question: string)` — natural language query about codebase
+  - [x] `get_type_definition(typeName: string)` — returns type/interface definition
+  - [x] `get_component_sample(componentName: string)` — returns usage example
+  - [x] `analyze_impact(filePath: string)` — identifies what would break if file changes
+  - [x] `check_convention_compliance(filePath: string, content: string)` — checks against `.aes/standards.md`
 - [x] Create `StandardsEngineService`:
-  - [ ] `generateStandards(projectId: string)`:
-    - [ ] Reads codebase patterns from parser and graph engines
-    - [ ] Synthesizes `.aes/standards.md` in the Librarian workspace
+  - [x] `generateStandards(projectId: string)`:
+    - [x] Reads codebase patterns from parser and graph engines
+    - [x] Synthesizes `.aes/standards.md` in the Librarian workspace
 - [x] Create `LibrarianIndexerService`:
-  - [ ] `triggerIngestion(projectId: string)` — runs full codebase indexing
-    - [ ] Clones or pulls latest from shared librarian workspace
-    - [ ] Calls parser engine on all source files
-    - [ ] Builds call graph
-    - [ ] Updates standards
-  - [ ] `triggerPostMergeReindex(projectId: string)` — lightweight re-index on PR merge
+  - [x] `triggerIngestion(projectId: string)` — runs full codebase indexing
+    - [x] Clones or pulls latest from shared librarian workspace
+    - [x] Calls parser engine on all source files
+    - [x] Builds call graph
+    - [x] Updates standards
+  - [x] `triggerPostMergeReindex(projectId: string)` — lightweight re-index on PR merge
 - [x] Listen to `librarian.reindex` event from GitHub webhook handler
 - [x] Create `GET /projects/:id/librarian/status` endpoint — returns indexing status
 - [x] Create `POST /projects/:id/librarian/ingest` endpoint — manual trigger

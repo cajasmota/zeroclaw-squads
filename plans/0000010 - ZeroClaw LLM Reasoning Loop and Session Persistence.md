@@ -25,42 +25,42 @@ ZeroClaw natively supports AIEOS v1.1 as its identity format. The schema URL is 
 ## Actionable Tasks
 
 - [x] Fetch and cache AIEOS v1.1 JSON schema (`https://aieos.org/schema/v1.1/aieos.schema.json`)
-  - [ ] Save as `packages/types/aieos-v1.1.schema.json` for offline validation
+  - [x] Save as `packages/types/aieos-v1.1.schema.json` for offline validation
 - [x] Create `AieosGeneratorService`:
-  - [ ] `validate(payload: object): boolean` — validates against AIEOS v1.1 schema using `ajv`
-  - [ ] `generate(agentInstance: AgentInstance): AieosPayload` — maps AES fields to full AIEOS v1.1 structure
-  - [ ] `serialize(payload: AieosPayload): string` — converts to JSON string for file write
-  - [ ] Map AIEOS 5 sections from AES data:
-    - [ ] **Identity**: `names`, `bio`, `origin` from `aieos_identity.identity`
-    - [ ] **Psychology**: neural_matrix (OCEAN traits, 0.0-1.0), moral_alignment from `aieos_identity.psychology`
-    - [ ] **Linguistics**: vocal style, syntax patterns from `aieos_identity.linguistics`
-    - [ ] **History**: origin story, motivations from `aieos_identity.history`
-    - [ ] **Capabilities**: tool skills with priority 1-10 from `role_meta` and `config.skills`
+  - [x] `validate(payload: object): boolean` — validates against AIEOS v1.1 schema using `ajv`
+  - [x] `generate(agentInstance: AgentInstance): AieosPayload` — maps AES fields to full AIEOS v1.1 structure
+  - [x] `serialize(payload: AieosPayload): string` — converts to JSON string for file write
+  - [x] Map AIEOS 5 sections from AES data:
+    - [x] **Identity**: `names`, `bio`, `origin` from `aieos_identity.identity`
+    - [x] **Psychology**: neural_matrix (OCEAN traits, 0.0-1.0), moral_alignment from `aieos_identity.psychology`
+    - [x] **Linguistics**: vocal style, syntax patterns from `aieos_identity.linguistics`
+    - [x] **History**: origin story, motivations from `aieos_identity.history`
+    - [x] **Capabilities**: tool skills with priority 1-10 from `role_meta` and `config.skills`
 - [x] Create `ZeroClawConfigTomlGenerator`:
-  - [ ] `generate(instance: AgentInstance, project: Project, gatewayPort: number): string`
-  - [ ] Outputs valid TOML for ZeroClaw config
-  - [ ] Sections: `[runtime]`, `[providers]`, `[channels]` (Slack), `[memory]`, `[observability]`, `[cost]`, `[security]`, `[identity]`
-  - [ ] Uses `gatewayPort` for per-agent gateway isolation
-  - [ ] Sets `security.workspace` to agent's `workspacePath` (filesystem scoping)
-  - [ ] Sets `memory.path = "{workspacePath}/memory/brain.db"` (actual ZeroClaw filename)
-  - [ ] Sets `observability.runtime_trace_mode = "rolling"` and `runtime_trace_path = "{workspacePath}/state/runtime-trace.jsonl"`
-  - [ ] Sets `cost.enabled = true` (costs written to `{workspacePath}/state/costs.jsonl`)
-  - [ ] Resolves correct LLM provider from `instance.config.provider`
-  - [ ] For Reviewer role agents: adds `[[mcp_servers]]` entry pointing to Librarian MCP endpoint so `check_convention_compliance` is available
+  - [x] `generate(instance: AgentInstance, project: Project, gatewayPort: number): string`
+  - [x] Outputs valid TOML for ZeroClaw config
+  - [x] Sections: `[runtime]`, `[providers]`, `[channels]` (Slack), `[memory]`, `[observability]`, `[cost]`, `[security]`, `[identity]`
+  - [x] Uses `gatewayPort` for per-agent gateway isolation
+  - [x] Sets `security.workspace` to agent's `workspacePath` (filesystem scoping)
+  - [x] Sets `memory.path = "{workspacePath}/memory/brain.db"` (actual ZeroClaw filename)
+  - [x] Sets `observability.runtime_trace_mode = "rolling"` and `runtime_trace_path = "{workspacePath}/state/runtime-trace.jsonl"`
+  - [x] Sets `cost.enabled = true` (costs written to `{workspacePath}/state/costs.jsonl`)
+  - [x] Resolves correct LLM provider from `instance.config.provider`
+  - [x] For Reviewer role agents: adds `[[mcp_servers]]` entry pointing to Librarian MCP endpoint so `check_convention_compliance` is available
 - [x] Update `AgentInstancesService`:
-  - [ ] Store `gatewayPort` on AgentInstance (assigned at spawn time)
-  - [ ] Auto-assign unique ports (starting from configurable base port)
+  - [x] Store `gatewayPort` on AgentInstance (assigned at spawn time)
+  - [x] Auto-assign unique ports (starting from configurable base port)
 - [x] Create `AgentFileWriterService`:
-  - [ ] `writeAgentFiles(instance, project)`:
-    - [ ] Writes `{workspacePath}/zeroclaw.config.toml`
-    - [ ] Writes `{workspacePath}/identity.json` (validated AIEOS v1.1)
-    - [ ] Writes `{workspacePath}/soul.md`
-    - [ ] Creates `{workspacePath}/.aes/` directory
+  - [x] `writeAgentFiles(instance, project)`:
+    - [x] Writes `{workspacePath}/zeroclaw.config.toml`
+    - [x] Writes `{workspacePath}/identity.json` (validated AIEOS v1.1)
+    - [x] Writes `{workspacePath}/soul.md`
+    - [x] Creates `{workspacePath}/.aes/` directory
 - [x] Update AIEOS Builder UI data model to include all 5 AIEOS v1.1 sections (coordinate with frontend story 0000004)
 - [x] Write unit tests for:
-  - [ ] `AieosGeneratorService.validate()` with valid and invalid payloads
-  - [ ] `ZeroClawConfigTomlGenerator.generate()` output structure
-  - [ ] `AgentFileWriterService.writeAgentFiles()` (mock filesystem)
+  - [x] `AieosGeneratorService.validate()` with valid and invalid payloads
+  - [x] `ZeroClawConfigTomlGenerator.generate()` output structure
+  - [x] `AgentFileWriterService.writeAgentFiles()` (mock filesystem)
 
 ---
 

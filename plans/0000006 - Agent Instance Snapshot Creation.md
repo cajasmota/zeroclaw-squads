@@ -23,34 +23,34 @@ The snapshot pattern ensures that each project has stable, isolated agent config
 
 - [x] Create `AgentInstancesModule` in NestJS
 - [x] Define `AgentInstance` Mongoose schema with fields:
-  - [ ] `projectId` (ObjectId, indexed)
-  - [ ] `tenantId` (ObjectId, indexed)
-  - [ ] `templateId` (ObjectId, ref AgentTemplate)
-  - [ ] `displayName` (string — user override or template default)
-  - [ ] `identifier` (string — e.g., `web-app-dev-1`, unique per project)
-  - [ ] `tags` (string[])
-  - [ ] `pid` (number, nullable — assigned when spawned)
-  - [ ] `soul` (string — copied from template at snapshot time)
-  - [ ] `aieos_identity` (Mixed — copied from template at snapshot time)
-  - [ ] `config.model` (string)
-  - [ ] `config.provider` (string)
-  - [ ] `config.skills` (string)
-  - [ ] `config.canWriteCode` (boolean)
-  - [ ] `config.mcpServers` (array)
-  - [ ] `status` (enum: `idle | busy | error`)
-  - [ ] `workspacePath` (string — computed: `/artifacts/{projectId}/workspaces/{instanceId}/`)
-  - [ ] Timestamps
+  - [x] `projectId` (ObjectId, indexed)
+  - [x] `tenantId` (ObjectId, indexed)
+  - [x] `templateId` (ObjectId, ref AgentTemplate)
+  - [x] `displayName` (string — user override or template default)
+  - [x] `identifier` (string — e.g., `web-app-dev-1`, unique per project)
+  - [x] `tags` (string[])
+  - [x] `pid` (number, nullable — assigned when spawned)
+  - [x] `soul` (string — copied from template at snapshot time)
+  - [x] `aieos_identity` (Mixed — copied from template at snapshot time)
+  - [x] `config.model` (string)
+  - [x] `config.provider` (string)
+  - [x] `config.skills` (string)
+  - [x] `config.canWriteCode` (boolean)
+  - [x] `config.mcpServers` (array)
+  - [x] `status` (enum: `idle | busy | error`)
+  - [x] `workspacePath` (string — computed: `/artifacts/{projectId}/workspaces/{instanceId}/`)
+  - [x] Timestamps
 - [x] Create `AgentInstancesService` with methods:
-  - [ ] `createSnapshot(projectId, tenantId, templateId, displayName?)` — creates instance from template
-  - [ ] `findByProject(projectId, tenantId)` — list all instances for a project
-  - [ ] `findById(id, tenantId)` — single instance
-  - [ ] `updateStatus(id, status)` — update process status
-  - [ ] `updatePid(id, pid)` — update PID after spawn
-  - [ ] `updateSoulOrIdentity(id, tenantId, { soul?, aieos_identity? })` — direct instance edit without affecting template
+  - [x] `createSnapshot(projectId, tenantId, templateId, displayName?)` — creates instance from template
+  - [x] `findByProject(projectId, tenantId)` — list all instances for a project
+  - [x] `findById(id, tenantId)` — single instance
+  - [x] `updateStatus(id, status)` — update process status
+  - [x] `updatePid(id, pid)` — update PID after spawn
+  - [x] `updateSoulOrIdentity(id, tenantId, { soul?, aieos_identity? })` — direct instance edit without affecting template
 - [x] Create `AgentInstancesController` with routes:
-  - [ ] `GET /projects/:projectId/agents` — list instances
-  - [ ] `GET /projects/:projectId/agents/:id` — single instance
-  - [ ] `PATCH /projects/:projectId/agents/:id` — edit soul/identity/displayName
+  - [x] `GET /projects/:projectId/agents` — list instances
+  - [x] `GET /projects/:projectId/agents/:id` — single instance
+  - [x] `PATCH /projects/:projectId/agents/:id` — edit soul/identity/displayName
 - [x] Listen to `project.created` event to auto-create instances for assigned templates
 - [x] Write unit tests for `AgentInstancesService`
 

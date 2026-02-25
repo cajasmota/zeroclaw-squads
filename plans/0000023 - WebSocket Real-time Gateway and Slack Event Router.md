@@ -26,15 +26,15 @@ Real-time feedback is central to AES. The UI must reflect agent activity as it h
 ### WebSocket Gateway
 
 - [x] Create NestJS `@WebSocketGateway()` class `AesGateway`:
-  - [ ] Namespace: `/ws` (or global)
-  - [ ] JWT authentication for WebSocket connections (verify token on `handleConnection`)
-  - [ ] Client join rooms: `client.join(\`project:${projectId}\`)`
-  - [ ] Event types emitted:
-    - [ ] `agent:log` — tagged stdout/stderr line `{ agentInstanceId, line, type, runId, ticketId, timestamp }`
-    - [ ] `agent:status` — agent status change `{ agentInstanceId, status }`
-    - [ ] `story:status` — story kanban status change `{ storyId, status }`
-    - [ ] `workflow:node` — workflow node execution update `{ runId, nodeId, status }`
-    - [ ] `approval:needed` — workflow approval required `{ runId, nodeId, description }`
+  - [x] Namespace: `/ws` (or global)
+  - [x] JWT authentication for WebSocket connections (verify token on `handleConnection`)
+  - [x] Client join rooms: `client.join(\`project:${projectId}\`)`
+  - [x] Event types emitted:
+    - [x] `agent:log` — tagged stdout/stderr line `{ agentInstanceId, line, type, runId, ticketId, timestamp }`
+    - [x] `agent:status` — agent status change `{ agentInstanceId, status }`
+    - [x] `story:status` — story kanban status change `{ storyId, status }`
+    - [x] `workflow:node` — workflow node execution update `{ runId, nodeId, status }`
+    - [x] `approval:needed` — workflow approval required `{ runId, nodeId, description }`
 - [x] `StreamAggregatorService` (from 0000009) emits `agent:log` events via AesGateway
 - [x] `DevelopmentOrchestrationService` (from 0000014) emits `story:status` events
 - [x] `WorkflowNodeExecutorService` (from 0000017) emits `workflow:node` events
@@ -42,28 +42,28 @@ Real-time feedback is central to AES. The UI must reflect agent activity as it h
 ### Slack Event Router
 
 - [x] Create `SlackEventsController`:
-  - [ ] `POST /webhooks/slack` — receives Slack Events API payloads
-  - [ ] Verify Slack signature (`X-Slack-Signature` header using `SLACK_SIGNING_SECRET`)
-  - [ ] Handle challenge verification (Slack URL verification)
-  - [ ] Handle `message` events:
-    - [ ] Skip bot messages (prevent loops)
-    - [ ] Skip A2A flagged messages (messages starting with `[A2A]`)
-    - [ ] Map `channel_id` → `projectId` via `SlackChannelMappingService`
-    - [ ] Identify which agent the message is directed to (mention or thread context)
-    - [ ] Send SIGUSR1 to agent PID
-    - [ ] Inject message via stdin: `USER_MESSAGE: {text}`
-  - [ ] Handle `app_mention` events:
-    - [ ] Route to the mentioned agent
+  - [x] `POST /webhooks/slack` — receives Slack Events API payloads
+  - [x] Verify Slack signature (`X-Slack-Signature` header using `SLACK_SIGNING_SECRET`)
+  - [x] Handle challenge verification (Slack URL verification)
+  - [x] Handle `message` events:
+    - [x] Skip bot messages (prevent loops)
+    - [x] Skip A2A flagged messages (messages starting with `[A2A]`)
+    - [x] Map `channel_id` → `projectId` via `SlackChannelMappingService`
+    - [x] Identify which agent the message is directed to (mention or thread context)
+    - [x] Send SIGUSR1 to agent PID
+    - [x] Inject message via stdin: `USER_MESSAGE: {text}`
+  - [x] Handle `app_mention` events:
+    - [x] Route to the mentioned agent
 - [x] Create `SlackChannelMappingService`:
-  - [ ] MongoDB collection: `{ channelId, projectId, tenantId }`
-  - [ ] `getProjectByChannel(channelId)` — lookup
-  - [ ] Updated when Slack channel is created during project initialization
+  - [x] MongoDB collection: `{ channelId, projectId, tenantId }`
+  - [x] `getProjectByChannel(channelId)` — lookup
+  - [x] Updated when Slack channel is created during project initialization
 - [x] When routing human Slack messages to agents, use `SlackService.postThreadReplyAsAgent()` for all agent responses:
-  - [ ] Always pass agent `displayName` as `username` and generated `icon_url` — impersonation applies to ALL responses including human-reply threads
-  - [ ] The Slack conversation must look like the actual agent is speaking, not "AES Bot"
+  - [x] Always pass agent `displayName` as `username` and generated `icon_url` — impersonation applies to ALL responses including human-reply threads
+  - [x] The Slack conversation must look like the actual agent is speaking, not "AES Bot"
 - [x] When parsing agent stdout for Slack output (lines starting with `SLACK_MESSAGE:`):
-  - [ ] Extract message body and post via `postAsAgent()` with the spawned agent's identity
-  - [ ] Identify the correct `thread_ts` from the story's `storySlackThread` field
+  - [x] Extract message body and post via `postAsAgent()` with the spawned agent's identity
+  - [x] Identify the correct `thread_ts` from the story's `storySlackThread` field
 - [x] Write unit tests for `SlackEventsController` signature verification
 
 ---

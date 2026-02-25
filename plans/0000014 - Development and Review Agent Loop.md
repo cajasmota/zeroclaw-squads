@@ -30,54 +30,54 @@ This is the core operational loop that makes AES self-sustaining. The NestJS bac
 ## Actionable Tasks
 
 - [x] Create `DevelopmentOrchestrationService`:
-  - [ ] Listen to `sprint.ready` event (PM agent-mediated — do NOT assign directly):
-    - [ ] Fetch all "selected" stories in the sprint
-    - [ ] Fetch all available Developer agents for the project
-    - [ ] Find the PM agent instance for the project
-    - [ ] Send SIGUSR1 to PM agent PID
-    - [ ] Inject via stdin: `SPRINT_READY: {sprintId}\nSTORIES: {JSON story list}\nAVAILABLE_DEVELOPERS: {JSON agent list}`
-    - [ ] The PM agent reasons over the sprint and calls `POST /projects/:id/stories/:storyId/assign` for each story
-  - [ ] Create `POST /projects/:id/stories/:storyId/assign` endpoint (called by PM agent via tool):
-    - [ ] Body: `{ agentInstanceId: string }`
-    - [ ] Updates story `assignedTo`, `branchName = feature/{storyId}`
-    - [ ] Calls `StoriesService.updateStatus(storyId, projectId, tenantId, 'in_progress')` — emits `story:status` WebSocket event so Kanban card auto-moves to In Progress column
-    - [ ] Emits `story.assigned` event
-    - [ ] Decorated `@Public()` is NOT correct — this endpoint is JWT-protected; the PM agent uses its project credentials
-  - [ ] Listen to `story.assigned` event:
-    - [ ] Find the assigned Developer agent instance
-    - [ ] Send SIGUSR1 to Developer agent PID
-    - [ ] Inject via stdin: story context (title, description, tasks, acceptance criteria)
-    - [ ] Post assignment notification to Slack via `SlackService`
+  - [x] Listen to `sprint.ready` event (PM agent-mediated — do NOT assign directly):
+    - [x] Fetch all "selected" stories in the sprint
+    - [x] Fetch all available Developer agents for the project
+    - [x] Find the PM agent instance for the project
+    - [x] Send SIGUSR1 to PM agent PID
+    - [x] Inject via stdin: `SPRINT_READY: {sprintId}\nSTORIES: {JSON story list}\nAVAILABLE_DEVELOPERS: {JSON agent list}`
+    - [x] The PM agent reasons over the sprint and calls `POST /projects/:id/stories/:storyId/assign` for each story
+  - [x] Create `POST /projects/:id/stories/:storyId/assign` endpoint (called by PM agent via tool):
+    - [x] Body: `{ agentInstanceId: string }`
+    - [x] Updates story `assignedTo`, `branchName = feature/{storyId}`
+    - [x] Calls `StoriesService.updateStatus(storyId, projectId, tenantId, 'in_progress')` — emits `story:status` WebSocket event so Kanban card auto-moves to In Progress column
+    - [x] Emits `story.assigned` event
+    - [x] Decorated `@Public()` is NOT correct — this endpoint is JWT-protected; the PM agent uses its project credentials
+  - [x] Listen to `story.assigned` event:
+    - [x] Find the assigned Developer agent instance
+    - [x] Send SIGUSR1 to Developer agent PID
+    - [x] Inject via stdin: story context (title, description, tasks, acceptance criteria)
+    - [x] Post assignment notification to Slack via `SlackService`
 - [x] Update `GitHubWebhookController` (from story 0000011):
-  - [ ] `pull_request.opened`:
-    - [ ] Match PR branch to `storyId` via `branchName`
-    - [ ] Find available Reviewer agents for the project
-    - [ ] Send SIGUSR1 to Reviewer agent PID
-    - [ ] Inject via stdin: PR URL, PR diff summary, story context
-    - [ ] Call `StoriesService.updateStatus(storyId, projectId, tenantId, 'review')` — this updates MongoDB AND emits the `story:status` WebSocket event so the Kanban card auto-moves to the Review column
-  - [ ] `pull_request_review.submitted` or `issue_comment.created`:
-    - [ ] Extract PR comment body
-    - [ ] Find Developer agent assigned to the story
-    - [ ] Send SIGUSR1 to Developer agent PID
-    - [ ] Inject via stdin: `PR_FEEDBACK: {comment_body}`
-  - [ ] `pull_request.closed` (merged):
-    - [ ] Call `StoriesService.updateStatus(storyId, projectId, tenantId, 'done')` — emits `story:status` WebSocket event so Kanban card auto-moves to Done
-    - [ ] Emit `librarian.reindex`
+  - [x] `pull_request.opened`:
+    - [x] Match PR branch to `storyId` via `branchName`
+    - [x] Find available Reviewer agents for the project
+    - [x] Send SIGUSR1 to Reviewer agent PID
+    - [x] Inject via stdin: PR URL, PR diff summary, story context
+    - [x] Call `StoriesService.updateStatus(storyId, projectId, tenantId, 'review')` — this updates MongoDB AND emits the `story:status` WebSocket event so the Kanban card auto-moves to the Review column
+  - [x] `pull_request_review.submitted` or `issue_comment.created`:
+    - [x] Extract PR comment body
+    - [x] Find Developer agent assigned to the story
+    - [x] Send SIGUSR1 to Developer agent PID
+    - [x] Inject via stdin: `PR_FEEDBACK: {comment_body}`
+  - [x] `pull_request.closed` (merged):
+    - [x] Call `StoriesService.updateStatus(storyId, projectId, tenantId, 'done')` — emits `story:status` WebSocket event so Kanban card auto-moves to Done
+    - [x] Emit `librarian.reindex`
 - [x] Create `StoryContextSerializer`:
-  - [ ] `serialize(story: Story): string` — converts story data to LLM-friendly context string
-  - [ ] Includes: title, description, type, tasks list, acceptance criteria
-  - [ ] Injected via stdin when signaling an agent
+  - [x] `serialize(story: Story): string` — converts story data to LLM-friendly context string
+  - [x] Includes: title, description, type, tasks list, acceptance criteria
+  - [x] Injected via stdin when signaling an agent
 - [x] Create `AgentAvailabilityService`:
-  - [ ] `getAvailableAgent(projectId, role): AgentInstance | null`
-  - [ ] Returns first agent with `status = idle` for the given role
-  - [ ] Sets agent `status = busy` atomically (to prevent double-assignment)
+  - [x] `getAvailableAgent(projectId, role): AgentInstance | null`
+  - [x] Returns first agent with `status = idle` for the given role
+  - [x] Sets agent `status = busy` atomically (to prevent double-assignment)
 - [x] Add `canWriteCode` guard in `AgentAvailabilityService`:
-  - [ ] `getAvailableAgent()` must only return agents where `config.canWriteCode === true` for Developer role
-  - [ ] Log a warning and skip `canWriteCode: false` agents when assigning code work
+  - [x] `getAvailableAgent()` must only return agents where `config.canWriteCode === true` for Developer role
+  - [x] Log a warning and skip `canWriteCode: false` agents when assigning code work
 - [x] Add Reviewer → Librarian MCP configuration note:
-  - [ ] The Reviewer agent's `zeroclaw.config.toml` must include the Librarian MCP endpoint in `[mcp_servers]`
-  - [ ] This is configured by `ZeroClawConfigTomlGenerator` in story 0000010 — ensure Reviewer role agents get Librarian MCP registered
-  - [ ] The `check_convention_compliance` tool from the Librarian MCP must be available in the Reviewer's tool set
+  - [x] The Reviewer agent's `zeroclaw.config.toml` must include the Librarian MCP endpoint in `[mcp_servers]`
+  - [x] This is configured by `ZeroClawConfigTomlGenerator` in story 0000010 — ensure Reviewer role agents get Librarian MCP registered
+  - [x] The `check_convention_compliance` tool from the Librarian MCP must be available in the Reviewer's tool set
 - [x] Note: `POST /projects/:id/stories/:storyId/approve` is implemented in story 0000025 (Ticket Dialogue Backend)
 - [x] Write integration tests for orchestration flow (mock ZeroClaw signals)
 

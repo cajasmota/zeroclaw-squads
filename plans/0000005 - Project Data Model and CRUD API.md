@@ -23,46 +23,46 @@ A project is the central entity in AES. It contains role assignments (LibrarianI
 
 - [x] Create `ProjectsModule` in NestJS
 - [x] Define `Project` Mongoose schema with fields:
-  - [ ] `tenantId` (ObjectId, indexed)
-  - [ ] `name` (string)
-  - [ ] `slug` (string, unique per tenant, URL-safe)
-  - [ ] `brandColor` (string, hex)
-  - [ ] `status` (enum: `active | archived`)
-  - [ ] `roles.librarian` (ObjectId ref AgentInstance)
-  - [ ] `roles.architect` (ObjectId ref AgentInstance)
-  - [ ] `roles.pm` (ObjectId ref AgentInstance)
-  - [ ] `roles.developer` (ObjectId[] ref AgentInstance)
-  - [ ] `roles.reviewer` (ObjectId[] ref AgentInstance)
-  - [ ] `roles.optional` (ObjectId[] ref AgentInstance)
-  - [ ] `config.slackToken` (string, encrypted)
-  - [ ] `config.slackChannelId` (string)
-  - [ ] `config.repoUrl` (string)
-  - [ ] `config.githubApp.appId` (string)
-  - [ ] `config.githubApp.privateKey` (string, encrypted)
-  - [ ] `config.githubApp.installationId` (string)
-  - [ ] `config.githubApp.webhookSecret` (string, encrypted)
-  - [ ] `config.inviteUsers` (string[])
-  - [ ] `config.llmKeys.openai` (string, encrypted)
-  - [ ] `config.llmKeys.anthropic` (string, encrypted)
-  - [ ] `config.llmKeys.google` (string, encrypted)
-  - [ ] `config.llmKeys.ollama_endpoint` (string)
-  - [ ] Timestamps
+  - [x] `tenantId` (ObjectId, indexed)
+  - [x] `name` (string)
+  - [x] `slug` (string, unique per tenant, URL-safe)
+  - [x] `brandColor` (string, hex)
+  - [x] `status` (enum: `active | archived`)
+  - [x] `roles.librarian` (ObjectId ref AgentInstance)
+  - [x] `roles.architect` (ObjectId ref AgentInstance)
+  - [x] `roles.pm` (ObjectId ref AgentInstance)
+  - [x] `roles.developer` (ObjectId[] ref AgentInstance)
+  - [x] `roles.reviewer` (ObjectId[] ref AgentInstance)
+  - [x] `roles.optional` (ObjectId[] ref AgentInstance)
+  - [x] `config.slackToken` (string, encrypted)
+  - [x] `config.slackChannelId` (string)
+  - [x] `config.repoUrl` (string)
+  - [x] `config.githubApp.appId` (string)
+  - [x] `config.githubApp.privateKey` (string, encrypted)
+  - [x] `config.githubApp.installationId` (string)
+  - [x] `config.githubApp.webhookSecret` (string, encrypted)
+  - [x] `config.inviteUsers` (string[])
+  - [x] `config.llmKeys.openai` (string, encrypted)
+  - [x] `config.llmKeys.anthropic` (string, encrypted)
+  - [x] `config.llmKeys.google` (string, encrypted)
+  - [x] `config.llmKeys.ollama_endpoint` (string)
+  - [x] Timestamps
 - [x] Create `AES256EncryptionService` utility:
-  - [ ] `encrypt(value: string): string`
-  - [ ] `decrypt(value: string): string`
-  - [ ] Uses `AES_ENCRYPTION_KEY` from env
+  - [x] `encrypt(value: string): string`
+  - [x] `decrypt(value: string): string`
+  - [x] Uses `AES_ENCRYPTION_KEY` from env
 - [x] Create `ProjectsService` with methods:
-  - [ ] `findAll(tenantId)` — list projects
-  - [ ] `findById(tenantId, id)` — single project (with roles populated)
-  - [ ] `create(tenantId, dto)` — create project + trigger initialization
-  - [ ] `update(tenantId, id, dto)` — update project metadata/config
-  - [ ] `archive(tenantId, id)` — set status to archived
+  - [x] `findAll(tenantId)` — list projects
+  - [x] `findById(tenantId, id)` — single project (with roles populated)
+  - [x] `create(tenantId, dto)` — create project + trigger initialization
+  - [x] `update(tenantId, id, dto)` — update project metadata/config
+  - [x] `archive(tenantId, id)` — set status to archived
 - [x] Create `ProjectsController` with routes:
-  - [ ] `GET /projects` — list
-  - [ ] `GET /projects/:id` — single (populated roles)
-  - [ ] `POST /projects` — create
-  - [ ] `PATCH /projects/:id` — update
-  - [ ] `DELETE /projects/:id` — archive
+  - [x] `GET /projects` — list
+  - [x] `GET /projects/:id` — single (populated roles)
+  - [x] `POST /projects` — create
+  - [x] `PATCH /projects/:id` — update
+  - [x] `DELETE /projects/:id` — archive
 - [x] Create `CreateProjectDto` and `UpdateProjectDto` with validation
 - [x] Implement slug generation from project name (auto-generated, unique)
 - [x] Emit `project.created` event after project creation (for initialization pipeline)

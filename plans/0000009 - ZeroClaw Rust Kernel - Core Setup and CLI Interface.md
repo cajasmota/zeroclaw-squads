@@ -28,41 +28,41 @@ The NestJS backend is the control plane for all ZeroClaw processes. It manages t
 ## Actionable Tasks
 
 - [x] Add ZeroClaw binary to system (via installer script or Docker):
-  - [ ] Document ZeroClaw installation: `brew install zeroclaw` or download binary
-  - [ ] Configure `ZEROCLAW_BINARY_PATH` in env vars
+  - [x] Document ZeroClaw installation: `brew install zeroclaw` or download binary
+  - [x] Configure `ZEROCLAW_BINARY_PATH` in env vars
 - [x] Create `ZeroClawModule` in NestJS
 - [x] Create `ZeroClawConfigGeneratorService` (stub — full implementation in story 0000010):
-  - [ ] `generateConfig(instance: AgentInstance, project: Project): string` — returns `config.toml` TOML string
-  - [ ] Note: actual file writing is handled by `AgentFileWriterService` in story 0000010
-  - [ ] Note: AIEOS identity.json generation and validation is handled by `AieosGeneratorService` in story 0000010
+  - [x] `generateConfig(instance: AgentInstance, project: Project): string` — returns `config.toml` TOML string
+  - [x] Note: actual file writing is handled by `AgentFileWriterService` in story 0000010
+  - [x] Note: AIEOS identity.json generation and validation is handled by `AieosGeneratorService` in story 0000010
 - [x] Create `ZeroClawProcessManagerService`:
-  - [ ] `spawn(agentInstance: AgentInstance, project: Project): ChildProcess`
-    - [ ] Calls `ZeroClawConfigGeneratorService.generateConfig()` (writes config.toml, identity.json, soul.md to workspacePath)
-    - [ ] Spawns: `child_process.spawn(ZEROCLAW_BINARY_PATH, ['daemon', '--host', '127.0.0.1', '--port', String(gatewayPort)], { cwd: workspacePath, env: { AES_PROJECT_ID, AES_STORY_ID, AES_RUN_ID, ...projectLlmKeys } })`
-    - [ ] Note: ZeroClaw reads `zeroclaw.config.toml` from `cwd` automatically — there is NO `--config` flag
-    - [ ] Note: `--soul` and `--identity` flags do NOT exist — paths come from `config.toml` `[identity]` section
-    - [ ] Generates a unique `sessionId` (UUID) and stores it on AgentInstance (`AgentInstancesService.updateSessionId()`)
-    - [ ] Stores returned PID via `AgentInstancesService.updatePid()`
-    - [ ] Attaches stdout/stderr listeners
-  - [ ] `kill(pid: number)` — graceful SIGTERM
-  - [ ] `poke(pid: number)` — send SIGUSR1 to wake agent
-  - [ ] `injectStdin(pid: number, message: string)` — write to process stdin
-  - [ ] `isAlive(pid: number): boolean` — check process health
-  - [ ] `reSpawn(agentInstance)` — kill + re-spawn if dead
+  - [x] `spawn(agentInstance: AgentInstance, project: Project): ChildProcess`
+    - [x] Calls `ZeroClawConfigGeneratorService.generateConfig()` (writes config.toml, identity.json, soul.md to workspacePath)
+    - [x] Spawns: `child_process.spawn(ZEROCLAW_BINARY_PATH, ['daemon', '--host', '127.0.0.1', '--port', String(gatewayPort)], { cwd: workspacePath, env: { AES_PROJECT_ID, AES_STORY_ID, AES_RUN_ID, ...projectLlmKeys } })`
+    - [x] Note: ZeroClaw reads `zeroclaw.config.toml` from `cwd` automatically — there is NO `--config` flag
+    - [x] Note: `--soul` and `--identity` flags do NOT exist — paths come from `config.toml` `[identity]` section
+    - [x] Generates a unique `sessionId` (UUID) and stores it on AgentInstance (`AgentInstancesService.updateSessionId()`)
+    - [x] Stores returned PID via `AgentInstancesService.updatePid()`
+    - [x] Attaches stdout/stderr listeners
+  - [x] `kill(pid: number)` — graceful SIGTERM
+  - [x] `poke(pid: number)` — send SIGUSR1 to wake agent
+  - [x] `injectStdin(pid: number, message: string)` — write to process stdin
+  - [x] `isAlive(pid: number): boolean` — check process health
+  - [x] `reSpawn(agentInstance)` — kill + re-spawn if dead
 - [x] Create `StreamAggregatorService`:
-  - [ ] Listens to stdout/stderr of each ZeroClaw process
-  - [ ] Tags each line: `{ line, runId, ticketId, agentInstanceId, timestamp }`
-  - [ ] Broadcasts tagged lines via WebSocket gateway (NestJS @WebSocketGateway)
-  - [ ] Archives tagged lines to MongoDB `transcripts` collection (async, non-blocking)
+  - [x] Listens to stdout/stderr of each ZeroClaw process
+  - [x] Tags each line: `{ line, runId, ticketId, agentInstanceId, timestamp }`
+  - [x] Broadcasts tagged lines via WebSocket gateway (NestJS @WebSocketGateway)
+  - [x] Archives tagged lines to MongoDB `transcripts` collection (async, non-blocking)
 - [x] Create `ZeroClawGatewayService`:
-  - [ ] Each agent's ZeroClaw instance runs `zeroclaw gateway` on a unique port
-  - [ ] NestJS stores `gatewayPort` on AgentInstance
-  - [ ] `postTask(agentInstance, payload)` — HTTP POST to agent's gateway endpoint
+  - [x] Each agent's ZeroClaw instance runs `zeroclaw gateway` on a unique port
+  - [x] NestJS stores `gatewayPort` on AgentInstance
+  - [x] `postTask(agentInstance, payload)` — HTTP POST to agent's gateway endpoint
 - [x] Listen to `agents.spawn.all` event from `ProjectInitializerService` to spawn all project agents
 - [x] Write unit tests for:
-  - [ ] `ZeroClawConfigGeneratorService` output format
-  - [ ] `ZeroClawProcessManagerService.poke()` (mock process)
-  - [ ] `StreamAggregatorService` line tagging
+  - [x] `ZeroClawConfigGeneratorService` output format
+  - [x] `ZeroClawProcessManagerService.poke()` (mock process)
+  - [x] `StreamAggregatorService` line tagging
 
 ---
 

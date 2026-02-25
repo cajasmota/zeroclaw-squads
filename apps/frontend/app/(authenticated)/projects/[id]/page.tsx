@@ -22,6 +22,9 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Separator } from "@/components/ui/separator";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Switch } from "@/components/ui/switch";
+import {
+  AreaChart, Area, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend,
+} from "recharts";
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -73,6 +76,9 @@ interface Story {
   epicId?: string;
   sprintId?: string;
   description?: string;
+  assignedTo?: string[];
+  runId?: string;
+  branchName?: string;
 }
 
 interface Task {
@@ -101,6 +107,120 @@ interface WorkflowTemplate {
   name: string;
   description?: string;
   nodes?: unknown[];
+}
+
+// ─── Analytics Section ───────────────────────────────────────────────────────
+
+const ROLE_COLORS: Record<string, string> = {
+  developer: "#004176", reviewer: "#0ea5e9", architect: "#8b5cf6",
+  "project-manager": "#f59e0b", tester: "#10b981", librarian: "#ec4899",
+};
+
+interface BurnRateEntry { date: string; cost: number; }
+interface DistributionEntry { role: string; cost: number; }
+interface TranscriptEntry { id: string; timestamp: string; event_type: string; message?: string; }
+
+function AnalyticsSection({ projectId }: { projectId: string }) {
+  const [burnRate, setBurnRate] = useState<BurnRateEntry[]>([]);
+  const [distribution, setDistribution] = useState<DistributionEntry[]>([]);
+  const [totalCost, setTotalCost] = useState(0);
+  const [totalTokens, setTotalTokens] = useState(0);
+
+  useEffect(() => {
+    fetch(`/api/projects/${projectId}/analytics?metric=burn-rate`)
+      .then(r => r.json())
+      .then((d: { data?: BurnRateEntry[]; totalCost?: number; totalTokens?: number }) => {
+        setBurnRate(d.data ?? []);
+        setTotalCost(d.totalCost ?? 0);
+        setTotalTokens(d.totalTokens ?? 0);
+      })
+      .catch(console.error);
+    fetch(`/api/projects/${projectId}/analytics?metric=distribution`)
+      .then(r => r.json())
+      .then((d: { data?: DistributionEntry[] }) => setDistribution(d.data ?? []))
+      .catch(console.error);
+  }, [projectId]);
+
+  return (
+    <div className="space-y-4">
+      <div className="flex gap-4">
+        <div className="rounded-lg border px-4 py-2 text-center">
+          <p className="text-xs text-muted-foreground">Total Cost</p>
+          <p className="text-lg font-semibold">${totalCost.toFixed(4)}</p>
+        </div>
+        <div className="rounded-lg border px-4 py-2 text-center">
+          <p className="text-xs text-muted-foreground">Total Tokens</p>
+          <p className="text-lg font-semibold">{totalTokens.toLocaleString()}</p>
+        </div>
+      </div>
+      {burnRate.length > 0 && (
+        <div>
+          <h3 className="text-sm font-semibold mb-2">Burn Rate (USD/day)</h3>
+          <ResponsiveContainer width="100%" height={180}>
+            <AreaChart data={burnRate}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="date" tick={{ fontSize: 10 }} />
+              <YAxis tick={{ fontSize: 10 }} tickFormatter={(v: number) => `$${v.toFixed(3)}`} />
+              <Tooltip formatter={(v) => [`$${(v as number).toFixed(4)}`, "Cost"]} />
+              <Area type="monotone" dataKey="cost" stroke="#004176" fill="#004176" fillOpacity={0.15} />
+            </AreaChart>
+          </ResponsiveContainer>
+        </div>
+      )}
+      {distribution.length > 0 && (
+        <div>
+          <h3 className="text-sm font-semibold mb-2">Cost Distribution by Role</h3>
+          <ResponsiveContainer width="100%" height={180}>
+            <PieChart>
+              <Pie data={distribution} dataKey="cost" nameKey="role" cx="50%" cy="50%" outerRadius={70} label={(p) => (p as { role?: string }).role ?? ""}>
+                {distribution.map((entry) => (
+                  <Cell key={entry.role} fill={ROLE_COLORS[entry.role] ?? "#94a3b8"} />
+                ))}
+              </Pie>
+              <Tooltip formatter={(v) => [`$${(v as number).toFixed(4)}`, "Cost"]} />
+              <Legend />
+            </PieChart>
+          </ResponsiveContainer>
+        </div>
+      )}
+      {burnRate.length === 0 && distribution.length === 0 && (
+        <p className="text-sm text-muted-foreground text-center py-4">No usage data yet. Analytics appear once agents start running.</p>
+      )}
+    </div>
+  );
+}
+
+// ─── Transcript Viewer ────────────────────────────────────────────────────────
+
+function TranscriptViewer({ projectId, runId }: { projectId: string; runId: string }) {
+  const [entries, setEntries] = useState<TranscriptEntry[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetch(`/api/projects/${projectId}/analytics?metric=transcripts/${runId}`)
+      .then(r => r.json())
+      .then((d: { entries?: TranscriptEntry[] }) => setEntries(d.entries ?? []))
+      .catch(console.error)
+      .finally(() => setLoading(false));
+  }, [projectId, runId]);
+
+  const typeColor = (t: string) =>
+    ({ llm_response: "text-blue-400", tool_call: "text-yellow-400", system: "text-gray-400" }[t] ?? "text-gray-300");
+
+  if (loading) return <div className="flex justify-center py-4"><Loader2 className="h-4 w-4 animate-spin" /></div>;
+  if (entries.length === 0) return <p className="text-sm text-gray-400 text-center py-4">No trace entries found.</p>;
+
+  return (
+    <div className="space-y-1 max-h-60 overflow-y-auto font-mono text-xs">
+      {entries.map((e) => (
+        <div key={e.id} className={`leading-5 ${typeColor(e.event_type)}`}>
+          <span className="text-gray-500 mr-2">[{new Date(e.timestamp).toLocaleTimeString()}]</span>
+          <span className="opacity-70 mr-2">{e.event_type}</span>
+          {e.message && <span>{e.message}</span>}
+        </div>
+      ))}
+    </div>
+  );
 }
 
 // ─── Dashboard Tab ───────────────────────────────────────────────────────────
@@ -199,6 +319,11 @@ function DashboardTab({ projectId, liveStatuses }: { projectId: string; liveStat
           </div>
         </div>
       )}
+
+      <div>
+        <h3 className="text-sm font-semibold mb-3">Usage Analytics</h3>
+        <AnalyticsSection projectId={projectId} />
+      </div>
     </div>
   );
 }
@@ -207,6 +332,7 @@ function DashboardTab({ projectId, liveStatuses }: { projectId: string; liveStat
 
 export function AgentsTab({ projectId, liveStatuses }: { projectId: string; liveStatuses?: Record<string, string> }) {
   const [agents, setAgents] = useState<AgentInstance[]>([]);
+  const [stories, setStories] = useState<Story[]>([]);
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState<AgentInstance | null>(null);
   const [editMode, setEditMode] = useState(false);
@@ -218,7 +344,10 @@ export function AgentsTab({ projectId, liveStatuses }: { projectId: string; live
     fetch(`/api/projects/${projectId}/agents`).then(r => r.json()).then(setAgents).catch(console.error).finally(() => setLoading(false));
   };
 
-  useEffect(() => { fetchAgents(); }, [projectId]);
+  useEffect(() => {
+    fetchAgents();
+    fetch(`/api/projects/${projectId}/stories`).then(r => r.json()).then((s: Story[]) => setStories(Array.isArray(s) ? s : [])).catch(console.error);
+  }, [projectId]);
 
   const openAgent = (a: AgentInstance) => {
     setSelected(a);
@@ -296,6 +425,19 @@ export function AgentsTab({ projectId, liveStatuses }: { projectId: string; live
                     <p className="text-xs text-muted-foreground">{selected.config?.provider} / {selected.config?.model}</p>
                   </div>
                 </div>
+                {(() => {
+                  const agentStories = stories.filter(s => s.assignedTo?.includes(selected._id));
+                  const done = agentStories.filter(s => s.status === "done").length;
+                  const current = agentStories.find(s => s.status === "in_progress");
+                  if (!agentStories.length) return null;
+                  return (
+                    <div className="rounded-md border p-3 space-y-1">
+                      <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Statistics</h4>
+                      <p className="text-sm">Stories completed: <span className="font-medium">{done}</span></p>
+                      {current && <p className="text-sm truncate">Current: <span className="font-medium">{current.title}</span></p>}
+                    </div>
+                  );
+                })()}
                 {selected.soul && (
                   <div>
                     <h4 className="text-sm font-medium mb-1">Soul</h4>
@@ -1018,16 +1160,26 @@ export function KanbanTab({
 
             {/* Live Activity tab */}
             {ticketTab === "activity" && (
-              <div className="space-y-1 max-h-60 overflow-y-auto bg-black/90 rounded-md p-3 font-mono text-xs">
-                {(liveAgentLogs ?? []).length === 0 && (
-                  <p className="text-gray-400 text-center py-4">No live activity. Logs appear here when agents are active.</p>
-                )}
-                {(liveAgentLogs ?? []).map((log, i) => (
-                  <div key={i} className={`leading-5 ${log.type === "stderr" ? "text-red-400" : "text-green-300"}`}>
-                    <span className="text-gray-500 mr-2">[{new Date(log.timestamp).toLocaleTimeString()}]</span>
-                    {log.line}
+              <div className="space-y-3">
+                <div className="bg-black/90 rounded-md p-3 font-mono text-xs space-y-1 max-h-40 overflow-y-auto">
+                  {(liveAgentLogs ?? []).length === 0 && (
+                    <p className="text-gray-400 text-center py-2">No live activity. Logs appear here when agents are active.</p>
+                  )}
+                  {(liveAgentLogs ?? []).map((log, i) => (
+                    <div key={i} className={`leading-5 ${log.type === "stderr" ? "text-red-400" : "text-green-300"}`}>
+                      <span className="text-gray-500 mr-2">[{new Date(log.timestamp).toLocaleTimeString()}]</span>
+                      {log.line}
+                    </div>
+                  ))}
+                </div>
+                {selected.runId && (
+                  <div>
+                    <p className="text-xs font-semibold mb-1 text-muted-foreground">Historical Trace (run: {selected.runId.slice(0, 8)}…)</p>
+                    <div className="bg-black/90 rounded-md p-3">
+                      <TranscriptViewer projectId={projectId} runId={selected.runId} />
+                    </div>
                   </div>
-                ))}
+                )}
               </div>
             )}
 
@@ -1195,7 +1347,7 @@ function RequirementsTab({ projectId }: { projectId: string }) {
   const [selected, setSelected] = useState<ReqDoc | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const saveTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const selectedRef = useRef<ReqDoc | null>(null);
   selectedRef.current = selected;
 

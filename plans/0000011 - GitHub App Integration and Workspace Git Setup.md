@@ -26,42 +26,42 @@ AES uses a hybrid git approach: GitHub MCP for remote API actions (PRs, comments
 ## Actionable Tasks
 
 - [x] Create `GitHubAppService`:
-  - [ ] Install: `@octokit/auth-app`, `@octokit/rest`
-  - [ ] `getInstallationToken(project: Project): string` — authenticates via GitHub App and gets installation token
-  - [ ] `getAuthenticatedOctokit(project: Project): Octokit` — returns authenticated Octokit instance
-  - [ ] Decrypts `config.githubApp.privateKey` using `AES256EncryptionService`
+  - [x] Install: `@octokit/auth-app`, `@octokit/rest`
+  - [x] `getInstallationToken(project: Project): string` — authenticates via GitHub App and gets installation token
+  - [x] `getAuthenticatedOctokit(project: Project): Octokit` — returns authenticated Octokit instance
+  - [x] Decrypts `config.githubApp.privateKey` using `AES256EncryptionService`
 - [x] Create `GitWorkspaceService`:
-  - [ ] `clone(agentInstance: AgentInstance, project: Project)`:
-    - [ ] Runs: `git clone {repoUrl} {workspacePath}` using installation token for auth
-    - [ ] Sets git user name/email to agent's display name / system email
-  - [ ] `createFeatureBranch(workspacePath, storyId)`:
-    - [ ] Creates and checks out: `feature/{storyId}`
-  - [ ] `commit(workspacePath, message)`:
-    - [ ] Stages all changes and creates atomic commit
-  - [ ] `push(workspacePath, branch)`:
-    - [ ] Pushes branch to remote using installation token
-  - [ ] `pull(workspacePath)`:
-    - [ ] Pulls latest changes from remote
-  - [ ] `acquireLock(workspacePath)`: — creates `.git/aes.lock`
-  - [ ] `releaseLock(workspacePath)`: — removes `.git/aes.lock`
+  - [x] `clone(agentInstance: AgentInstance, project: Project)`:
+    - [x] Runs: `git clone {repoUrl} {workspacePath}` using installation token for auth
+    - [x] Sets git user name/email to agent's display name / system email
+  - [x] `createFeatureBranch(workspacePath, storyId)`:
+    - [x] Creates and checks out: `feature/{storyId}`
+  - [x] `commit(workspacePath, message)`:
+    - [x] Stages all changes and creates atomic commit
+  - [x] `push(workspacePath, branch)`:
+    - [x] Pushes branch to remote using installation token
+  - [x] `pull(workspacePath)`:
+    - [x] Pulls latest changes from remote
+  - [x] `acquireLock(workspacePath)`: — creates `.git/aes.lock`
+  - [x] `releaseLock(workspacePath)`: — removes `.git/aes.lock`
 - [x] Create `GitHubPRService`:
-  - [ ] `createPullRequest(project, { title, body, branch, base })` — creates PR via GitHub REST API
-  - [ ] `postComment(project, prNumber, body)` — posts comment on PR
-  - [ ] `getPRComments(project, prNumber)` — fetches PR comments for agent feedback injection
-  - [ ] `mergePullRequest(project, prNumber)` — merges PR (triggered by PM or user)
+  - [x] `createPullRequest(project, { title, body, branch, base })` — creates PR via GitHub REST API
+  - [x] `postComment(project, prNumber, body)` — posts comment on PR
+  - [x] `getPRComments(project, prNumber)` — fetches PR comments for agent feedback injection
+  - [x] `mergePullRequest(project, prNumber)` — merges PR (triggered by PM or user)
 - [x] Integrate `GitWorkspaceService.clone()` into `ProjectInitializerService`:
-  - [ ] Each agent workspace is cloned after directory creation
+  - [x] Each agent workspace is cloned after directory creation
 - [x] Create `GitHubWebhookController`:
-  - [ ] `POST /webhooks/github` — receives GitHub webhook events
-  - [ ] Verifies webhook signature using `webhookSecret`
-  - [ ] Routes events:
-    - [ ] `pull_request.opened` → signal Reviewer agent
-    - [ ] `issue_comment.created` (on PR) → signal Developer agent + inject feedback via stdin
-    - [ ] `push` (to main) → emit `librarian.reindex` event
+  - [x] `POST /webhooks/github` — receives GitHub webhook events
+  - [x] Verifies webhook signature using `webhookSecret`
+  - [x] Routes events:
+    - [x] `pull_request.opened` → signal Reviewer agent
+    - [x] `issue_comment.created` (on PR) → signal Developer agent + inject feedback via stdin
+    - [x] `push` (to main) → emit `librarian.reindex` event
 - [x] Write unit tests for:
-  - [ ] `GitHubAppService.getInstallationToken()` (mock Octokit)
-  - [ ] `GitHubWebhookController` signature verification
-  - [ ] `GitWorkspaceService` operations (mock child_process)
+  - [x] `GitHubAppService.getInstallationToken()` (mock Octokit)
+  - [x] `GitHubWebhookController` signature verification
+  - [x] `GitWorkspaceService` operations (mock child_process)
 
 ---
 

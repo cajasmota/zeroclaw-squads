@@ -28,47 +28,47 @@ The backlog is the central coordination layer of AES. PM agents create and manag
 
 - [x] Create `BacklogModule` in NestJS
 - [x] Define `Epic` Mongoose schema:
-  - [ ] `projectId`, `tenantId`, `title`, `description`, `color`, `status`, `order`, timestamps
+  - [x] `projectId`, `tenantId`, `title`, `description`, `color`, `status`, `order`, timestamps
 - [x] Define `Story` Mongoose schema:
-  - [ ] `projectId`, `epicId` (nullable), `sprintId` (nullable), `tenantId`
-  - [ ] `title`, `description`
-  - [ ] `type` (enum: `feature | bugfix | refactor | task`)
-  - [ ] `priority` (enum: `high | medium | low`)
-  - [ ] `status` (enum: `backlog | selected | in_progress | review | done`)
-  - [ ] `workflowNodeStatus` (string)
-  - [ ] `assignedTo` (ObjectId[], ref AgentInstance)
-  - [ ] `waitingForApproval` (boolean, default false)
-  - [ ] `waitingForAnswer` (boolean, default false)
-  - [ ] `branchName` (string, e.g., `feature/{storyId}`)
-  - [ ] `runId` (string)
-  - [ ] `order` (number)
-  - [ ] Timestamps
+  - [x] `projectId`, `epicId` (nullable), `sprintId` (nullable), `tenantId`
+  - [x] `title`, `description`
+  - [x] `type` (enum: `feature | bugfix | refactor | task`)
+  - [x] `priority` (enum: `high | medium | low`)
+  - [x] `status` (enum: `backlog | selected | in_progress | review | done`)
+  - [x] `workflowNodeStatus` (string)
+  - [x] `assignedTo` (ObjectId[], ref AgentInstance)
+  - [x] `waitingForApproval` (boolean, default false)
+  - [x] `waitingForAnswer` (boolean, default false)
+  - [x] `branchName` (string, e.g., `feature/{storyId}`)
+  - [x] `runId` (string)
+  - [x] `order` (number)
+  - [x] Timestamps
 - [x] Define `Task` Mongoose schema:
-  - [ ] `storyId`, `projectId`, `tenantId`
-  - [ ] `title`, `description`
-  - [ ] `status` (enum: `todo | in_progress | done`)
-  - [ ] `assignedTo` (ObjectId, ref AgentInstance)
-  - [ ] `order` (number)
-  - [ ] Timestamps
+  - [x] `storyId`, `projectId`, `tenantId`
+  - [x] `title`, `description`
+  - [x] `status` (enum: `todo | in_progress | done`)
+  - [x] `assignedTo` (ObjectId, ref AgentInstance)
+  - [x] `order` (number)
+  - [x] Timestamps
 - [x] Define `Sprint` Mongoose schema:
-  - [ ] `projectId`, `tenantId`, `name`, `startDate`, `endDate`
-  - [ ] `status` (enum: `planning | active | completed`)
-  - [ ] `isReady` (boolean — triggers PM agent assignment when true)
+  - [x] `projectId`, `tenantId`, `name`, `startDate`, `endDate`
+  - [x] `status` (enum: `planning | active | completed`)
+  - [x] `isReady` (boolean — triggers PM agent assignment when true)
 - [x] Create `EpicsService`, `StoriesService`, `TasksService`, `SprintsService`
 - [x] Create REST controllers:
-  - [ ] **Epics**: `GET|POST /projects/:id/epics`, `PATCH|DELETE /projects/:id/epics/:epicId`
-  - [ ] **Stories**: `GET|POST /projects/:id/stories`, `PATCH|DELETE /projects/:id/stories/:storyId`
-    - [ ] `GET /projects/:id/stories?epicId=&sprintId=&status=` — filterable
-  - [ ] **Tasks**: `GET|POST /projects/:id/stories/:storyId/tasks`, `PATCH|DELETE .../:taskId`
-  - [ ] **Sprints**: `GET|POST /projects/:id/sprints`, `PATCH /projects/:id/sprints/:sprintId`
-    - [ ] `POST /projects/:id/sprints/:sprintId/ready` — mark sprint ready → emit `sprint.ready` event
+  - [x] **Epics**: `GET|POST /projects/:id/epics`, `PATCH|DELETE /projects/:id/epics/:epicId`
+  - [x] **Stories**: `GET|POST /projects/:id/stories`, `PATCH|DELETE /projects/:id/stories/:storyId`
+    - [x] `GET /projects/:id/stories?epicId=&sprintId=&status=` — filterable
+  - [x] **Tasks**: `GET|POST /projects/:id/stories/:storyId/tasks`, `PATCH|DELETE .../:taskId`
+  - [x] **Sprints**: `GET|POST /projects/:id/sprints`, `PATCH /projects/:id/sprints/:sprintId`
+    - [x] `POST /projects/:id/sprints/:sprintId/ready` — mark sprint ready → emit `sprint.ready` event
 - [x] Emit `sprint.ready` event when sprint is marked ready (triggers PM agent assignment)
 - [x] Emit `story.assigned` event when `assignedTo` is set on a story
 - [x] Inject `AesGateway` into `BacklogModule` (import `WebSocketModule` or use a shared gateway provider)
 - [x] In `StoriesService`, create `updateStatus(storyId, projectId, tenantId, status, workflowNodeStatus?)`:
-  - [ ] Updates `Story.status` (and optionally `Story.workflowNodeStatus`) in MongoDB
-  - [ ] Immediately after saving, calls `aesGateway.emitToProject(projectId, 'story:status', { storyId, status, workflowNodeStatus })`
-  - [ ] All other services (0000014, 0000028) MUST call this method instead of updating `status` directly — this ensures the WebSocket event fires on every transition
+  - [x] Updates `Story.status` (and optionally `Story.workflowNodeStatus`) in MongoDB
+  - [x] Immediately after saving, calls `aesGateway.emitToProject(projectId, 'story:status', { storyId, status, workflowNodeStatus })`
+  - [x] All other services (0000014, 0000028) MUST call this method instead of updating `status` directly — this ensures the WebSocket event fires on every transition
 - [x] Write unit tests for services
 
 ---

@@ -156,7 +156,7 @@ function AgentTaskNode({ id, data, selected }: any) {
           )}
         </div>
         {data.requiresHumanApproval && (
-          <AlertTriangle className="h-4 w-4 text-orange-400 flex-shrink-0 mt-0.5" title="Requires approval" />
+          <AlertTriangle className="h-4 w-4 text-orange-400 flex-shrink-0 mt-0.5" aria-label="Requires approval" />
         )}
       </div>
       {data.kanbanStatus && (

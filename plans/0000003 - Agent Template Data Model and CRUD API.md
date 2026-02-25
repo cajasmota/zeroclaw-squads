@@ -23,35 +23,35 @@ Agent Templates are the global blueprints for agents. When a user creates a proj
 
 - [x] Create `TemplatesModule` in NestJS
 - [x] Define `AgentTemplate` Mongoose schema with fields:
-  - [ ] `tenantId` (ObjectId, indexed)
-  - [ ] `displayName` (string)
-  - [ ] `role` (enum: `librarian | architect | pm | developer | reviewer | tester`)
-  - [ ] `tags` (string array)
-  - [ ] `soul` (string, Markdown)
-  - [ ] `aieos_identity` (Mixed — validated against AIEOS v1.1 structure)
-  - [ ] `config.model` (string)
-  - [ ] `config.provider` (enum: `ollama | openai | anthropic | google`)
-  - [ ] `config.skills` (string, YAML content)
-  - [ ] `config.canWriteCode` (boolean)
-  - [ ] `config.mcpServers` (array of objects)
-  - [ ] `avatarUrl` (string, optional)
-  - [ ] Timestamps (`createdAt`, `updatedAt`)
+  - [x] `tenantId` (ObjectId, indexed)
+  - [x] `displayName` (string)
+  - [x] `role` (enum: `librarian | architect | pm | developer | reviewer | tester`)
+  - [x] `tags` (string array)
+  - [x] `soul` (string, Markdown)
+  - [x] `aieos_identity` (Mixed — validated against AIEOS v1.1 structure)
+  - [x] `config.model` (string)
+  - [x] `config.provider` (enum: `ollama | openai | anthropic | google`)
+  - [x] `config.skills` (string, YAML content)
+  - [x] `config.canWriteCode` (boolean)
+  - [x] `config.mcpServers` (array of objects)
+  - [x] `avatarUrl` (string, optional)
+  - [x] Timestamps (`createdAt`, `updatedAt`)
 - [x] Create `TemplatesService` with methods:
-  - [ ] `findAll(tenantId, filters?: { role?, tags? })` — paginated list
-  - [ ] `findById(tenantId, id)` — single template
-  - [ ] `create(tenantId, dto)` — create template
-  - [ ] `update(tenantId, id, dto)` — partial update
-  - [ ] `delete(tenantId, id)` — soft or hard delete
-  - [ ] `exportJson(tenantId, id)` — export as AIEOS-compatible JSON
-  - [ ] `importJson(tenantId, payload)` — import from AIEOS-compatible JSON
+  - [x] `findAll(tenantId, filters?: { role?, tags? })` — paginated list
+  - [x] `findById(tenantId, id)` — single template
+  - [x] `create(tenantId, dto)` — create template
+  - [x] `update(tenantId, id, dto)` — partial update
+  - [x] `delete(tenantId, id)` — soft or hard delete
+  - [x] `exportJson(tenantId, id)` — export as AIEOS-compatible JSON
+  - [x] `importJson(tenantId, payload)` — import from AIEOS-compatible JSON
 - [x] Create `TemplatesController` with routes:
-  - [ ] `GET /templates` — list with optional `?role=&tags=` filters
-  - [ ] `GET /templates/:id` — single template
-  - [ ] `POST /templates` — create
-  - [ ] `PATCH /templates/:id` — update
-  - [ ] `DELETE /templates/:id` — delete
-  - [ ] `GET /templates/:id/export` — export JSON
-  - [ ] `POST /templates/import` — import JSON
+  - [x] `GET /templates` — list with optional `?role=&tags=` filters
+  - [x] `GET /templates/:id` — single template
+  - [x] `POST /templates` — create
+  - [x] `PATCH /templates/:id` — update
+  - [x] `DELETE /templates/:id` — delete
+  - [x] `GET /templates/:id/export` — export JSON
+  - [x] `POST /templates/import` — import JSON
 - [x] Create `CreateTemplateDto` and `UpdateTemplateDto` with validation
 - [x] Add AIEOS v1.1 validation (required sections: `identity`, `psychology`, `role_meta`)
 - [x] Write unit tests for `TemplatesService` (mock Mongoose)

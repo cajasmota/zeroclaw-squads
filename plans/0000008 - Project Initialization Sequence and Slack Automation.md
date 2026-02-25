@@ -30,45 +30,45 @@ The initialization sequence is triggered by the `project.created` event emitted 
 
 - [x] Create `ProjectInitializerService` (or use NestJS event listeners)
 - [x] **Step 1 — Directory Setup**:
-  - [ ] Create `/artifacts/{projectId}/` directory
-  - [ ] Create `/artifacts/{projectId}/librarian/` subdirectory
-  - [ ] Create `/artifacts/{projectId}/workspaces/` subdirectory
-  - [ ] For each AgentInstance: create `/artifacts/{projectId}/workspaces/{agentInstanceId}/`
+  - [x] Create `/artifacts/{projectId}/` directory
+  - [x] Create `/artifacts/{projectId}/librarian/` subdirectory
+  - [x] Create `/artifacts/{projectId}/workspaces/` subdirectory
+  - [x] For each AgentInstance: create `/artifacts/{projectId}/workspaces/{agentInstanceId}/`
 - [x] **Step 2 — Slack Channel Setup**:
-  - [ ] Install Slack Web API SDK: `@slack/web-api`
-  - [ ] Create `SlackService`:
-    - [ ] `createChannel(token, slug)` — creates `#project-{slug}`
-    - [ ] `inviteUsers(token, channelId, userIds)` — invites from `inviteUsers` list
-    - [ ] `postAsAgent(token, channelId, message, agent: AgentInstance, brandColor)`:
-      - [ ] Uses Slack `chat.postMessage` with **user impersonation fields**:
-        - [ ] `username`: set to `agent.displayName` (e.g., "R2-D2 · Developer")
-        - [ ] `icon_url`: set to `AvatarGeneratorService.generateAvatarUrl(agent, brandColor)`
-      - [ ] This makes ALL agent messages appear with the agent's name and colored avatar, not the generic bot name
-      - [ ] Works for: greetings, task responses, A2A messages, and ticket replies
-    - [ ] `postThreadReplyAsAgent(token, channelId, threadTs, message, agent, brandColor)` — thread reply with full agent impersonation
-    - [ ] `postA2AMessage(token, channelId, fromAgent, toAgent, message, brandColor)`:
-      - [ ] Posts with `fromAgent` impersonation (username + icon_url)
-      - [ ] Message prefixed: `[A2A] {fromAgent.roleEmoji} {fromAgent.displayName} → {toAgent.roleEmoji} {toAgent.displayName}: {message}`
-      - [ ] Uses `fromAgent` display name and avatar (natural conversation appearance)
-  - [ ] Store `slackChannelId` on Project document after creation
-  - [ ] Fall back to global settings if project `inviteUsers` is empty
+  - [x] Install Slack Web API SDK: `@slack/web-api`
+  - [x] Create `SlackService`:
+    - [x] `createChannel(token, slug)` — creates `#project-{slug}`
+    - [x] `inviteUsers(token, channelId, userIds)` — invites from `inviteUsers` list
+    - [x] `postAsAgent(token, channelId, message, agent: AgentInstance, brandColor)`:
+      - [x] Uses Slack `chat.postMessage` with **user impersonation fields**:
+        - [x] `username`: set to `agent.displayName` (e.g., "R2-D2 · Developer")
+        - [x] `icon_url`: set to `AvatarGeneratorService.generateAvatarUrl(agent, brandColor)`
+      - [x] This makes ALL agent messages appear with the agent's name and colored avatar, not the generic bot name
+      - [x] Works for: greetings, task responses, A2A messages, and ticket replies
+    - [x] `postThreadReplyAsAgent(token, channelId, threadTs, message, agent, brandColor)` — thread reply with full agent impersonation
+    - [x] `postA2AMessage(token, channelId, fromAgent, toAgent, message, brandColor)`:
+      - [x] Posts with `fromAgent` impersonation (username + icon_url)
+      - [x] Message prefixed: `[A2A] {fromAgent.roleEmoji} {fromAgent.displayName} → {toAgent.roleEmoji} {toAgent.displayName}: {message}`
+      - [x] Uses `fromAgent` display name and avatar (natural conversation appearance)
+  - [x] Store `slackChannelId` on Project document after creation
+  - [x] Fall back to global settings if project `inviteUsers` is empty
 - [x] **Step 3 — Agent Spawn Delegation**:
-  - [ ] Emit `agents.spawn.all` event with `projectId` (actual spawning handled in ZeroClaw story)
-  - [ ] For now: update all AgentInstance `status` to `idle` (placeholder until ZeroClaw is implemented)
+  - [x] Emit `agents.spawn.all` event with `projectId` (actual spawning handled in ZeroClaw story)
+  - [x] For now: update all AgentInstance `status` to `idle` (placeholder until ZeroClaw is implemented)
 - [x] **Step 4 — Greetings**:
-  - [ ] For each AgentInstance, post introduction message to Slack channel using `postAsAgent()`
-  - [ ] Each agent posts its own greeting with its own name and avatar — looks like a natural team intro
-  - [ ] Create `AvatarGeneratorService`:
-    - [ ] `generateAvatarUrl(agent: AgentInstance, brandColor: string): string`
-    - [ ] Generates a transient URL for a PNG with the agent's base transparent avatar overlaid with `brandColor`
-    - [ ] Uses `sharp` or `canvas` for image compositing
-    - [ ] URL is publicly accessible (served by NestJS static file endpoint or CDN)
+  - [x] For each AgentInstance, post introduction message to Slack channel using `postAsAgent()`
+  - [x] Each agent posts its own greeting with its own name and avatar — looks like a natural team intro
+  - [x] Create `AvatarGeneratorService`:
+    - [x] `generateAvatarUrl(agent: AgentInstance, brandColor: string): string`
+    - [x] Generates a transient URL for a PNG with the agent's base transparent avatar overlaid with `brandColor`
+    - [x] Uses `sharp` or `canvas` for image compositing
+    - [x] URL is publicly accessible (served by NestJS static file endpoint or CDN)
 - [x] Create `AgentRoleEmojiService`:
-  - [ ] Maps role to emoji: `{ librarian: '📚', architect: '🏗️', pm: '📋', developer: '💻', reviewer: '🔍', tester: '🧪' }`
-  - [ ] Used in A2A message prefixes and display names
+  - [x] Maps role to emoji: `{ librarian: '📚', architect: '🏗️', pm: '📋', developer: '💻', reviewer: '🔍', tester: '🧪' }`
+  - [x] Used in A2A message prefixes and display names
 - [x] Create `SlackEventRouterService`:
-  - [ ] Maps `channel_id` → `projectId` (stored in MongoDB or in-memory cache)
-  - [ ] Routes incoming Slack events to the correct project/agent
+  - [x] Maps `channel_id` → `projectId` (stored in MongoDB or in-memory cache)
+  - [x] Routes incoming Slack events to the correct project/agent
 - [x] Write `SlackService` unit tests (mock Slack API)
 - [x] Write `ProjectInitializerService` integration test
 

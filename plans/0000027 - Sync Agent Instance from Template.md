@@ -30,32 +30,32 @@ PRD §2.2: "Changes to global templates do not propagate to instances unless man
 ### Backend
 
 - [x] Add `syncFromTemplate` method to `AgentInstancesService`:
-  - [ ] `syncFromTemplate(tenantId, projectId, agentInstanceId, fields: SyncFields)`:
-    - [ ] `SyncFields`: `{ soul?: boolean, aieos?: boolean, config?: boolean }`
-    - [ ] Fetches the source `AgentTemplate` using `instance.templateId`
-    - [ ] Conditionally updates: `instance.soul`, `instance.aieos_identity`, `instance.config`
-    - [ ] Never updates: `displayName`, `identifier`, `pid`, `status`, `workspacePath`
-    - [ ] Returns the updated `AgentInstance`
+  - [x] `syncFromTemplate(tenantId, projectId, agentInstanceId, fields: SyncFields)`:
+    - [x] `SyncFields`: `{ soul?: boolean, aieos?: boolean, config?: boolean }`
+    - [x] Fetches the source `AgentTemplate` using `instance.templateId`
+    - [x] Conditionally updates: `instance.soul`, `instance.aieos_identity`, `instance.config`
+    - [x] Never updates: `displayName`, `identifier`, `pid`, `status`, `workspacePath`
+    - [x] Returns the updated `AgentInstance`
 - [x] Add `POST /projects/:projectId/agents/:agentInstanceId/sync` endpoint:
-  - [ ] Body: `{ fields: { soul: true, aieos: true, config: false } }`
-  - [ ] Calls `syncFromTemplate()`
-  - [ ] Returns updated `AgentInstance`
-  - [ ] Requires `JwtAuthGuard`; scoped to `tenantId` from JWT
+  - [x] Body: `{ fields: { soul: true, aieos: true, config: false } }`
+  - [x] Calls `syncFromTemplate()`
+  - [x] Returns updated `AgentInstance`
+  - [x] Requires `JwtAuthGuard`; scoped to `tenantId` from JWT
 - [x] Write unit tests for `syncFromTemplate()`:
-  - [ ] Only syncs requested fields
-  - [ ] Does not modify `displayName` or `pid`
-  - [ ] Throws `NotFoundException` if template not found
+  - [x] Only syncs requested fields
+  - [x] Does not modify `displayName` or `pid`
+  - [x] Throws `NotFoundException` if template not found
 
 ### Frontend
 
 - [x] Add "Sync from Template" button to Agent Profile Modal (in Edit Mode, story 0000015):
-  - [ ] Shows only if `instance.templateId` exists
-  - [ ] Opens a confirmation `Dialog` with checkboxes:
-    - [ ] "Sync Soul (personality prompt)"
-    - [ ] "Sync AIEOS Identity (personality JSON)"
-    - [ ] "Sync Config (model, provider, MCP servers)"
-  - [ ] "Sync" button calls `POST /api/projects/:id/agents/:agentId/sync`
-  - [ ] On success: refreshes the Agent Profile Modal with updated data, shows success toast
+  - [x] Shows only if `instance.templateId` exists
+  - [x] Opens a confirmation `Dialog` with checkboxes:
+    - [x] "Sync Soul (personality prompt)"
+    - [x] "Sync AIEOS Identity (personality JSON)"
+    - [x] "Sync Config (model, provider, MCP servers)"
+  - [x] "Sync" button calls `POST /api/projects/:id/agents/:agentId/sync`
+  - [x] On success: refreshes the Agent Profile Modal with updated data, shows success toast
 
 ---
 

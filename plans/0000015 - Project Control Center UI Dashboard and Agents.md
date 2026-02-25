@@ -57,7 +57,7 @@ The control center is where users monitor and interact with a running project. T
     - [x] **View Mode** (default):
       - [x] Hero layout: large avatar, display name, role, tags, full bio
       - [x] Status and PID info
-      - [ ] Statistics: stories completed, current story assigned
+      - [x] Statistics: stories completed, current story assigned
     - [x] **Edit Mode** toggle (top-right button):
       - [x] Display Name input
       - [x] Soul editor (Shadcn `Textarea`)
