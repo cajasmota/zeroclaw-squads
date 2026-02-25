@@ -110,7 +110,7 @@ export class WorkflowNodeExecutorService {
     const exec = run.nodeExecutions.find((e) => e.nodeId === node.id);
     if (exec) {
       exec.status = 'running';
-      exec.agentInstanceId = agent._id as Types.ObjectId;
+      exec.agentInstanceId = (agent._id as Types.ObjectId).toString();
     }
     await run.save();
 
