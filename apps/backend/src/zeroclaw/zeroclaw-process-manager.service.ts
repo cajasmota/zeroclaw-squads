@@ -6,9 +6,11 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
+import { Story, StoryDocument } from '../backlog/story.schema';
 import { AgentInstance, AgentInstanceDocument } from '../agent-instances/agent-instance.schema';
 import { AgentInstancesService } from '../agent-instances/agent-instances.service';
 import { GlobalSettingsService } from '../settings/global-settings.service';
+import { TicketComment, TicketCommentDocument } from '../ticket-dialogue/ticket-comment.schema';
 import { AesGateway } from '../websocket/aes.gateway';
 import { AieosGeneratorService } from './aieos-generator.service';
 import { ZeroClawConfigGeneratorService } from './zeroclaw-config-generator.service';
@@ -20,6 +22,8 @@ export class ZeroClawProcessManagerService {
 
   constructor(
     @InjectModel(AgentInstance.name) private readonly instanceModel: Model<AgentInstanceDocument>,
+    @InjectModel(Story.name) private readonly storyModel: Model<StoryDocument>,
+    @InjectModel(TicketComment.name) private readonly commentModel: Model<TicketCommentDocument>,
     private readonly configService: ConfigService,
     private readonly configGenerator: ZeroClawConfigGeneratorService,
     private readonly aieosGenerator: AieosGeneratorService,
@@ -160,6 +164,7 @@ export class ZeroClawProcessManagerService {
     channelId: string;
     text: string;
     mentionedSlackUserId?: string;
+    threadTs?: string | null;
   }): Promise<void> {
     const projectId = new Types.ObjectId(payload.projectId);
     const tenantId = new Types.ObjectId(payload.tenantId);
@@ -190,6 +195,30 @@ export class ZeroClawProcessManagerService {
 
     const instanceId = (target._id as Types.ObjectId).toString();
     if (target.pid) this.poke(target.pid);
+
+    // If message is part of a known story thread, inject prior context first
+    if (payload.threadTs) {
+      const story = await this.storyModel
+        .findOne({ projectId, tenantId, storySlackThread: payload.threadTs })
+        .lean()
+        .exec();
+      if (story) {
+        const priorComments = await this.commentModel
+          .find({ storyId: story._id, tenantId })
+          .sort({ createdAt: 1 })
+          .lean()
+          .exec();
+        if (priorComments.length > 0) {
+          const context = priorComments.map((c) => ({
+            author: c.authorDisplayName,
+            text: c.content,
+            type: c.type,
+          }));
+          this.injectStdin(instanceId, `THREAD_CONTEXT: ${JSON.stringify(context)}`);
+        }
+      }
+    }
+
     this.injectStdin(instanceId, `USER_MESSAGE: ${payload.text}`);
     this.logger.log(`Routed Slack message to agent ${target.displayName}`);
   }

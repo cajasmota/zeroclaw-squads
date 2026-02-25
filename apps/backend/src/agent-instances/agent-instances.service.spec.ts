@@ -1,4 +1,4 @@
-import { NotFoundException } from '@nestjs/common';
+import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { getModelToken } from '@nestjs/mongoose';
 import { Test, TestingModule } from '@nestjs/testing';
 import { Types } from 'mongoose';
@@ -18,8 +18,14 @@ const mockTemplate = {
   role: 'developer',
   tags: ['typescript'],
   soul: 'You are a developer',
-  aieos_identity: { version: '1.1' },
+  aieos_identity: { version: '1.1', identity: { role: 'developer' } },
   config: { model: 'gpt-4', provider: 'openai', skills: '', canWriteCode: true, mcpServers: [] },
+};
+
+const mockLibrarianTemplate = {
+  ...mockTemplate,
+  displayName: 'Librarian Agent',
+  aieos_identity: { version: '1.1', identity: { role: 'librarian' } },
 };
 
 const mockInstance = {
@@ -87,6 +93,28 @@ describe('AgentInstancesService', () => {
 
       await expect(service.createSnapshot(projectId, tenantId, templateId))
         .rejects.toThrow(NotFoundException);
+    });
+
+    it('should throw BadRequestException when creating a second Librarian for the same project', async () => {
+      templateFindOne.mockReturnValue({ lean: () => ({ exec: () => Promise.resolve(mockLibrarianTemplate) }) });
+      // First findOne for identifier uniqueness → null; second for singleton check → existing instance
+      instanceFindOne
+        .mockReturnValueOnce({ lean: () => ({ exec: () => Promise.resolve(null) }) })   // identifier check
+        .mockReturnValueOnce({ lean: () => ({ exec: () => Promise.resolve(mockInstance) }) }); // singleton check
+
+      await expect(service.createSnapshot(projectId, tenantId, templateId))
+        .rejects.toThrow(BadRequestException);
+    });
+
+    it('should allow creating multiple Developer instances', async () => {
+      templateFindOne.mockReturnValue({ lean: () => ({ exec: () => Promise.resolve(mockTemplate) }) });
+      instanceFindOne.mockReturnValue({ lean: () => ({ exec: () => Promise.resolve(null) }) });
+      instanceCreate.mockResolvedValue(mockInstance);
+      instanceFindByIdAndUpdate.mockResolvedValue(mockInstance);
+
+      // Should not throw for non-singleton roles
+      const result = await service.createSnapshot(projectId, tenantId, templateId);
+      expect(result.displayName).toBe('Developer Agent');
     });
   });
 

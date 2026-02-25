@@ -86,6 +86,7 @@ export class SlackEventsController {
       channelId,
       text: event.text ?? '',
       mentionedSlackUserId,
+      threadTs: event.thread_ts ?? null,
     });
   }
 }

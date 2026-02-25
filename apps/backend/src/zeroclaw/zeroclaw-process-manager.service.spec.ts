@@ -2,9 +2,11 @@ import { EventEmitter2 } from '@nestjs/event-emitter';
 import { getModelToken } from '@nestjs/mongoose';
 import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigService } from '@nestjs/config';
+import { Story } from '../backlog/story.schema';
 import { AgentInstance } from '../agent-instances/agent-instance.schema';
 import { AgentInstancesService } from '../agent-instances/agent-instances.service';
 import { GlobalSettingsService } from '../settings/global-settings.service';
+import { TicketComment } from '../ticket-dialogue/ticket-comment.schema';
 import { AesGateway } from '../websocket/aes.gateway';
 import { AieosGeneratorService } from './aieos-generator.service';
 import { ZeroClawConfigGeneratorService } from './zeroclaw-config-generator.service';
@@ -24,6 +26,18 @@ describe('ZeroClawProcessManagerService', () => {
           useValue: {
             find: jest.fn().mockReturnValue({ lean: () => ({ exec: () => Promise.resolve([]) }) }),
             findOne: jest.fn().mockReturnValue({ exec: () => Promise.resolve(null) }),
+          },
+        },
+        {
+          provide: getModelToken(Story.name),
+          useValue: {
+            findOne: jest.fn().mockReturnValue({ lean: () => ({ exec: () => Promise.resolve(null) }) }),
+          },
+        },
+        {
+          provide: getModelToken(TicketComment.name),
+          useValue: {
+            find: jest.fn().mockReturnValue({ sort: () => ({ lean: () => ({ exec: () => Promise.resolve([]) }) }) }),
           },
         },
         { provide: AgentInstancesService, useValue: { updateStatus: jest.fn(), updatePid: jest.fn() } },

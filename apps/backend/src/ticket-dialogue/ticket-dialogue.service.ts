@@ -57,6 +57,22 @@ export class TicketDialogueService {
 
     if (story?.assignedTo?.length) {
       const agentId = story.assignedTo[0].toString();
+
+      // Inject full thread context before the new message (avoids stale context)
+      const priorComments = await this.commentModel
+        .find({ storyId: new Types.ObjectId(storyId), tenantId })
+        .sort({ createdAt: 1 })
+        .lean()
+        .exec();
+      if (priorComments.length > 0) {
+        const context = priorComments.map((c) => ({
+          author: c.authorDisplayName,
+          text: c.content,
+          type: c.type,
+        }));
+        this.processManager.injectStdin(agentId, `THREAD_CONTEXT: ${JSON.stringify(context)}`);
+      }
+
       this.processManager.injectStdin(agentId, `USER_MESSAGE: ${content}`);
     }
 

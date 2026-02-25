@@ -1,7 +1,10 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { OnEvent } from '@nestjs/event-emitter';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
+
+/** Roles that may only have one instance per project */
+const SINGLETON_ROLES = ['librarian', 'architect', 'pm', 'product manager'];
 import { AgentTemplate, AgentTemplateDocument } from '../templates/agent-template.schema';
 import { AgentInstance, AgentInstanceDocument } from './agent-instance.schema';
 
@@ -40,6 +43,24 @@ export class AgentInstancesService {
     let counter = 1;
     while (await this.instanceModel.findOne({ projectId, identifier }).lean().exec()) {
       identifier = `${baseIdentifier}-${counter++}`;
+    }
+
+    // Enforce singleton role constraint
+    const role: string = (template.aieos_identity as any)?.identity?.role ?? '';
+    const isSingleton = SINGLETON_ROLES.some((r) => role.toLowerCase().includes(r));
+    if (isSingleton) {
+      const existing = await this.instanceModel
+        .findOne({
+          projectId,
+          'aieos_identity.identity.role': new RegExp(role, 'i'),
+        })
+        .lean()
+        .exec();
+      if (existing) {
+        throw new BadRequestException(
+          `A ${role} agent already exists for this project. Only one ${role} is allowed per project.`,
+        );
+      }
     }
 
     const instance = await this.instanceModel.create({
