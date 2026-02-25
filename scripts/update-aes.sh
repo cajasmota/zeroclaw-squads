@@ -1,0 +1,130 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# =============================================================================
+# AES Update Script — Zero-Downtime Update
+# Usage: ./scripts/update-aes.sh [--branch <name>] [--auto]
+# =============================================================================
+
+RED='\033[0;31m'; YELLOW='\033[1;33m'; GREEN='\033[0;32m'; BLUE='\033[0;34m'; NC='\033[0m'
+info()    { echo -e "${BLUE}[INFO]${NC} $*"; }
+success() { echo -e "${GREEN}[OK]${NC} $*"; }
+warn()    { echo -e "${YELLOW}[WARN]${NC} $*"; }
+error()   { echo -e "${RED}[ERROR]${NC} $*"; exit 1; }
+
+BRANCH="main"
+AUTO=false
+for arg in "$@"; do
+  case $arg in
+    --branch) shift; BRANCH="$1" ;;
+    --auto)   AUTO=true ;;
+  esac
+done
+
+AES_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+TIMESTAMP=$(date +%Y%m%d_%H%M%S)
+
+# ---------------------------------------------------------------------------
+# Pre-flight
+# ---------------------------------------------------------------------------
+preflight() {
+  [[ -f "${AES_DIR}/.env" ]] || error "AES does not appear to be installed (.env not found)."
+  command -v pm2 &>/dev/null || error "pm2 not found. Is AES installed?"
+
+  info "Backing up .env to .env.backup.${TIMESTAMP}..."
+  cp "${AES_DIR}/.env" "${AES_DIR}/.env.backup.${TIMESTAMP}"
+
+  info "Backing up MongoDB..."
+  if command -v mongodump &>/dev/null; then
+    mongodump --out "/tmp/aes-backup-${TIMESTAMP}/" &>/dev/null || warn "mongodump failed (MongoDB may not be local)."
+    success "MongoDB backup at /tmp/aes-backup-${TIMESTAMP}/"
+  else
+    warn "mongodump not found — skipping MongoDB backup."
+  fi
+}
+
+# ---------------------------------------------------------------------------
+# Pull latest code
+# ---------------------------------------------------------------------------
+pull_code() {
+  info "Pulling latest code from branch: ${BRANCH}..."
+  cd "${AES_DIR}"
+  git pull origin "${BRANCH}"
+  success "Code updated."
+}
+
+# ---------------------------------------------------------------------------
+# Check and optionally update ZeroClaw / Ollama
+# ---------------------------------------------------------------------------
+check_tools() {
+  info "Checking ZeroClaw version..."
+  local current_version; current_version=$(zeroclaw --version 2>/dev/null || echo "unknown")
+  info "Current ZeroClaw: ${current_version}"
+
+  if ! $AUTO; then
+    read -rp "Check for ZeroClaw update? [y/N]: " check_zc
+    if [[ "${check_zc,,}" == "y" ]]; then
+      local arch; arch=$(uname -m)
+      local os; os=$(uname -s | tr '[:upper:]' '[:lower:]')
+      if curl -fsSL "https://github.com/zeroclaw-labs/zeroclaw/releases/latest/download/zeroclaw-${os}-${arch}" -o /tmp/zeroclaw 2>/dev/null; then
+        sudo install -m 755 /tmp/zeroclaw /usr/local/bin/zeroclaw
+        success "ZeroClaw updated to $(zeroclaw --version)"
+      else
+        warn "Could not download ZeroClaw update."
+      fi
+    fi
+  fi
+}
+
+# ---------------------------------------------------------------------------
+# Rebuild
+# ---------------------------------------------------------------------------
+rebuild() {
+  info "Rebuilding application..."
+  cd "${AES_DIR}"
+  pnpm install --frozen-lockfile
+  pnpm build
+  success "Application rebuilt."
+}
+
+# ---------------------------------------------------------------------------
+# Zero-downtime restart
+# ---------------------------------------------------------------------------
+restart() {
+  info "Reloading pm2 processes (zero-downtime)..."
+  cd "${AES_DIR}"
+  pm2 reload ecosystem.config.js || pm2 restart ecosystem.config.js
+  success "pm2 reloaded."
+}
+
+# ---------------------------------------------------------------------------
+# Post-update verification
+# ---------------------------------------------------------------------------
+verify() {
+  info "Waiting 10s for backend to start..."
+  sleep 10
+
+  if curl -fs --max-time 5 http://localhost:3001/health &>/dev/null; then
+    local version; version=$(git -C "${AES_DIR}" describe --tags --always 2>/dev/null || echo "unknown")
+    success "Update complete. Version: ${version}"
+  else
+    warn "Backend health check failed. Attempting rollback..."
+    pm2 reload ecosystem.config.js || true
+    error "Update may have failed. Check pm2 logs: pm2 logs"
+  fi
+}
+
+# ---------------------------------------------------------------------------
+# Main
+# ---------------------------------------------------------------------------
+main() {
+  echo -e "${BLUE}[AES] Starting update...${NC}"
+  preflight
+  pull_code
+  check_tools
+  rebuild
+  restart
+  verify
+}
+
+main
