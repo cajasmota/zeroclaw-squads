@@ -55,6 +55,9 @@ export class AgentInstance {
 
   @Prop({ default: '' })
   workspacePath: string;
+
+  @Prop({ type: Number, default: null })
+  gatewayPort: number | null;
 }
 
 export const AgentInstanceSchema = SchemaFactory.createForClass(AgentInstance);

@@ -90,6 +90,13 @@ export class AgentInstancesService {
       .exec();
   }
 
+  async updateGatewayPort(id: string, gatewayPort: number) {
+    return this.instanceModel
+      .findByIdAndUpdate(id, { $set: { gatewayPort } }, { new: true })
+      .lean()
+      .exec();
+  }
+
   async updateSoulOrIdentity(
     id: string,
     tenantId: Types.ObjectId,
@@ -105,5 +112,43 @@ export class AgentInstancesService {
       .exec();
     if (!instance) throw new NotFoundException(`AgentInstance ${id} not found`);
     return instance;
+  }
+
+  async syncFromTemplate(
+    tenantId: Types.ObjectId,
+    projectId: Types.ObjectId,
+    agentInstanceId: string,
+    fields: { soul?: boolean; aieos?: boolean; config?: boolean },
+  ) {
+    const instance = await this.instanceModel
+      .findOne({ _id: new Types.ObjectId(agentInstanceId), projectId, tenantId })
+      .lean()
+      .exec();
+    if (!instance) throw new NotFoundException(`AgentInstance ${agentInstanceId} not found`);
+
+    if (!instance.templateId) throw new NotFoundException(`AgentInstance has no linked template`);
+
+    const template = await this.templateModel
+      .findOne({ _id: instance.templateId, tenantId })
+      .lean()
+      .exec();
+    if (!template) throw new NotFoundException(`Source template not found`);
+
+    const updates: Record<string, any> = {};
+    if (fields.soul) updates.soul = template.soul;
+    if (fields.aieos) updates.aieos_identity = template.aieos_identity;
+    if (fields.config) updates.config = template.config;
+
+    if (Object.keys(updates).length === 0) return instance;
+
+    const updated = await this.instanceModel
+      .findOneAndUpdate(
+        { _id: new Types.ObjectId(agentInstanceId), tenantId },
+        { $set: updates },
+        { new: true },
+      )
+      .lean()
+      .exec();
+    return updated;
   }
 }

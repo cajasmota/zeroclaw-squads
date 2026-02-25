@@ -105,4 +105,64 @@ describe('AgentInstancesService', () => {
         .rejects.toThrow(NotFoundException);
     });
   });
+
+  describe('syncFromTemplate()', () => {
+    const instanceWithTemplate = { ...mockInstance, templateId };
+
+    it('should sync only requested fields (soul only)', async () => {
+      instanceFindOne.mockReturnValue({ lean: () => ({ exec: () => Promise.resolve(instanceWithTemplate) }) });
+      templateFindOne.mockReturnValue({ lean: () => ({ exec: () => Promise.resolve(mockTemplate) }) });
+      const updatedInstance = { ...instanceWithTemplate, soul: mockTemplate.soul };
+      instanceFindOneAndUpdate.mockReturnValue({ lean: () => ({ exec: () => Promise.resolve(updatedInstance) }) });
+
+      const result = await service.syncFromTemplate(tenantId, projectId, instanceId.toString(), { soul: true });
+      expect(instanceFindOneAndUpdate).toHaveBeenCalledWith(
+        expect.any(Object),
+        { $set: { soul: mockTemplate.soul } },
+        expect.any(Object),
+      );
+      expect(result?.soul).toBe(mockTemplate.soul);
+    });
+
+    it('should sync all fields when all flags are true', async () => {
+      instanceFindOne.mockReturnValue({ lean: () => ({ exec: () => Promise.resolve(instanceWithTemplate) }) });
+      templateFindOne.mockReturnValue({ lean: () => ({ exec: () => Promise.resolve(mockTemplate) }) });
+      instanceFindOneAndUpdate.mockReturnValue({ lean: () => ({ exec: () => Promise.resolve(instanceWithTemplate) }) });
+
+      await service.syncFromTemplate(tenantId, projectId, instanceId.toString(), { soul: true, aieos: true, config: true });
+      expect(instanceFindOneAndUpdate).toHaveBeenCalledWith(
+        expect.any(Object),
+        { $set: { soul: mockTemplate.soul, aieos_identity: mockTemplate.aieos_identity, config: mockTemplate.config } },
+        expect.any(Object),
+      );
+    });
+
+    it('should not modify displayName or pid', async () => {
+      instanceFindOne.mockReturnValue({ lean: () => ({ exec: () => Promise.resolve(instanceWithTemplate) }) });
+      templateFindOne.mockReturnValue({ lean: () => ({ exec: () => Promise.resolve(mockTemplate) }) });
+      instanceFindOneAndUpdate.mockReturnValue({ lean: () => ({ exec: () => Promise.resolve(instanceWithTemplate) }) });
+
+      await service.syncFromTemplate(tenantId, projectId, instanceId.toString(), { soul: true });
+      const setArg = instanceFindOneAndUpdate.mock.calls[0][1].$set;
+      expect(setArg).not.toHaveProperty('displayName');
+      expect(setArg).not.toHaveProperty('pid');
+    });
+
+    it('should throw NotFoundException when instance not found', async () => {
+      instanceFindOne.mockReturnValue({ lean: () => ({ exec: () => Promise.resolve(null) }) });
+
+      await expect(
+        service.syncFromTemplate(tenantId, projectId, instanceId.toString(), { soul: true }),
+      ).rejects.toThrow(NotFoundException);
+    });
+
+    it('should throw NotFoundException when template not found', async () => {
+      instanceFindOne.mockReturnValue({ lean: () => ({ exec: () => Promise.resolve(instanceWithTemplate) }) });
+      templateFindOne.mockReturnValue({ lean: () => ({ exec: () => Promise.resolve(null) }) });
+
+      await expect(
+        service.syncFromTemplate(tenantId, projectId, instanceId.toString(), { soul: true }),
+      ).rejects.toThrow(NotFoundException);
+    });
+  });
 });

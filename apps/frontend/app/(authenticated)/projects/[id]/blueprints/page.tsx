@@ -2,6 +2,7 @@
 
 import { useParams } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useProjectSocket } from "@/hooks/useProjectSocket";
 import {
   ReactFlow,
   Background,
@@ -131,11 +132,17 @@ function NodeContextMenu({
 }
 
 function AgentTaskNode({ id, data, selected }: any) {
+  const liveStatus: string | undefined = data.liveStatus;
+  const liveRing = liveStatus === "running" ? "ring-2 ring-blue-400 animate-pulse" :
+    liveStatus === "completed" ? "ring-2 ring-green-400" :
+    liveStatus === "failed" ? "ring-2 ring-red-400" :
+    liveStatus === "waiting_approval" ? "ring-2 ring-orange-400 animate-pulse" : "";
+
   return (
     <div
       className={`relative bg-background border-2 rounded-lg p-3 min-w-[180px] max-w-[220px] shadow-sm ${
         selected ? "border-primary" : data.requiresHumanApproval ? "border-orange-400" : "border-border"
-      }`}
+      } ${liveRing}`}
     >
       <Handle type="target" position={Position.Top} />
       <div className="flex items-start gap-2">
@@ -328,19 +335,168 @@ function NodeConfigureDialog({
 
 // ── Node Execution History Panel ───────────────────────────────────────────
 
-function ExecutionHistoryPanel({ open, nodeId, onClose }: { open: boolean; nodeId: string | null; onClose: () => void }) {
+interface NodeExecution {
+  nodeId: string;
+  status: "pending" | "running" | "completed" | "failed" | "waiting_approval";
+  startedAt?: string;
+  completedAt?: string;
+  agentInstanceId?: string;
+}
+
+interface WorkflowRun {
+  _id: string;
+  status: string;
+  startedAt: string;
+  completedAt?: string;
+  currentNodeId: string;
+  nodeExecutions: NodeExecution[];
+}
+
+const STATUS_LABEL: Record<string, string> = {
+  pending: "Pending", running: "Running", completed: "Completed",
+  failed: "Failed", waiting_approval: "Waiting Approval",
+};
+const STATUS_COLOR: Record<string, string> = {
+  pending: "text-gray-500", running: "text-blue-500", completed: "text-green-500",
+  failed: "text-red-500", waiting_approval: "text-orange-500",
+};
+
+function ExecutionHistoryPanel({
+  open, nodeId, projectId, onClose,
+}: {
+  open: boolean; nodeId: string | null; projectId: string; onClose: () => void;
+}) {
+  const [runs, setRuns] = useState<WorkflowRun[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [selectedRun, setSelectedRun] = useState<{ run: WorkflowRun; exec: NodeExecution } | null>(null);
+
+  useEffect(() => {
+    if (!open || !nodeId) return;
+    setLoading(true);
+    setSelectedRun(null);
+    fetch(`/api/projects/${projectId}/workflows`)
+      .then(r => r.json())
+      .then((data: WorkflowRun[]) => {
+        // Filter runs that have an execution for this nodeId
+        const relevant = (Array.isArray(data) ? data : []).filter(run =>
+          run.nodeExecutions?.some(e => e.nodeId === nodeId)
+        );
+        setRuns(relevant);
+      })
+      .catch(console.error)
+      .finally(() => setLoading(false));
+  }, [open, nodeId, projectId]);
+
   if (!open) return null;
+
   return (
     <div className="absolute right-0 top-0 h-full w-80 bg-background border-l shadow-xl z-40 flex flex-col">
       <div className="flex items-center justify-between px-4 py-3 border-b">
-        <h3 className="font-semibold text-sm">Execution History — Node {nodeId}</h3>
-        <button onClick={onClose}><X className="h-4 w-4" /></button>
-      </div>
-      <div className="flex-1 overflow-y-auto p-4">
-        <div className="text-sm text-muted-foreground text-center py-8">
-          No execution history found for this node.
+        <h3 className="font-semibold text-sm">
+          {selectedRun ? "Execution Log" : `History — Node ${nodeId}`}
+        </h3>
+        <div className="flex gap-2">
+          {selectedRun && (
+            <button onClick={() => setSelectedRun(null)} className="text-xs text-muted-foreground hover:text-foreground">← Back</button>
+          )}
+          <button onClick={onClose}><X className="h-4 w-4" /></button>
         </div>
       </div>
+
+      <div className="flex-1 overflow-y-auto p-4">
+        {loading ? (
+          <div className="text-sm text-muted-foreground text-center py-8">Loading...</div>
+        ) : selectedRun ? (
+          // Log viewer for selected run's node execution
+          <div className="space-y-3">
+            <div className="rounded-md bg-muted p-3 space-y-1 text-xs font-mono">
+              <div className="text-muted-foreground">Run ID: {selectedRun.run._id}</div>
+              <div className="text-muted-foreground">Node: {selectedRun.exec.nodeId}</div>
+              <div className={STATUS_COLOR[selectedRun.exec.status]}>Status: {STATUS_LABEL[selectedRun.exec.status] ?? selectedRun.exec.status}</div>
+              {selectedRun.exec.startedAt && (
+                <div className="text-muted-foreground">
+                  Started: {new Date(selectedRun.exec.startedAt).toLocaleString()}
+                </div>
+              )}
+              {selectedRun.exec.completedAt && (
+                <div className="text-muted-foreground">
+                  Completed: {new Date(selectedRun.exec.completedAt).toLocaleString()}
+                </div>
+              )}
+              {selectedRun.exec.agentInstanceId && (
+                <div className="text-muted-foreground">Agent: {selectedRun.exec.agentInstanceId}</div>
+              )}
+            </div>
+            <div className="rounded-md bg-black/90 p-3 min-h-[120px] font-mono text-xs text-green-300">
+              <div className="text-gray-500 mb-2"># stdout/stderr</div>
+              <div className="text-gray-400">Live logs are streamed via WebSocket and not persisted. Re-trigger this workflow to see live output.</div>
+            </div>
+          </div>
+        ) : runs.length === 0 ? (
+          <div className="text-sm text-muted-foreground text-center py-8">
+            No execution history found for this node.
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {runs.map(run => {
+              const exec = run.nodeExecutions.find(e => e.nodeId === nodeId)!;
+              return (
+                <button
+                  key={run._id}
+                  onClick={() => setSelectedRun({ run, exec })}
+                  className="w-full text-left rounded-md border p-3 hover:bg-accent/50 space-y-1"
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-mono text-muted-foreground truncate">{run._id.slice(-8)}</span>
+                    <span className={`text-xs font-medium ${STATUS_COLOR[exec.status]}`}>{STATUS_LABEL[exec.status] ?? exec.status}</span>
+                  </div>
+                  <div className="text-xs text-muted-foreground">
+                    {new Date(run.startedAt).toLocaleString()}
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ── WorkflowRunStatusOverlay ────────────────────────────────────────────────
+
+function WorkflowRunStatusOverlay({
+  nodeStatuses,
+  approvalNodeIds,
+}: {
+  nodeStatuses: Record<string, string>;
+  approvalNodeIds: Set<string>;
+}) {
+  const hasOverlay = Object.keys(nodeStatuses).length > 0 || approvalNodeIds.size > 0;
+  if (!hasOverlay) return null;
+
+  return (
+    <div className="absolute top-2 left-2 z-30 bg-background/90 border rounded-md shadow p-2 space-y-1 max-w-[200px]">
+      <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Live Run Status</p>
+      {Object.entries(nodeStatuses).map(([nodeId, status]) => (
+        <div key={nodeId} className="flex items-center gap-2 text-xs">
+          <span className={`h-2 w-2 rounded-full flex-shrink-0 ${
+            status === "running" ? "bg-blue-500 animate-pulse" :
+            status === "completed" ? "bg-green-500" :
+            status === "failed" ? "bg-red-500" :
+            status === "waiting_approval" ? "bg-orange-400 animate-pulse" :
+            "bg-gray-400"
+          }`} />
+          <span className="font-mono truncate">{nodeId.slice(0, 12)}</span>
+          <span className="text-muted-foreground capitalize">{status.replace("_", " ")}</span>
+        </div>
+      ))}
+      {approvalNodeIds.size > 0 && (
+        <div className="text-xs text-orange-500 font-medium flex items-center gap-1">
+          <AlertTriangle className="h-3 w-3" />
+          {approvalNodeIds.size} node(s) waiting approval
+        </div>
+      )}
     </div>
   );
 }
@@ -363,8 +519,23 @@ export default function BlueprintsPage() {
   const [historyNodeId, setHistoryNodeId] = useState<string | null>(null);
   const [historyOpen, setHistoryOpen] = useState(false);
   const [error, setError] = useState("");
+  const [liveNodeStatuses, setLiveNodeStatuses] = useState<Record<string, string>>({});
+  const [approvalNodeIds, setApprovalNodeIds] = useState<Set<string>>(new Set());
 
   const rfWrapper = useRef<HTMLDivElement>(null);
+
+  // WebSocket: live workflow node status
+  useProjectSocket(projectId, {
+    onWorkflowNode: useCallback(({ nodeId, status }: { runId: string; nodeId: string; status: string }) => {
+      setLiveNodeStatuses(prev => ({ ...prev, [nodeId]: status }));
+      // Update node data so the ring effect shows
+      setNodes(nds => nds.map(n => n.id === nodeId ? { ...n, data: { ...n.data, liveStatus: status } } : n));
+    }, [setNodes]),
+    onApprovalNeeded: useCallback(({ nodeId }: { runId: string; nodeId: string; description: string }) => {
+      setApprovalNodeIds(prev => new Set([...prev, nodeId]));
+      setNodes(nds => nds.map(n => n.id === nodeId ? { ...n, data: { ...n.data, liveStatus: "waiting_approval" } } : n));
+    }, [setNodes]),
+  });
 
   async function loadTemplates() {
     try {
@@ -590,7 +761,14 @@ export default function BlueprintsPage() {
           <ExecutionHistoryPanel
             open={historyOpen}
             nodeId={historyNodeId}
+            projectId={projectId}
             onClose={() => { setHistoryOpen(false); setHistoryNodeId(null); }}
+          />
+
+          {/* WorkflowRunStatusOverlay */}
+          <WorkflowRunStatusOverlay
+            nodeStatuses={liveNodeStatuses}
+            approvalNodeIds={approvalNodeIds}
           />
         </div>
       </div>
