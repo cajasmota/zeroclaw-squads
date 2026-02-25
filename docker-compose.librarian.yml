@@ -1,0 +1,50 @@
+version: '3.8'
+
+# AES Librarian MCP — Parser Engine + Graph Engine
+# Run: docker-compose -f docker-compose.librarian.yml up -d
+
+services:
+  parser-engine:
+    # CocoIndex MCP Server + Drift for AST parsing
+    # See: https://github.com/aanno/cocoindex-code-mcp-server
+    #      https://github.com/dadbodgeoff/drift
+    image: node:20-alpine
+    working_dir: /app
+    command: >
+      sh -c "echo 'Parser engine placeholder — replace with real CocoIndex+Drift image'"
+    ports:
+      - "5001:5001"
+    environment:
+      - PORT=5001
+      - WORKSPACE_PATH=/workspace
+    volumes:
+      - librarian-data:/workspace
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:5001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  graph-engine:
+    # Code Pathfinder for call graph analysis
+    # See: https://github.com/shivasurya/code-pathfinder
+    image: node:20-alpine
+    working_dir: /app
+    command: >
+      sh -c "echo 'Graph engine placeholder — replace with real Code Pathfinder image'"
+    ports:
+      - "5002:5002"
+    environment:
+      - PORT=5002
+      - WORKSPACE_PATH=/workspace
+    volumes:
+      - librarian-data:/workspace
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:5002/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+volumes:
+  librarian-data:
+    driver: local
