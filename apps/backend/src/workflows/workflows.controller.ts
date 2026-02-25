@@ -10,7 +10,9 @@ import { WorkflowsService } from './workflows.service';
 export class WorkflowsController {
   constructor(private readonly workflowsService: WorkflowsService) {}
 
-  private tenantId(user: RequestUser) { return new Types.ObjectId(user.tenantId); }
+  private tenantId(user: RequestUser) {
+    return new Types.ObjectId(user.tenantId);
+  }
 
   @Get('workflows/templates')
   findAllTemplates(@CurrentUser() user: RequestUser) {
@@ -37,8 +39,14 @@ export class WorkflowsController {
   }
 
   @Get('projects/:projectId/workflows/runs')
-  getRunHistory(@CurrentUser() user: RequestUser, @Param('projectId') pid: string) {
-    return this.workflowsService.getRunHistory(new Types.ObjectId(pid), this.tenantId(user));
+  getRunHistory(
+    @CurrentUser() user: RequestUser,
+    @Param('projectId') pid: string,
+  ) {
+    return this.workflowsService.getRunHistory(
+      new Types.ObjectId(pid),
+      this.tenantId(user),
+    );
   }
 
   @Get('projects/:projectId/workflows/runs/:runId')

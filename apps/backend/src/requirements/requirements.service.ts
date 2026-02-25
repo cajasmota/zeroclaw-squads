@@ -1,7 +1,10 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
-import { RequirementsDocument, RequirementsDocumentDoc } from './requirements-document.schema';
+import {
+  RequirementsDocument,
+  RequirementsDocumentDoc,
+} from './requirements-document.schema';
 
 @Injectable()
 export class RequirementsService {
@@ -10,7 +13,10 @@ export class RequirementsService {
     private readonly docModel: Model<RequirementsDocumentDoc>,
   ) {}
 
-  async findAll(projectId: Types.ObjectId, tenantId: Types.ObjectId): Promise<RequirementsDocumentDoc[]> {
+  async findAll(
+    projectId: Types.ObjectId,
+    tenantId: Types.ObjectId,
+  ): Promise<RequirementsDocumentDoc[]> {
     return this.docModel
       .find({ projectId, tenantId })
       .sort({ order: 1, createdAt: 1 })
@@ -20,7 +26,12 @@ export class RequirementsService {
   async create(
     projectId: Types.ObjectId,
     tenantId: Types.ObjectId,
-    dto: { title: string; content?: unknown; parentId?: string; order?: number },
+    dto: {
+      title: string;
+      content?: unknown;
+      parentId?: string;
+      order?: number;
+    },
   ): Promise<RequirementsDocumentDoc> {
     const doc = new this.docModel({
       projectId,
@@ -37,12 +48,20 @@ export class RequirementsService {
     projectId: Types.ObjectId,
     tenantId: Types.ObjectId,
     docId: string,
-    dto: { title?: string; content?: unknown; parentId?: string; order?: number },
+    dto: {
+      title?: string;
+      content?: unknown;
+      parentId?: string;
+      order?: number;
+    },
   ): Promise<RequirementsDocumentDoc> {
     const updateData: Record<string, unknown> = {};
     if (dto.title !== undefined) updateData.title = dto.title;
     if (dto.content !== undefined) updateData.content = dto.content;
-    if (dto.parentId !== undefined) updateData.parentId = dto.parentId ? new Types.ObjectId(dto.parentId) : null;
+    if (dto.parentId !== undefined)
+      updateData.parentId = dto.parentId
+        ? new Types.ObjectId(dto.parentId)
+        : null;
     if (dto.order !== undefined) updateData.order = dto.order;
 
     const updated = await this.docModel
@@ -53,7 +72,8 @@ export class RequirementsService {
       )
       .exec();
 
-    if (!updated) throw new NotFoundException('Requirements document not found');
+    if (!updated)
+      throw new NotFoundException('Requirements document not found');
     return updated;
   }
 
@@ -65,6 +85,7 @@ export class RequirementsService {
     const result = await this.docModel
       .deleteOne({ _id: new Types.ObjectId(docId), projectId, tenantId })
       .exec();
-    if (result.deletedCount === 0) throw new NotFoundException('Requirements document not found');
+    if (result.deletedCount === 0)
+      throw new NotFoundException('Requirements document not found');
   }
 }

@@ -13,7 +13,12 @@ describe('OllamaService', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         OllamaService,
-        { provide: ConfigService, useValue: { get: jest.fn().mockReturnValue('http://localhost:11434') } },
+        {
+          provide: ConfigService,
+          useValue: {
+            get: jest.fn().mockReturnValue('http://localhost:11434'),
+          },
+        },
       ],
     }).compile();
 

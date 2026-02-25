@@ -43,6 +43,7 @@ interface AgentInstance {
   soul?: string;
   pid?: number;
   config?: { model: string; provider: string };
+  aieos_identity?: Record<string, unknown>;
 }
 
 interface Epic {
@@ -109,10 +110,12 @@ function DashboardTab({ projectId, liveStatuses }: { projectId: string; liveStat
   const [stories, setStories] = useState<Story[]>([]);
   const [indexing, setIndexing] = useState(false);
   const [indexMsg, setIndexMsg] = useState<string | null>(null);
+  const [librarianStatus, setLibrarianStatus] = useState<string>("idle");
 
   useEffect(() => {
     fetch(`/api/projects/${projectId}/agents`).then(r => r.json()).then(setAgents).catch(console.error);
     fetch(`/api/projects/${projectId}/stories`).then(r => r.json()).then(setStories).catch(console.error);
+    fetch(`/api/projects/${projectId}/librarian/status`).then(r => r.json()).then((d: { status: string }) => setLibrarianStatus(d.status)).catch(console.error);
   }, [projectId]);
 
   const triggerIngest = async () => {
@@ -138,10 +141,18 @@ function DashboardTab({ projectId, liveStatuses }: { projectId: string; liveStat
     backlog: "Backlog", selected: "Selected", in_progress: "In Progress", review: "Review", done: "Done",
   };
 
+  const libStatusColors: Record<string, string> = { idle: "bg-gray-400", indexing: "bg-yellow-500 animate-pulse", done: "bg-green-500", error: "bg-red-500" };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h2 className="text-lg font-semibold">Agent Health</h2>
+        <div className="flex items-center gap-3">
+          <h2 className="text-lg font-semibold">Agent Health</h2>
+          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+            <span className={`h-2 w-2 rounded-full ${libStatusColors[librarianStatus] ?? "bg-gray-400"}`} />
+            <span>Librarian: {librarianStatus}</span>
+          </div>
+        </div>
         <Button variant="outline" size="sm" onClick={triggerIngest} disabled={indexing}>
           {indexing ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <RefreshCw className="h-4 w-4 mr-2" />}
           Trigger Knowledge Ingestion
@@ -199,7 +210,8 @@ export function AgentsTab({ projectId, liveStatuses }: { projectId: string; live
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState<AgentInstance | null>(null);
   const [editMode, setEditMode] = useState(false);
-  const [editForm, setEditForm] = useState({ displayName: "", soul: "" });
+  const [editForm, setEditForm] = useState({ displayName: "", soul: "", aieosJson: "" });
+  const [aieosJsonError, setAieosJsonError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
   const fetchAgents = () => {
@@ -210,17 +222,28 @@ export function AgentsTab({ projectId, liveStatuses }: { projectId: string; live
 
   const openAgent = (a: AgentInstance) => {
     setSelected(a);
-    setEditForm({ displayName: a.displayName, soul: a.soul ?? "" });
+    setEditForm({ displayName: a.displayName, soul: a.soul ?? "", aieosJson: a.aieos_identity ? JSON.stringify(a.aieos_identity, null, 2) : "" });
+    setAieosJsonError(null);
     setEditMode(false);
   };
 
   const saveAgent = async () => {
     if (!selected) return;
+    let aieos_identity: Record<string, unknown> | undefined;
+    if (editForm.aieosJson.trim()) {
+      try {
+        aieos_identity = JSON.parse(editForm.aieosJson) as Record<string, unknown>;
+        setAieosJsonError(null);
+      } catch {
+        setAieosJsonError("Invalid JSON");
+        return;
+      }
+    }
     setSaving(true);
     await fetch(`/api/projects/${projectId}/agents/${selected._id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(editForm),
+      body: JSON.stringify({ displayName: editForm.displayName, soul: editForm.soul, ...(aieos_identity !== undefined ? { aieos_identity } : {}) }),
     });
     setSaving(false);
     setEditMode(false);
@@ -295,6 +318,17 @@ export function AgentsTab({ projectId, liveStatuses }: { projectId: string; live
                     value={editForm.soul}
                     onChange={e => setEditForm({ ...editForm, soul: e.target.value })}
                   />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="agent-edit-aieos">AIEOS Identity JSON</Label>
+                  <textarea
+                    id="agent-edit-aieos"
+                    className={`flex min-h-[120px] w-full rounded-md border bg-transparent px-3 py-2 text-xs font-mono shadow-sm resize-y ${aieosJsonError ? "border-red-500" : "border-input"}`}
+                    placeholder='{"identity": {"names": ["Agent"]}, ...}'
+                    value={editForm.aieosJson}
+                    onChange={e => { setEditForm({ ...editForm, aieosJson: e.target.value }); setAieosJsonError(null); }}
+                  />
+                  {aieosJsonError && <p className="text-xs text-red-500">{aieosJsonError}</p>}
                 </div>
                 <div className="flex gap-2 justify-end">
                   <Button variant="outline" onClick={() => setEditMode(false)}>Cancel</Button>

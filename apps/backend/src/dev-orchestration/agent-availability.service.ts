@@ -1,7 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
-import { AgentInstance, AgentInstanceDocument } from '../agent-instances/agent-instance.schema';
+import {
+  AgentInstance,
+  AgentInstanceDocument,
+} from '../agent-instances/agent-instance.schema';
 
 @Injectable()
 export class AgentAvailabilityService {
@@ -32,6 +35,8 @@ export class AgentAvailabilityService {
   }
 
   async releaseAgent(agentId: string): Promise<void> {
-    await this.instanceModel.findByIdAndUpdate(agentId, { $set: { status: 'idle' } });
+    await this.instanceModel.findByIdAndUpdate(agentId, {
+      $set: { status: 'idle' },
+    });
   }
 }

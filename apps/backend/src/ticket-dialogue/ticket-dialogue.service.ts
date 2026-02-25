@@ -70,18 +70,25 @@ export class TicketDialogueService {
           text: c.content,
           type: c.type,
         }));
-        this.processManager.injectStdin(agentId, `THREAD_CONTEXT: ${JSON.stringify(context)}`);
+        this.processManager.injectStdin(
+          agentId,
+          `THREAD_CONTEXT: ${JSON.stringify(context)}`,
+        );
       }
 
       this.processManager.injectStdin(agentId, `USER_MESSAGE: ${content}`);
     }
 
     if (story?.waitingForAnswer) {
-      await this.backlogService.updateStory(projectId, tenantId, storyId, { waitingForAnswer: false } as any);
+      await this.backlogService.updateStory(projectId, tenantId, storyId, {
+        waitingForAnswer: false,
+      } as any);
     }
 
     // Broadcast via WebSocket
-    (this.gateway as any).server?.to(`project:${projectId}`).emit('ticket:comment', comment);
+    (this.gateway as any).server
+      ?.to(`project:${projectId}`)
+      .emit('ticket:comment', comment);
 
     return comment;
   }
@@ -105,7 +112,9 @@ export class TicketDialogueService {
       type: 'message',
     });
 
-    (this.gateway as any).server?.to(`project:${projectId}`).emit('ticket:comment', comment);
+    (this.gateway as any).server
+      ?.to(`project:${projectId}`)
+      .emit('ticket:comment', comment);
     return comment;
   }
 
@@ -131,7 +140,11 @@ export class TicketDialogueService {
       type: 'approval',
     });
 
-    this.eventEmitter.emit('story.approved', { storyId, projectId: projectId.toString(), tenantId: tenantId.toString() });
+    this.eventEmitter.emit('story.approved', {
+      storyId,
+      projectId: projectId.toString(),
+      tenantId: tenantId.toString(),
+    });
     return { message: 'Story approved' };
   }
 
@@ -168,13 +181,21 @@ export class TicketDialogueService {
     return comment;
   }
 
-  async setWaitingForAnswer(storyId: string, projectId: Types.ObjectId, tenantId: Types.ObjectId) {
+  async setWaitingForAnswer(
+    storyId: string,
+    projectId: Types.ObjectId,
+    tenantId: Types.ObjectId,
+  ) {
     await this.backlogService.updateStory(projectId, tenantId, storyId, {
       waitingForAnswer: true,
     } as any);
   }
 
-  async setWaitingForApproval(storyId: string, projectId: Types.ObjectId, tenantId: Types.ObjectId) {
+  async setWaitingForApproval(
+    storyId: string,
+    projectId: Types.ObjectId,
+    tenantId: Types.ObjectId,
+  ) {
     await this.backlogService.updateStory(projectId, tenantId, storyId, {
       waitingForApproval: true,
     } as any);

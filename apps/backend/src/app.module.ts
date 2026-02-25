@@ -31,7 +31,10 @@ import { TenantMiddleware } from './common/middleware/tenant.middleware';
     MongooseModule.forRootAsync({
       imports: [ConfigModule],
       useFactory: (configService: ConfigService) => ({
-        uri: configService.get<string>('MONGODB_URI', 'mongodb://localhost:27017/aes'),
+        uri: configService.get<string>(
+          'MONGODB_URI',
+          'mongodb://localhost:27017/aes',
+        ),
       }),
       inject: [ConfigService],
     }),

@@ -34,7 +34,9 @@ describe('RequirementsService', () => {
 
     mockModel = {
       find: jest.fn().mockReturnValue({
-        sort: jest.fn().mockReturnValue({ exec: jest.fn().mockResolvedValue([MOCK_DOC]) }),
+        sort: jest
+          .fn()
+          .mockReturnValue({ exec: jest.fn().mockResolvedValue([MOCK_DOC]) }),
       }),
       findOneAndUpdate: jest.fn().mockReturnValue({
         exec: jest.fn().mockResolvedValue(MOCK_DOC),
@@ -73,7 +75,10 @@ describe('RequirementsService', () => {
     it('queries with projectId and tenantId', async () => {
       const result = await service.findAll(PROJECT_ID, TENANT_ID);
       expect(result).toEqual([MOCK_DOC]);
-      expect(mockModel.find).toHaveBeenCalledWith({ projectId: PROJECT_ID, tenantId: TENANT_ID });
+      expect(mockModel.find).toHaveBeenCalledWith({
+        projectId: PROJECT_ID,
+        tenantId: TENANT_ID,
+      });
     });
   });
 
@@ -100,13 +105,24 @@ describe('RequirementsService', () => {
 
   describe('update', () => {
     it('updates document by id with tenantId filter', async () => {
-      const result = await service.update(PROJECT_ID, TENANT_ID, DOC_ID.toHexString(), {
-        content: '# Updated content',
-      });
+      const result = await service.update(
+        PROJECT_ID,
+        TENANT_ID,
+        DOC_ID.toHexString(),
+        {
+          content: '# Updated content',
+        },
+      );
       expect(result).toEqual(MOCK_DOC);
       expect(mockModel.findOneAndUpdate).toHaveBeenCalledWith(
-        expect.objectContaining({ _id: expect.any(Types.ObjectId), projectId: PROJECT_ID, tenantId: TENANT_ID }),
-        expect.objectContaining({ $set: expect.objectContaining({ content: '# Updated content' }) }),
+        expect.objectContaining({
+          _id: expect.any(Types.ObjectId),
+          projectId: PROJECT_ID,
+          tenantId: TENANT_ID,
+        }),
+        expect.objectContaining({
+          $set: expect.objectContaining({ content: '# Updated content' }),
+        }),
         { new: true },
       );
     });
@@ -116,7 +132,9 @@ describe('RequirementsService', () => {
         exec: jest.fn().mockResolvedValue(null),
       });
       await expect(
-        service.update(PROJECT_ID, TENANT_ID, DOC_ID.toHexString(), { title: 'x' }),
+        service.update(PROJECT_ID, TENANT_ID, DOC_ID.toHexString(), {
+          title: 'x',
+        }),
       ).rejects.toThrow(NotFoundException);
     });
   });
@@ -125,7 +143,11 @@ describe('RequirementsService', () => {
     it('deletes document with tenantId filter', async () => {
       await service.delete(PROJECT_ID, TENANT_ID, DOC_ID.toHexString());
       expect(mockModel.deleteOne).toHaveBeenCalledWith(
-        expect.objectContaining({ _id: expect.any(Types.ObjectId), projectId: PROJECT_ID, tenantId: TENANT_ID }),
+        expect.objectContaining({
+          _id: expect.any(Types.ObjectId),
+          projectId: PROJECT_ID,
+          tenantId: TENANT_ID,
+        }),
       );
     });
 

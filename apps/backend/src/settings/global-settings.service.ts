@@ -2,7 +2,10 @@ import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { Aes256EncryptionService } from '../common/services/aes256-encryption.service';
-import { GlobalSettings, GlobalSettingsDocument } from './global-settings.schema';
+import {
+  GlobalSettings,
+  GlobalSettingsDocument,
+} from './global-settings.schema';
 
 export interface ResolvedLlmKeys {
   openai?: string;
@@ -31,7 +34,7 @@ export class GlobalSettingsService {
 
   async getForDisplay(tenantId: Types.ObjectId) {
     const settings = await this.get(tenantId);
-    const obj = settings.toObject() as any;
+    const obj = settings.toObject();
     if (obj.llmKeys) {
       for (const key of ['openai', 'anthropic', 'google']) {
         if (obj.llmKeys[key]) obj.llmKeys[key] = SENSITIVE_MASK;
@@ -40,7 +43,10 @@ export class GlobalSettingsService {
     return obj;
   }
 
-  async update(tenantId: Types.ObjectId, dto: Partial<GlobalSettings>): Promise<GlobalSettingsDocument> {
+  async update(
+    tenantId: Types.ObjectId,
+    dto: Partial<GlobalSettings>,
+  ): Promise<GlobalSettingsDocument> {
     // Encrypt LLM keys before saving
     if (dto.llmKeys) {
       for (const key of ['openai', 'anthropic', 'google'] as const) {
@@ -49,20 +55,29 @@ export class GlobalSettingsService {
         }
       }
     }
-    return this.settingsModel.findOneAndUpdate(
-      { tenantId },
-      { $set: dto },
-      { new: true, upsert: true },
-    ).exec() as any;
+    return this.settingsModel
+      .findOneAndUpdate(
+        { tenantId },
+        { $set: dto },
+        { new: true, upsert: true },
+      )
+      .exec() as any;
   }
 
-  async resolveLlmKeys(tenantId: Types.ObjectId, project: any): Promise<ResolvedLlmKeys> {
+  async resolveLlmKeys(
+    tenantId: Types.ObjectId,
+    project: any,
+  ): Promise<ResolvedLlmKeys> {
     const settings = await this.get(tenantId);
     const result: ResolvedLlmKeys = {
       ollamaEndpoint: settings.ollamaEndpoint || 'http://localhost:11434',
     };
 
-    const providers: Array<'openai' | 'anthropic' | 'google'> = ['openai', 'anthropic', 'google'];
+    const providers: Array<'openai' | 'anthropic' | 'google'> = [
+      'openai',
+      'anthropic',
+      'google',
+    ];
     for (const provider of providers) {
       if (!settings.providers?.[provider]) continue; // disabled
 
@@ -82,7 +97,10 @@ export class GlobalSettingsService {
     return result;
   }
 
-  async resolveInviteUsers(tenantId: Types.ObjectId, project: any): Promise<string[]> {
+  async resolveInviteUsers(
+    tenantId: Types.ObjectId,
+    project: any,
+  ): Promise<string[]> {
     if (project?.config?.inviteUsers?.length) return project.config.inviteUsers;
     const settings = await this.get(tenantId);
     return settings.globalInviteUsers ?? [];

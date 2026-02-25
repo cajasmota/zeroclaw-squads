@@ -30,11 +30,18 @@ export class SlackService {
     }
   }
 
-  async inviteUsers(token: string, channelId: string, userIds: string[]): Promise<void> {
+  async inviteUsers(
+    token: string,
+    channelId: string,
+    userIds: string[],
+  ): Promise<void> {
     if (!userIds.length) return;
     try {
       const client = this.getClient(token);
-      await client.conversations.invite({ channel: channelId, users: userIds.join(',') });
+      await client.conversations.invite({
+        channel: channelId,
+        users: userIds.join(','),
+      });
     } catch (e) {
       this.logger.warn(`Failed to invite users to Slack: ${e.message}`);
     }
@@ -96,9 +103,8 @@ export class SlackService {
     await this.postAsAgent(token, channelId, text, fromAgent, brandColor);
   }
 
-  generateAvatarUrl(agent: AgentIdentity, _brandColor: string): string {
-    // Returns a placeholder avatar URL - real implementation would use sharp/canvas
-    const role = agent.role?.toLowerCase() ?? 'agent';
-    return `https://ui-avatars.com/api/?name=${encodeURIComponent(agent.displayName)}&background=004176&color=fff&size=64&bold=true&rounded=true`;
+  generateAvatarUrl(agent: AgentIdentity, brandColor: string): string {
+    const bg = (brandColor || '#004176').replace('#', '');
+    return `https://ui-avatars.com/api/?name=${encodeURIComponent(agent.displayName)}&background=${bg}&color=fff&size=64&bold=true&rounded=true`;
   }
 }

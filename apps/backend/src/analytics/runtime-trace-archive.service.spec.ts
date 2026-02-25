@@ -22,12 +22,20 @@ describe('RuntimeTraceArchiveService', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         RuntimeTraceArchiveService,
-        { provide: getModelToken(Transcript.name), useValue: { create: mockCreate } },
-        { provide: getModelToken(AgentInstance.name), useValue: { findById: mockFindById } },
+        {
+          provide: getModelToken(Transcript.name),
+          useValue: { create: mockCreate },
+        },
+        {
+          provide: getModelToken(AgentInstance.name),
+          useValue: { findById: mockFindById },
+        },
       ],
     }).compile();
 
-    service = module.get<RuntimeTraceArchiveService>(RuntimeTraceArchiveService);
+    service = module.get<RuntimeTraceArchiveService>(
+      RuntimeTraceArchiveService,
+    );
   });
 
   afterEach(() => jest.clearAllMocks());
@@ -38,7 +46,17 @@ describe('RuntimeTraceArchiveService', () => {
 
   it('should archive trace entries to MongoDB and truncate file', async () => {
     const workspacePath = '/artifacts/proj/workspaces/inst';
-    mockFindById.mockReturnValue({ lean: () => ({ exec: () => Promise.resolve({ _id: instanceId, projectId, tenantId, workspacePath }) }) });
+    mockFindById.mockReturnValue({
+      lean: () => ({
+        exec: () =>
+          Promise.resolve({
+            _id: instanceId,
+            projectId,
+            tenantId,
+            workspacePath,
+          }),
+      }),
+    });
     mockFs.existsSync.mockReturnValue(true);
     mockFs.readFileSync.mockReturnValue(
       '{"id":"1","event_type":"tool_call"}\n{"id":"2","event_type":"llm_response"}\n',
@@ -64,7 +82,17 @@ describe('RuntimeTraceArchiveService', () => {
 
   it('should skip archiving when trace file does not exist', async () => {
     const workspacePath = '/artifacts/proj/workspaces/inst';
-    mockFindById.mockReturnValue({ lean: () => ({ exec: () => Promise.resolve({ _id: instanceId, projectId, tenantId, workspacePath }) }) });
+    mockFindById.mockReturnValue({
+      lean: () => ({
+        exec: () =>
+          Promise.resolve({
+            _id: instanceId,
+            projectId,
+            tenantId,
+            workspacePath,
+          }),
+      }),
+    });
     mockFs.existsSync.mockReturnValue(false);
 
     await service.archiveTrace(instanceId.toString(), 'run-002');
@@ -72,7 +100,9 @@ describe('RuntimeTraceArchiveService', () => {
   });
 
   it('should skip archiving when agent instance not found', async () => {
-    mockFindById.mockReturnValue({ lean: () => ({ exec: () => Promise.resolve(null) }) });
+    mockFindById.mockReturnValue({
+      lean: () => ({ exec: () => Promise.resolve(null) }),
+    });
 
     await service.archiveTrace(instanceId.toString(), 'run-003');
     expect(mockCreate).not.toHaveBeenCalled();

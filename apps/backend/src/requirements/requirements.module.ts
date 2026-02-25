@@ -2,7 +2,10 @@ import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { RequirementsController } from './requirements.controller';
 import { RequirementsService } from './requirements.service';
-import { RequirementsDocument, RequirementsDocumentSchema } from './requirements-document.schema';
+import {
+  RequirementsDocument,
+  RequirementsDocumentSchema,
+} from './requirements-document.schema';
 
 @Module({
   imports: [

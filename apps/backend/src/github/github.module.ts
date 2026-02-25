@@ -8,7 +8,12 @@ import { GitWorkspaceService } from './git-workspace.service';
 
 @Module({
   imports: [ZeroClawModule],
-  providers: [GitHubAppService, GitHubPRService, GitWorkspaceService, Aes256EncryptionService],
+  providers: [
+    GitHubAppService,
+    GitHubPRService,
+    GitWorkspaceService,
+    Aes256EncryptionService,
+  ],
   controllers: [GitHubWebhookController],
   exports: [GitHubAppService, GitHubPRService, GitWorkspaceService],
 })

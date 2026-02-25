@@ -9,7 +9,9 @@ jest.mock('axios', () => ({
 
 describe('LibrarianMcpService', () => {
   let service: LibrarianMcpService;
-  const mockConfig = { get: jest.fn().mockReturnValue('http://localhost:5001') };
+  const mockConfig = {
+    get: jest.fn().mockReturnValue('http://localhost:5001'),
+  };
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -26,7 +28,9 @@ describe('LibrarianMcpService', () => {
 
   it('should call find_logic and return result', async () => {
     const axios = require('axios');
-    axios.post.mockResolvedValueOnce({ data: { matches: ['fn doSomething()'] } });
+    axios.post.mockResolvedValueOnce({
+      data: { matches: ['fn doSomething()'] },
+    });
     const result = await service.findLogic('authentication logic');
     expect(result.tool).toBe('find_logic');
     expect(result.result).toContain('doSomething');
@@ -42,7 +46,9 @@ describe('LibrarianMcpService', () => {
   it('should route tool calls via handleToolCall', async () => {
     const axios = require('axios');
     axios.post.mockResolvedValueOnce({ data: { answer: '42' } });
-    const result = await service.handleToolCall('ask_question', { question: 'What is 42?' });
+    const result = await service.handleToolCall('ask_question', {
+      question: 'What is 42?',
+    });
     expect(result.tool).toBe('ask_question');
   });
 
@@ -54,7 +60,10 @@ describe('LibrarianMcpService', () => {
   it('check_convention_compliance should call compliance endpoint', async () => {
     const axios = require('axios');
     axios.post.mockResolvedValueOnce({ data: { violations: [] } });
-    const result = await service.checkConventionCompliance('/src/app.ts', 'const x = 1;');
+    const result = await service.checkConventionCompliance(
+      '/src/app.ts',
+      'const x = 1;',
+    );
     expect(result.tool).toBe('check_convention_compliance');
   });
 });

@@ -26,7 +26,10 @@ describe('SlackService', () => {
   });
 
   it('should generate avatar URL with agent display name', () => {
-    const url = service.generateAvatarUrl({ displayName: 'Dev Bot', role: 'developer' }, '#004176');
+    const url = service.generateAvatarUrl(
+      { displayName: 'Dev Bot', role: 'developer' },
+      '#004176',
+    );
     expect(url).toContain('Dev%20Bot');
     expect(url).toContain('004176');
   });
@@ -39,7 +42,9 @@ describe('SlackService', () => {
   it('should return empty string when Slack API throws', async () => {
     const { WebClient } = require('@slack/web-api');
     WebClient.mockImplementationOnce(() => ({
-      conversations: { create: jest.fn().mockRejectedValue(new Error('invalid_auth')) },
+      conversations: {
+        create: jest.fn().mockRejectedValue(new Error('invalid_auth')),
+      },
     }));
     const result = await service.createChannel('invalid-token', 'test-project');
     expect(result).toBe('');
@@ -49,10 +54,21 @@ describe('SlackService', () => {
     const { WebClient } = require('@slack/web-api');
     let capturedArgs: any;
     WebClient.mockImplementationOnce(() => ({
-      chat: { postMessage: jest.fn().mockImplementation((args) => { capturedArgs = args; return Promise.resolve({ ts: '123' }); }) },
+      chat: {
+        postMessage: jest.fn().mockImplementation((args) => {
+          capturedArgs = args;
+          return Promise.resolve({ ts: '123' });
+        }),
+      },
     }));
 
-    await service.postAsAgent('token', 'C123', 'Hello!', { displayName: 'Dev Bot', role: 'developer' }, '#004176');
+    await service.postAsAgent(
+      'token',
+      'C123',
+      'Hello!',
+      { displayName: 'Dev Bot', role: 'developer' },
+      '#004176',
+    );
     expect(capturedArgs.username).toBe('Dev Bot');
     expect(capturedArgs.icon_url).toBeTruthy();
   });
@@ -61,12 +77,28 @@ describe('SlackService', () => {
     const { WebClient } = require('@slack/web-api');
     let capturedText: string;
     WebClient.mockImplementationOnce(() => ({
-      chat: { postMessage: jest.fn().mockImplementation((args) => { capturedText = args.text; return Promise.resolve({ ts: '1' }); }) },
+      chat: {
+        postMessage: jest.fn().mockImplementation((args) => {
+          capturedText = args.text;
+          return Promise.resolve({ ts: '1' });
+        }),
+      },
     }));
 
     const fromAgent = { displayName: 'PM Bot', role: 'pm', roleEmoji: '📋' };
-    const toAgent = { displayName: 'Dev Bot', role: 'developer', roleEmoji: '💻' };
-    await service.postA2AMessage('token', 'C123', fromAgent, toAgent, 'assign story', '#004176');
+    const toAgent = {
+      displayName: 'Dev Bot',
+      role: 'developer',
+      roleEmoji: '💻',
+    };
+    await service.postA2AMessage(
+      'token',
+      'C123',
+      fromAgent,
+      toAgent,
+      'assign story',
+      '#004176',
+    );
     expect(capturedText).toContain('[A2A]');
     expect(capturedText).toContain('PM Bot');
     expect(capturedText).toContain('Dev Bot');

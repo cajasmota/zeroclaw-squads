@@ -22,12 +22,32 @@ export class Project {
 
   @Prop({
     type: {
-      librarian: { type: SchemaTypes.ObjectId, ref: 'AgentInstance', default: null },
-      architect: { type: SchemaTypes.ObjectId, ref: 'AgentInstance', default: null },
+      librarian: {
+        type: SchemaTypes.ObjectId,
+        ref: 'AgentInstance',
+        default: null,
+      },
+      architect: {
+        type: SchemaTypes.ObjectId,
+        ref: 'AgentInstance',
+        default: null,
+      },
       pm: { type: SchemaTypes.ObjectId, ref: 'AgentInstance', default: null },
-      developer: { type: [SchemaTypes.ObjectId], ref: 'AgentInstance', default: [] },
-      reviewer: { type: [SchemaTypes.ObjectId], ref: 'AgentInstance', default: [] },
-      optional: { type: [SchemaTypes.ObjectId], ref: 'AgentInstance', default: [] },
+      developer: {
+        type: [SchemaTypes.ObjectId],
+        ref: 'AgentInstance',
+        default: [],
+      },
+      reviewer: {
+        type: [SchemaTypes.ObjectId],
+        ref: 'AgentInstance',
+        default: [],
+      },
+      optional: {
+        type: [SchemaTypes.ObjectId],
+        ref: 'AgentInstance',
+        default: [],
+      },
     },
     _id: false,
   })

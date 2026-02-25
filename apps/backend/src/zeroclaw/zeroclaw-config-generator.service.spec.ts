@@ -9,7 +9,9 @@ describe('ZeroClawConfigGeneratorService', () => {
       providers: [ZeroClawConfigGeneratorService],
     }).compile();
 
-    service = module.get<ZeroClawConfigGeneratorService>(ZeroClawConfigGeneratorService);
+    service = module.get<ZeroClawConfigGeneratorService>(
+      ZeroClawConfigGeneratorService,
+    );
   });
 
   it('should generate valid TOML config', () => {

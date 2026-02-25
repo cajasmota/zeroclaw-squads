@@ -36,11 +36,18 @@ export class GitWorkspaceService {
     workspacePath: string,
   ): Promise<void> {
     // Embed token in URL for auth
-    const authUrl = repoUrl.replace('https://', `https://x-access-token:${token}@`);
+    const authUrl = repoUrl.replace(
+      'https://',
+      `https://x-access-token:${token}@`,
+    );
     try {
       await execAsync(`git clone "${authUrl}" "${workspacePath}"`);
-      await execAsync(`git -C "${workspacePath}" config user.name "${agentDisplayName}"`);
-      await execAsync(`git -C "${workspacePath}" config user.email "agent@aes.local"`);
+      await execAsync(
+        `git -C "${workspacePath}" config user.name "${agentDisplayName}"`,
+      );
+      await execAsync(
+        `git -C "${workspacePath}" config user.email "agent@aes.local"`,
+      );
       this.logger.log(`Cloned ${repoUrl} → ${workspacePath}`);
     } catch (e) {
       this.logger.error(`Git clone failed: ${e.message}`);
@@ -48,7 +55,10 @@ export class GitWorkspaceService {
     }
   }
 
-  async createFeatureBranch(workspacePath: string, storyId: string): Promise<string> {
+  async createFeatureBranch(
+    workspacePath: string,
+    storyId: string,
+  ): Promise<string> {
     const branch = `feature/${storyId}`;
     await execAsync(`git -C "${workspacePath}" checkout -b "${branch}"`);
     this.logger.log(`Created branch ${branch} in ${workspacePath}`);
@@ -59,15 +69,27 @@ export class GitWorkspaceService {
     this.acquireLock(workspacePath);
     try {
       await execAsync(`git -C "${workspacePath}" add -A`);
-      await execAsync(`git -C "${workspacePath}" commit -m "${message.replace(/"/g, '\\"')}"`);
+      await execAsync(
+        `git -C "${workspacePath}" commit -m "${message.replace(/"/g, '\\"')}"`,
+      );
     } finally {
       this.releaseLock(workspacePath);
     }
   }
 
-  async push(workspacePath: string, branch: string, token: string, repoUrl: string): Promise<void> {
-    const authUrl = repoUrl.replace('https://', `https://x-access-token:${token}@`);
-    await execAsync(`git -C "${workspacePath}" remote set-url origin "${authUrl}"`);
+  async push(
+    workspacePath: string,
+    branch: string,
+    token: string,
+    repoUrl: string,
+  ): Promise<void> {
+    const authUrl = repoUrl.replace(
+      'https://',
+      `https://x-access-token:${token}@`,
+    );
+    await execAsync(
+      `git -C "${workspacePath}" remote set-url origin "${authUrl}"`,
+    );
     await execAsync(`git -C "${workspacePath}" push -u origin "${branch}"`);
   }
 

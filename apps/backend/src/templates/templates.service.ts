@@ -14,7 +14,12 @@ export class TemplatesService {
 
   async findAll(
     tenantId: Types.ObjectId,
-    filters: { role?: string; tags?: string; page?: number; limit?: number } = {},
+    filters: {
+      role?: string;
+      tags?: string;
+      page?: number;
+      limit?: number;
+    } = {},
   ) {
     const query: Record<string, any> = { tenantId };
     if (filters.role) query.role = filters.role;

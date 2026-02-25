@@ -15,4 +15,5 @@ export class SlackChannelMapping {
   tenantId: Types.ObjectId;
 }
 
-export const SlackChannelMappingSchema = SchemaFactory.createForClass(SlackChannelMapping);
+export const SlackChannelMappingSchema =
+  SchemaFactory.createForClass(SlackChannelMapping);

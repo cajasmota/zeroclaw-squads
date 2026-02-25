@@ -7,10 +7,16 @@ import * as path from 'path';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { Story, StoryDocument } from '../backlog/story.schema';
-import { AgentInstance, AgentInstanceDocument } from '../agent-instances/agent-instance.schema';
+import {
+  AgentInstance,
+  AgentInstanceDocument,
+} from '../agent-instances/agent-instance.schema';
 import { AgentInstancesService } from '../agent-instances/agent-instances.service';
 import { GlobalSettingsService } from '../settings/global-settings.service';
-import { TicketComment, TicketCommentDocument } from '../ticket-dialogue/ticket-comment.schema';
+import {
+  TicketComment,
+  TicketCommentDocument,
+} from '../ticket-dialogue/ticket-comment.schema';
 import { AesGateway } from '../websocket/aes.gateway';
 import { AieosGeneratorService } from './aieos-generator.service';
 import { ZeroClawConfigGeneratorService } from './zeroclaw-config-generator.service';
@@ -21,9 +27,11 @@ export class ZeroClawProcessManagerService {
   private readonly processes = new Map<string, child_process.ChildProcess>();
 
   constructor(
-    @InjectModel(AgentInstance.name) private readonly instanceModel: Model<AgentInstanceDocument>,
+    @InjectModel(AgentInstance.name)
+    private readonly instanceModel: Model<AgentInstanceDocument>,
     @InjectModel(Story.name) private readonly storyModel: Model<StoryDocument>,
-    @InjectModel(TicketComment.name) private readonly commentModel: Model<TicketCommentDocument>,
+    @InjectModel(TicketComment.name)
+    private readonly commentModel: Model<TicketCommentDocument>,
     private readonly configService: ConfigService,
     private readonly configGenerator: ZeroClawConfigGeneratorService,
     private readonly aieosGenerator: AieosGeneratorService,
@@ -36,7 +44,10 @@ export class ZeroClawProcessManagerService {
   @OnEvent('agents.spawn.all')
   async handleSpawnAll(payload: { projectId: string; tenantId: string }) {
     const instances = await this.instanceModel
-      .find({ projectId: new Types.ObjectId(payload.projectId), tenantId: new Types.ObjectId(payload.tenantId) })
+      .find({
+        projectId: new Types.ObjectId(payload.projectId),
+        tenantId: new Types.ObjectId(payload.tenantId),
+      })
       .lean()
       .exec();
 
@@ -44,16 +55,26 @@ export class ZeroClawProcessManagerService {
       try {
         await this.spawn(instance as any, payload.projectId);
       } catch (e) {
-        this.logger.error(`Failed to spawn agent ${instance.displayName}: ${e.message}`);
+        this.logger.error(
+          `Failed to spawn agent ${instance.displayName}: ${e.message}`,
+        );
       }
     }
   }
 
   async spawn(instance: any, projectId: string): Promise<void> {
-    const binaryPath = this.configService.get<string>('ZEROCLAW_BINARY_PATH', '');
+    const binaryPath = this.configService.get<string>(
+      'ZEROCLAW_BINARY_PATH',
+      '',
+    );
     if (!binaryPath || !fs.existsSync(binaryPath)) {
-      this.logger.warn(`ZeroClaw binary not found at ${binaryPath}, skipping spawn`);
-      await this.agentInstancesService.updateStatus((instance._id as Types.ObjectId).toString(), 'idle');
+      this.logger.warn(
+        `ZeroClaw binary not found at ${binaryPath}, skipping spawn`,
+      );
+      await this.agentInstancesService.updateStatus(
+        (instance._id as Types.ObjectId).toString(),
+        'idle',
+      );
       return;
     }
 
@@ -64,15 +85,19 @@ export class ZeroClawProcessManagerService {
     }
 
     // Write config files
-    await this.writeConfigFiles(instance, workspacePath);
+    this.writeConfigFiles(instance, workspacePath);
 
     const instanceId = (instance._id as Types.ObjectId).toString();
 
     // Resolve LLM keys (global fallback, project override)
-    const tenantId = instance.tenantId instanceof Types.ObjectId
-      ? instance.tenantId
-      : new Types.ObjectId(instance.tenantId.toString());
-    const resolvedKeys = await this.globalSettingsService.resolveLlmKeys(tenantId, null);
+    const tenantId =
+      instance.tenantId instanceof Types.ObjectId
+        ? instance.tenantId
+        : new Types.ObjectId(instance.tenantId.toString());
+    const resolvedKeys = await this.globalSettingsService.resolveLlmKeys(
+      tenantId,
+      null,
+    );
 
     const proc = child_process.spawn(binaryPath, ['daemon'], {
       cwd: workspacePath,
@@ -80,8 +105,12 @@ export class ZeroClawProcessManagerService {
         ...process.env,
         AES_PROJECT_ID: projectId,
         AES_AGENT_ID: instanceId,
+        AES_STORY_ID: '',
+        AES_RUN_ID: '',
         ...(resolvedKeys.openai ? { OPENAI_API_KEY: resolvedKeys.openai } : {}),
-        ...(resolvedKeys.anthropic ? { ANTHROPIC_API_KEY: resolvedKeys.anthropic } : {}),
+        ...(resolvedKeys.anthropic
+          ? { ANTHROPIC_API_KEY: resolvedKeys.anthropic }
+          : {}),
         ...(resolvedKeys.google ? { GOOGLE_API_KEY: resolvedKeys.google } : {}),
         OLLAMA_ENDPOINT: resolvedKeys.ollamaEndpoint,
       },
@@ -111,15 +140,21 @@ export class ZeroClawProcessManagerService {
     this.logger.log(`Spawned agent ${instance.displayName} (pid: ${proc.pid})`);
   }
 
-  private async writeConfigFiles(instance: any, workspacePath: string) {
+  private writeConfigFiles(instance: any, workspacePath: string) {
     fs.mkdirSync(path.join(workspacePath, 'state'), { recursive: true });
     fs.mkdirSync(path.join(workspacePath, 'memory'), { recursive: true });
 
     const configToml = this.configGenerator.generateConfig(instance);
-    fs.writeFileSync(path.join(workspacePath, 'zeroclaw.config.toml'), configToml);
+    fs.writeFileSync(
+      path.join(workspacePath, 'zeroclaw.config.toml'),
+      configToml,
+    );
 
     const identityJson = this.aieosGenerator.generateIdentityJson(instance);
-    fs.writeFileSync(path.join(workspacePath, 'identity.json'), JSON.stringify(identityJson, null, 2));
+    fs.writeFileSync(
+      path.join(workspacePath, 'identity.json'),
+      JSON.stringify(identityJson, null, 2),
+    );
 
     const soul = this.configGenerator.generateAieosSoul(instance.soul);
     fs.writeFileSync(path.join(workspacePath, 'soul.md'), soul);
@@ -172,28 +207,34 @@ export class ZeroClawProcessManagerService {
     let target: AgentInstanceDocument | null = null;
 
     if (payload.mentionedSlackUserId) {
-      target = await this.instanceModel.findOne({
-        projectId,
-        tenantId,
-        'config.slackUserId': payload.mentionedSlackUserId,
-      }).exec();
+      target = await this.instanceModel
+        .findOne({
+          projectId,
+          tenantId,
+          'config.slackUserId': payload.mentionedSlackUserId,
+        })
+        .exec();
     }
 
     if (!target) {
-      target = await this.instanceModel.findOne({
-        projectId,
-        tenantId,
-        'aieos_identity.identity.role': /pm|product.manager/i,
-        status: { $in: ['idle', 'busy'] },
-      }).exec();
+      target = await this.instanceModel
+        .findOne({
+          projectId,
+          tenantId,
+          'aieos_identity.identity.role': /pm|product.manager/i,
+          status: { $in: ['idle', 'busy'] },
+        })
+        .exec();
     }
 
     if (!target) {
-      this.logger.warn(`No target agent for Slack message in project ${payload.projectId}`);
+      this.logger.warn(
+        `No target agent for Slack message in project ${payload.projectId}`,
+      );
       return;
     }
 
-    const instanceId = (target._id as Types.ObjectId).toString();
+    const instanceId = target._id.toString();
     if (target.pid) this.poke(target.pid);
 
     // If message is part of a known story thread, inject prior context first
@@ -214,7 +255,10 @@ export class ZeroClawProcessManagerService {
             text: c.content,
             type: c.type,
           }));
-          this.injectStdin(instanceId, `THREAD_CONTEXT: ${JSON.stringify(context)}`);
+          this.injectStdin(
+            instanceId,
+            `THREAD_CONTEXT: ${JSON.stringify(context)}`,
+          );
         }
       }
     }

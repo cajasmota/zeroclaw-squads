@@ -1,6 +1,6 @@
 import { Body, Controller, Get, Param, Post, UseGuards } from '@nestjs/common';
 import { Types } from 'mongoose';
-import { RequestUser } from '@aes/types';
+import type { RequestUser } from '@aes/types';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { TicketDialogueService } from './ticket-dialogue.service';
@@ -11,8 +11,14 @@ export class TicketDialogueController {
   constructor(private readonly dialogue: TicketDialogueService) {}
 
   @Get('comments')
-  getComments(@CurrentUser() user: RequestUser, @Param('storyId') storyId: string) {
-    return this.dialogue.getComments(storyId, new Types.ObjectId(user.tenantId));
+  getComments(
+    @CurrentUser() user: RequestUser,
+    @Param('storyId') storyId: string,
+  ) {
+    return this.dialogue.getComments(
+      storyId,
+      new Types.ObjectId(user.tenantId),
+    );
   }
 
   @Post('comments')

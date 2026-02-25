@@ -31,23 +31,47 @@ export class GitHubPRService {
     return response.data.number;
   }
 
-  async postComment(project: any, prNumber: number, body: string): Promise<void> {
+  async postComment(
+    project: any,
+    prNumber: number,
+    body: string,
+  ): Promise<void> {
     const octokit = await this.githubApp.getAuthenticatedOctokit(project);
     const { owner, repo } = this.parseRepo(project.config?.repoUrl ?? '');
-    await octokit.issues.createComment({ owner, repo, issue_number: prNumber, body });
+    await octokit.issues.createComment({
+      owner,
+      repo,
+      issue_number: prNumber,
+      body,
+    });
   }
 
-  async getPRComments(project: any, prNumber: number): Promise<Array<{ body: string; user: string }>> {
+  async getPRComments(
+    project: any,
+    prNumber: number,
+  ): Promise<Array<{ body: string; user: string }>> {
     const octokit = await this.githubApp.getAuthenticatedOctokit(project);
     const { owner, repo } = this.parseRepo(project.config?.repoUrl ?? '');
-    const response = await octokit.issues.listComments({ owner, repo, issue_number: prNumber });
-    return response.data.map((c) => ({ body: c.body ?? '', user: c.user?.login ?? '' }));
+    const response = await octokit.issues.listComments({
+      owner,
+      repo,
+      issue_number: prNumber,
+    });
+    return response.data.map((c) => ({
+      body: c.body ?? '',
+      user: c.user?.login ?? '',
+    }));
   }
 
   async mergePullRequest(project: any, prNumber: number): Promise<void> {
     const octokit = await this.githubApp.getAuthenticatedOctokit(project);
     const { owner, repo } = this.parseRepo(project.config?.repoUrl ?? '');
-    await octokit.pulls.merge({ owner, repo, pull_number: prNumber, merge_method: 'squash' });
+    await octokit.pulls.merge({
+      owner,
+      repo,
+      pull_number: prNumber,
+      merge_method: 'squash',
+    });
     this.logger.log(`Merged PR #${prNumber}`);
   }
 }

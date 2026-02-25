@@ -2,7 +2,10 @@ import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { EventEmitter2, OnEvent } from '@nestjs/event-emitter';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
-import { AgentInstance, AgentInstanceDocument } from '../agent-instances/agent-instance.schema';
+import {
+  AgentInstance,
+  AgentInstanceDocument,
+} from '../agent-instances/agent-instance.schema';
 import { BacklogService } from '../backlog/backlog.service';
 import { SlackService } from '../project-initializer/slack.service';
 import { AesGateway } from '../websocket/aes.gateway';
@@ -27,42 +30,57 @@ export class DevelopmentOrchestrationService {
   ) {}
 
   @OnEvent('sprint.ready')
-  async handleSprintReady(payload: { sprintId: string; projectId: string; tenantId: string }): Promise<void> {
+  async handleSprintReady(payload: {
+    sprintId: string;
+    projectId: string;
+    tenantId: string;
+  }): Promise<void> {
     this.logger.log(`Sprint ${payload.sprintId} is ready — notifying PM agent`);
     try {
       const projectId = new Types.ObjectId(payload.projectId);
       const tenantId = new Types.ObjectId(payload.tenantId);
 
       // Find stories in the sprint with 'selected' or 'backlog' status
-      const stories = await this.backlogService.findStories(projectId, tenantId, {
-        sprintId: payload.sprintId,
-        status: 'selected',
-      });
+      const stories = await this.backlogService.findStories(
+        projectId,
+        tenantId,
+        {
+          sprintId: payload.sprintId,
+          status: 'selected',
+        },
+      );
 
       // Find PM agent
-      const pmAgent = await this.instanceModel.findOne({
-        projectId,
-        status: 'idle',
-        'aieos_identity.identity.role': /pm|product.manager/i,
-      }).exec();
+      const pmAgent = await this.instanceModel
+        .findOne({
+          projectId,
+          status: 'idle',
+          'aieos_identity.identity.role': /pm|product.manager/i,
+        })
+        .exec();
 
       if (!pmAgent) {
-        this.logger.warn(`No idle PM agent found for project ${payload.projectId}`);
+        this.logger.warn(
+          `No idle PM agent found for project ${payload.projectId}`,
+        );
         return;
       }
 
       // Find available developer agents
-      const devAgents = await this.instanceModel.find({
-        projectId,
-        status: 'idle',
-        'config.canWriteCode': true,
-      }).lean().exec();
+      const devAgents = await this.instanceModel
+        .find({
+          projectId,
+          status: 'idle',
+          'config.canWriteCode': true,
+        })
+        .lean()
+        .exec();
 
       // Signal PM agent with sprint context
       if (pmAgent.pid) {
         this.processManager.poke(pmAgent.pid);
         this.processManager.injectStdin(
-          (pmAgent._id as Types.ObjectId).toString(),
+          pmAgent._id.toString(),
           `SPRINT_READY: ${payload.sprintId}\nSTORIES: ${JSON.stringify(stories)}\nAVAILABLE_DEVELOPERS: ${JSON.stringify(devAgents)}`,
         );
       }
@@ -79,12 +97,22 @@ export class DevelopmentOrchestrationService {
   ): Promise<any> {
     const branchName = `feature/${storyId}`;
 
-    const story = await this.backlogService.updateStory(projectId, tenantId, storyId, {
-      assignedTo: [new Types.ObjectId(agentInstanceId)] as any,
-      branchName,
-    });
+    const story = await this.backlogService.updateStory(
+      projectId,
+      tenantId,
+      storyId,
+      {
+        assignedTo: [new Types.ObjectId(agentInstanceId)] as any,
+        branchName,
+      },
+    );
 
-    await this.backlogService.updateStatus(storyId, projectId, tenantId, 'in_progress');
+    await this.backlogService.updateStatus(
+      storyId,
+      projectId,
+      tenantId,
+      'in_progress',
+    );
     this.gateway.emitStoryStatus(projectId.toString(), storyId, 'in_progress');
 
     this.eventEmitter.emit('story.assigned', {
@@ -106,7 +134,10 @@ export class DevelopmentOrchestrationService {
   }): Promise<void> {
     if (!payload.agentInstanceId) return;
     try {
-      const agent = await this.instanceModel.findById(payload.agentInstanceId).lean().exec();
+      const agent = await this.instanceModel
+        .findById(payload.agentInstanceId)
+        .lean()
+        .exec();
       if (!agent) return;
 
       const stories = await this.backlogService.findStories(
@@ -121,35 +152,59 @@ export class DevelopmentOrchestrationService {
       // Signal developer agent
       if (agent.pid) {
         this.processManager.poke(agent.pid);
-        this.processManager.injectStdin((agent._id as Types.ObjectId).toString(), `STORY_ASSIGNED:\n${context}`);
+        this.processManager.injectStdin(
+          agent._id.toString(),
+          `STORY_ASSIGNED:\n${context}`,
+        );
       }
 
-      this.logger.log(`Developer agent ${agent.displayName} notified for story ${payload.storyId}`);
+      this.logger.log(
+        `Developer agent ${agent.displayName} notified for story ${payload.storyId}`,
+      );
     } catch (e) {
       this.logger.error(`Failed to handle story.assigned: ${e.message}`);
     }
   }
 
-  async handlePROpened(prNumber: number, branchName: string, projectId: Types.ObjectId, tenantId: Types.ObjectId): Promise<void> {
+  async handlePROpened(
+    prNumber: number,
+    branchName: string,
+    projectId: Types.ObjectId,
+    tenantId: Types.ObjectId,
+  ): Promise<void> {
     const stories = await this.backlogService.findStories(projectId, tenantId);
     const story = (stories as any[]).find((s) => s.branchName === branchName);
     if (!story) return;
 
     const storyId = story._id.toString();
-    await this.backlogService.updateStatus(storyId, projectId, tenantId, 'review');
+    await this.backlogService.updateStatus(
+      storyId,
+      projectId,
+      tenantId,
+      'review',
+    );
     this.gateway.emitStoryStatus(projectId.toString(), storyId, 'review');
 
-    const reviewer = await this.availability.getAvailableAgent(projectId, 'reviewer');
+    const reviewer = await this.availability.getAvailableAgent(
+      projectId,
+      'reviewer',
+    );
     if (reviewer?.pid) {
       this.processManager.poke(reviewer.pid);
       this.processManager.injectStdin(
-        (reviewer._id as Types.ObjectId).toString(),
+        reviewer._id.toString(),
         `PR_REVIEW_REQUEST:\nPR_NUMBER: ${prNumber}\nBRANCH: ${branchName}\n${this.contextSerializer.serialize(story)}`,
       );
     }
   }
 
-  async handlePRFeedback(prNumber: number, commentBody: string, branchName: string, projectId: Types.ObjectId, tenantId: Types.ObjectId): Promise<void> {
+  async handlePRFeedback(
+    prNumber: number,
+    commentBody: string,
+    branchName: string,
+    projectId: Types.ObjectId,
+    tenantId: Types.ObjectId,
+  ): Promise<void> {
     const stories = await this.backlogService.findStories(projectId, tenantId);
     const story = (stories as any[]).find((s) => s.branchName === branchName);
     if (!story || !story.assignedTo?.length) return;
@@ -162,14 +217,25 @@ export class DevelopmentOrchestrationService {
     this.processManager.injectStdin(agentId, `PR_FEEDBACK: ${commentBody}`);
   }
 
-  async handlePRMerged(branchName: string, projectId: Types.ObjectId, tenantId: Types.ObjectId): Promise<void> {
+  async handlePRMerged(
+    branchName: string,
+    projectId: Types.ObjectId,
+    tenantId: Types.ObjectId,
+  ): Promise<void> {
     const stories = await this.backlogService.findStories(projectId, tenantId);
     const story = (stories as any[]).find((s) => s.branchName === branchName);
     if (!story) return;
 
     const mergedStoryId = story._id.toString();
-    await this.backlogService.updateStatus(mergedStoryId, projectId, tenantId, 'done');
+    await this.backlogService.updateStatus(
+      mergedStoryId,
+      projectId,
+      tenantId,
+      'done',
+    );
     this.gateway.emitStoryStatus(projectId.toString(), mergedStoryId, 'done');
-    this.eventEmitter.emit('librarian.reindex', { projectId: projectId.toString() });
+    this.eventEmitter.emit('librarian.reindex', {
+      projectId: projectId.toString(),
+    });
   }
 }

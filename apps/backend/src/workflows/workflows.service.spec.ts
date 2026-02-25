@@ -15,11 +15,34 @@ const mockTemplate = {
   name: 'Feature Development',
   isGlobal: true,
   nodes: [
-    { id: 'n1', type: 'action', agentRole: 'developer', requiresHumanApproval: false, description: 'Implement', nextNodeId: 'n2' },
-    { id: 'n2', type: 'action', agentRole: 'reviewer', requiresHumanApproval: false, description: 'Review', nextNodeId: 'n3' },
-    { id: 'n3', type: 'approval', agentRole: '', requiresHumanApproval: true, description: 'Approve' },
+    {
+      id: 'n1',
+      type: 'action',
+      agentRole: 'developer',
+      requiresHumanApproval: false,
+      description: 'Implement',
+      nextNodeId: 'n2',
+    },
+    {
+      id: 'n2',
+      type: 'action',
+      agentRole: 'reviewer',
+      requiresHumanApproval: false,
+      description: 'Review',
+      nextNodeId: 'n3',
+    },
+    {
+      id: 'n3',
+      type: 'approval',
+      agentRole: '',
+      requiresHumanApproval: true,
+      description: 'Approve',
+    },
   ],
-  edges: [{ from: 'n1', to: 'n2' }, { from: 'n2', to: 'n3' }],
+  edges: [
+    { from: 'n1', to: 'n2' },
+    { from: 'n2', to: 'n3' },
+  ],
 };
 
 const mockRunSave = jest.fn().mockResolvedValue(undefined);
@@ -34,17 +57,29 @@ const mockRun = {
 };
 
 const mockTemplateModel = {
-  findOne: jest.fn().mockReturnValue({ lean: () => ({ exec: () => Promise.resolve(null) }) }),
-  find: jest.fn().mockReturnValue({ lean: () => ({ exec: () => Promise.resolve([mockTemplate]) }) }),
-  findById: jest.fn().mockReturnValue({ lean: () => ({ exec: () => Promise.resolve(mockTemplate) }) }),
+  findOne: jest
+    .fn()
+    .mockReturnValue({ lean: () => ({ exec: () => Promise.resolve(null) }) }),
+  find: jest.fn().mockReturnValue({
+    lean: () => ({ exec: () => Promise.resolve([mockTemplate]) }),
+  }),
+  findById: jest.fn().mockReturnValue({
+    lean: () => ({ exec: () => Promise.resolve(mockTemplate) }),
+  }),
   create: jest.fn().mockResolvedValue(mockTemplate),
 };
 
 const mockRunModel = {
   create: jest.fn().mockResolvedValue(mockRun),
-  findById: jest.fn().mockReturnValue({ exec: () => Promise.resolve({ ...mockRun, save: mockRunSave }) }),
-  find: jest.fn().mockReturnValue({ sort: () => ({ lean: () => ({ exec: () => Promise.resolve([]) }) }) }),
-  findOne: jest.fn().mockReturnValue({ lean: () => ({ exec: () => Promise.resolve(null) }) }),
+  findById: jest.fn().mockReturnValue({
+    exec: () => Promise.resolve({ ...mockRun, save: mockRunSave }),
+  }),
+  find: jest.fn().mockReturnValue({
+    sort: () => ({ lean: () => ({ exec: () => Promise.resolve([]) }) }),
+  }),
+  findOne: jest
+    .fn()
+    .mockReturnValue({ lean: () => ({ exec: () => Promise.resolve(null) }) }),
 };
 
 describe('WorkflowsService', () => {
@@ -54,10 +89,19 @@ describe('WorkflowsService', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         WorkflowsService,
-        { provide: getModelToken(WorkflowTemplate.name), useValue: mockTemplateModel },
+        {
+          provide: getModelToken(WorkflowTemplate.name),
+          useValue: mockTemplateModel,
+        },
         { provide: getModelToken(WorkflowRun.name), useValue: mockRunModel },
         { provide: EventEmitter2, useValue: { emit: jest.fn() } },
-        { provide: AesGateway, useValue: { emitWorkflowNode: jest.fn(), emitApprovalNeeded: jest.fn() } },
+        {
+          provide: AesGateway,
+          useValue: {
+            emitWorkflowNode: jest.fn(),
+            emitApprovalNeeded: jest.fn(),
+          },
+        },
       ],
     }).compile();
 
@@ -76,7 +120,11 @@ describe('WorkflowsService', () => {
   describe('triggerWorkflow()', () => {
     it('should create a WorkflowRun and start the first node', async () => {
       const templateId = mockTemplate._id.toString();
-      const run = await service.triggerWorkflow(projectId, tenantId, templateId);
+      const run = await service.triggerWorkflow(
+        projectId,
+        tenantId,
+        templateId,
+      );
       expect(mockRunModel.create).toHaveBeenCalled();
       expect(run.currentNodeId).toBe('n1');
     });
@@ -84,7 +132,10 @@ describe('WorkflowsService', () => {
 
   describe('createTemplate()', () => {
     it('should create a new workflow template', async () => {
-      const result = await service.createTemplate(tenantId, { name: 'Custom', nodes: [] });
+      const result = await service.createTemplate(tenantId, {
+        name: 'Custom',
+        nodes: [],
+      });
       expect(mockTemplateModel.create).toHaveBeenCalled();
     });
   });

@@ -19,7 +19,13 @@ const mockTemplate = {
   tags: ['typescript'],
   soul: 'You are a developer',
   aieos_identity: { version: '1.1', identity: { role: 'developer' } },
-  config: { model: 'gpt-4', provider: 'openai', skills: '', canWriteCode: true, mcpServers: [] },
+  config: {
+    model: 'gpt-4',
+    provider: 'openai',
+    skills: '',
+    canWriteCode: true,
+    mcpServers: [],
+  },
 };
 
 const mockLibrarianTemplate = {
@@ -78,59 +84,90 @@ describe('AgentInstancesService', () => {
 
   describe('createSnapshot()', () => {
     it('should create snapshot from template', async () => {
-      templateFindOne.mockReturnValue({ lean: () => ({ exec: () => Promise.resolve(mockTemplate) }) });
-      instanceFindOne.mockReturnValue({ lean: () => ({ exec: () => Promise.resolve(null) }) });
+      templateFindOne.mockReturnValue({
+        lean: () => ({ exec: () => Promise.resolve(mockTemplate) }),
+      });
+      instanceFindOne.mockReturnValue({
+        lean: () => ({ exec: () => Promise.resolve(null) }),
+      });
       instanceCreate.mockResolvedValue(mockInstance);
       instanceFindByIdAndUpdate.mockResolvedValue(mockInstance);
 
-      const result = await service.createSnapshot(projectId, tenantId, templateId);
+      const result = await service.createSnapshot(
+        projectId,
+        tenantId,
+        templateId,
+      );
       expect(result.displayName).toBe('Developer Agent');
       expect(result.workspacePath).toBeTruthy();
     });
 
     it('should throw NotFoundException when template not found', async () => {
-      templateFindOne.mockReturnValue({ lean: () => ({ exec: () => Promise.resolve(null) }) });
+      templateFindOne.mockReturnValue({
+        lean: () => ({ exec: () => Promise.resolve(null) }),
+      });
 
-      await expect(service.createSnapshot(projectId, tenantId, templateId))
-        .rejects.toThrow(NotFoundException);
+      await expect(
+        service.createSnapshot(projectId, tenantId, templateId),
+      ).rejects.toThrow(NotFoundException);
     });
 
     it('should throw BadRequestException when creating a second Librarian for the same project', async () => {
-      templateFindOne.mockReturnValue({ lean: () => ({ exec: () => Promise.resolve(mockLibrarianTemplate) }) });
+      templateFindOne.mockReturnValue({
+        lean: () => ({ exec: () => Promise.resolve(mockLibrarianTemplate) }),
+      });
       // First findOne for identifier uniqueness → null; second for singleton check → existing instance
       instanceFindOne
-        .mockReturnValueOnce({ lean: () => ({ exec: () => Promise.resolve(null) }) })   // identifier check
-        .mockReturnValueOnce({ lean: () => ({ exec: () => Promise.resolve(mockInstance) }) }); // singleton check
+        .mockReturnValueOnce({
+          lean: () => ({ exec: () => Promise.resolve(null) }),
+        }) // identifier check
+        .mockReturnValueOnce({
+          lean: () => ({ exec: () => Promise.resolve(mockInstance) }),
+        }); // singleton check
 
-      await expect(service.createSnapshot(projectId, tenantId, templateId))
-        .rejects.toThrow(BadRequestException);
+      await expect(
+        service.createSnapshot(projectId, tenantId, templateId),
+      ).rejects.toThrow(BadRequestException);
     });
 
     it('should allow creating multiple Developer instances', async () => {
-      templateFindOne.mockReturnValue({ lean: () => ({ exec: () => Promise.resolve(mockTemplate) }) });
-      instanceFindOne.mockReturnValue({ lean: () => ({ exec: () => Promise.resolve(null) }) });
+      templateFindOne.mockReturnValue({
+        lean: () => ({ exec: () => Promise.resolve(mockTemplate) }),
+      });
+      instanceFindOne.mockReturnValue({
+        lean: () => ({ exec: () => Promise.resolve(null) }),
+      });
       instanceCreate.mockResolvedValue(mockInstance);
       instanceFindByIdAndUpdate.mockResolvedValue(mockInstance);
 
       // Should not throw for non-singleton roles
-      const result = await service.createSnapshot(projectId, tenantId, templateId);
+      const result = await service.createSnapshot(
+        projectId,
+        tenantId,
+        templateId,
+      );
       expect(result.displayName).toBe('Developer Agent');
     });
   });
 
   describe('findById()', () => {
     it('should return instance by id', async () => {
-      instanceFindOne.mockReturnValue({ lean: () => ({ exec: () => Promise.resolve(mockInstance) }) });
+      instanceFindOne.mockReturnValue({
+        lean: () => ({ exec: () => Promise.resolve(mockInstance) }),
+      });
 
       const result = await service.findById(instanceId.toString(), tenantId);
       expect(result.displayName).toBe('Developer Agent');
     });
 
     it('should throw NotFoundException when not found', async () => {
-      instanceFindOne.mockReturnValue({ lean: () => ({ exec: () => Promise.resolve(null) }) });
+      instanceFindOne.mockReturnValue({
+        lean: () => ({ exec: () => Promise.resolve(null) }),
+      });
 
-      await expect(service.findById(instanceId.toString(), tenantId))
-        .rejects.toThrow(NotFoundException);
+      await expect(
+        service.findById(instanceId.toString(), tenantId),
+      ).rejects.toThrow(NotFoundException);
     });
   });
 
@@ -138,12 +175,26 @@ describe('AgentInstancesService', () => {
     const instanceWithTemplate = { ...mockInstance, templateId };
 
     it('should sync only requested fields (soul only)', async () => {
-      instanceFindOne.mockReturnValue({ lean: () => ({ exec: () => Promise.resolve(instanceWithTemplate) }) });
-      templateFindOne.mockReturnValue({ lean: () => ({ exec: () => Promise.resolve(mockTemplate) }) });
-      const updatedInstance = { ...instanceWithTemplate, soul: mockTemplate.soul };
-      instanceFindOneAndUpdate.mockReturnValue({ lean: () => ({ exec: () => Promise.resolve(updatedInstance) }) });
+      instanceFindOne.mockReturnValue({
+        lean: () => ({ exec: () => Promise.resolve(instanceWithTemplate) }),
+      });
+      templateFindOne.mockReturnValue({
+        lean: () => ({ exec: () => Promise.resolve(mockTemplate) }),
+      });
+      const updatedInstance = {
+        ...instanceWithTemplate,
+        soul: mockTemplate.soul,
+      };
+      instanceFindOneAndUpdate.mockReturnValue({
+        lean: () => ({ exec: () => Promise.resolve(updatedInstance) }),
+      });
 
-      const result = await service.syncFromTemplate(tenantId, projectId, instanceId.toString(), { soul: true });
+      const result = await service.syncFromTemplate(
+        tenantId,
+        projectId,
+        instanceId.toString(),
+        { soul: true },
+      );
       expect(instanceFindOneAndUpdate).toHaveBeenCalledWith(
         expect.any(Object),
         { $set: { soul: mockTemplate.soul } },
@@ -153,43 +204,81 @@ describe('AgentInstancesService', () => {
     });
 
     it('should sync all fields when all flags are true', async () => {
-      instanceFindOne.mockReturnValue({ lean: () => ({ exec: () => Promise.resolve(instanceWithTemplate) }) });
-      templateFindOne.mockReturnValue({ lean: () => ({ exec: () => Promise.resolve(mockTemplate) }) });
-      instanceFindOneAndUpdate.mockReturnValue({ lean: () => ({ exec: () => Promise.resolve(instanceWithTemplate) }) });
+      instanceFindOne.mockReturnValue({
+        lean: () => ({ exec: () => Promise.resolve(instanceWithTemplate) }),
+      });
+      templateFindOne.mockReturnValue({
+        lean: () => ({ exec: () => Promise.resolve(mockTemplate) }),
+      });
+      instanceFindOneAndUpdate.mockReturnValue({
+        lean: () => ({ exec: () => Promise.resolve(instanceWithTemplate) }),
+      });
 
-      await service.syncFromTemplate(tenantId, projectId, instanceId.toString(), { soul: true, aieos: true, config: true });
+      await service.syncFromTemplate(
+        tenantId,
+        projectId,
+        instanceId.toString(),
+        { soul: true, aieos: true, config: true },
+      );
       expect(instanceFindOneAndUpdate).toHaveBeenCalledWith(
         expect.any(Object),
-        { $set: { soul: mockTemplate.soul, aieos_identity: mockTemplate.aieos_identity, config: mockTemplate.config } },
+        {
+          $set: {
+            soul: mockTemplate.soul,
+            aieos_identity: mockTemplate.aieos_identity,
+            config: mockTemplate.config,
+          },
+        },
         expect.any(Object),
       );
     });
 
     it('should not modify displayName or pid', async () => {
-      instanceFindOne.mockReturnValue({ lean: () => ({ exec: () => Promise.resolve(instanceWithTemplate) }) });
-      templateFindOne.mockReturnValue({ lean: () => ({ exec: () => Promise.resolve(mockTemplate) }) });
-      instanceFindOneAndUpdate.mockReturnValue({ lean: () => ({ exec: () => Promise.resolve(instanceWithTemplate) }) });
+      instanceFindOne.mockReturnValue({
+        lean: () => ({ exec: () => Promise.resolve(instanceWithTemplate) }),
+      });
+      templateFindOne.mockReturnValue({
+        lean: () => ({ exec: () => Promise.resolve(mockTemplate) }),
+      });
+      instanceFindOneAndUpdate.mockReturnValue({
+        lean: () => ({ exec: () => Promise.resolve(instanceWithTemplate) }),
+      });
 
-      await service.syncFromTemplate(tenantId, projectId, instanceId.toString(), { soul: true });
+      await service.syncFromTemplate(
+        tenantId,
+        projectId,
+        instanceId.toString(),
+        { soul: true },
+      );
       const setArg = instanceFindOneAndUpdate.mock.calls[0][1].$set;
       expect(setArg).not.toHaveProperty('displayName');
       expect(setArg).not.toHaveProperty('pid');
     });
 
     it('should throw NotFoundException when instance not found', async () => {
-      instanceFindOne.mockReturnValue({ lean: () => ({ exec: () => Promise.resolve(null) }) });
+      instanceFindOne.mockReturnValue({
+        lean: () => ({ exec: () => Promise.resolve(null) }),
+      });
 
       await expect(
-        service.syncFromTemplate(tenantId, projectId, instanceId.toString(), { soul: true }),
+        service.syncFromTemplate(tenantId, projectId, instanceId.toString(), {
+          soul: true,
+        }),
       ).rejects.toThrow(NotFoundException);
     });
 
     it('should throw NotFoundException when template not found', async () => {
-      instanceFindOne.mockReturnValue({ lean: () => ({ exec: () => Promise.resolve(instanceWithTemplate) }) });
-      templateFindOne.mockReturnValue({ lean: () => ({ exec: () => Promise.resolve(null) }) });
+      instanceFindOne.mockReturnValue({
+        lean: () => ({ exec: () => Promise.resolve(instanceWithTemplate) }),
+      });
+      templateFindOne.mockReturnValue({
+        lean: () => ({ exec: () => Promise.resolve(null) }),
+      });
 
       await expect(
-        service.syncFromTemplate(tenantId, projectId, instanceId.toString(), { soul: true }),
+        service.syncFromTemplate(tenantId, projectId, instanceId.toString(), {
+          soul: true,
+        }),
       ).rejects.toThrow(NotFoundException);
     });
   });

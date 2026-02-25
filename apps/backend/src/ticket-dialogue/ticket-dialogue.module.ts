@@ -11,7 +11,9 @@ import { TicketDialogueService } from './ticket-dialogue.service';
 
 @Module({
   imports: [
-    MongooseModule.forFeature([{ name: TicketComment.name, schema: TicketCommentSchema }]),
+    MongooseModule.forFeature([
+      { name: TicketComment.name, schema: TicketCommentSchema },
+    ]),
     BacklogModule,
     ZeroClawModule,
     WebsocketModule,

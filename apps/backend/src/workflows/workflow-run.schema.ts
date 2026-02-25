@@ -26,7 +26,10 @@ export class WorkflowRun {
   @Prop({ type: SchemaTypes.ObjectId, required: true, index: true })
   tenantId: Types.ObjectId;
 
-  @Prop({ enum: ['running', 'paused', 'completed', 'failed'], default: 'running' })
+  @Prop({
+    enum: ['running', 'paused', 'completed', 'failed'],
+    default: 'running',
+  })
   status: string;
 
   @Prop({ default: '' })

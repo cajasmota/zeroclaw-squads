@@ -4,7 +4,10 @@ import { InjectModel } from '@nestjs/mongoose';
 import * as fs from 'fs';
 import * as path from 'path';
 import { Model, Types } from 'mongoose';
-import { AgentInstance, AgentInstanceDocument } from '../agent-instances/agent-instance.schema';
+import {
+  AgentInstance,
+  AgentInstanceDocument,
+} from '../agent-instances/agent-instance.schema';
 import { Transcript, TranscriptDocument } from './transcript.schema';
 
 @Injectable()
@@ -12,14 +15,24 @@ export class RuntimeTraceArchiveService {
   private readonly logger = new Logger(RuntimeTraceArchiveService.name);
 
   constructor(
-    @InjectModel(Transcript.name) private readonly transcriptModel: Model<TranscriptDocument>,
-    @InjectModel(AgentInstance.name) private readonly instanceModel: Model<AgentInstanceDocument>,
+    @InjectModel(Transcript.name)
+    private readonly transcriptModel: Model<TranscriptDocument>,
+    @InjectModel(AgentInstance.name)
+    private readonly instanceModel: Model<AgentInstanceDocument>,
   ) {}
 
   @OnEvent('workflow.node.completed')
-  async handleNodeCompleted(payload: { storyId: string; nodeId: string; agentInstanceId?: string; runId?: string }) {
+  async handleNodeCompleted(payload: {
+    storyId: string;
+    nodeId: string;
+    agentInstanceId?: string;
+    runId?: string;
+  }) {
     if (!payload.agentInstanceId) return;
-    await this.archiveTrace(payload.agentInstanceId, payload.runId ?? payload.nodeId);
+    await this.archiveTrace(
+      payload.agentInstanceId,
+      payload.runId ?? payload.nodeId,
+    );
   }
 
   async archiveTrace(agentInstanceId: string, runId: string): Promise<void> {
@@ -29,7 +42,11 @@ export class RuntimeTraceArchiveService {
       .exec();
     if (!instance?.workspacePath) return;
 
-    const tracePath = path.join(instance.workspacePath, 'state', 'runtime-trace.jsonl');
+    const tracePath = path.join(
+      instance.workspacePath,
+      'state',
+      'runtime-trace.jsonl',
+    );
     if (!fs.existsSync(tracePath)) return;
 
     const raw = fs.readFileSync(tracePath, 'utf8');
@@ -37,7 +54,11 @@ export class RuntimeTraceArchiveService {
       .split('\n')
       .filter((l) => l.trim())
       .map((l) => {
-        try { return JSON.parse(l); } catch { return null; }
+        try {
+          return JSON.parse(l);
+        } catch {
+          return null;
+        }
       })
       .filter(Boolean);
 
@@ -54,6 +75,8 @@ export class RuntimeTraceArchiveService {
 
     // Truncate the file after successful archiving
     fs.writeFileSync(tracePath, '');
-    this.logger.log(`Archived ${entries.length} trace entries for instance ${agentInstanceId}`);
+    this.logger.log(
+      `Archived ${entries.length} trace entries for instance ${agentInstanceId}`,
+    );
   }
 }

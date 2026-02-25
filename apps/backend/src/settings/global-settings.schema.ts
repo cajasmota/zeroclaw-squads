@@ -5,7 +5,12 @@ export type GlobalSettingsDocument = GlobalSettings & Document;
 
 @Schema({ timestamps: true })
 export class GlobalSettings {
-  @Prop({ type: SchemaTypes.ObjectId, required: true, unique: true, index: true })
+  @Prop({
+    type: SchemaTypes.ObjectId,
+    required: true,
+    unique: true,
+    index: true,
+  })
   tenantId: Types.ObjectId;
 
   @Prop({ default: 'AES' })
@@ -28,7 +33,12 @@ export class GlobalSettings {
       ollama: { type: Boolean, default: true },
     },
     _id: false,
-    default: () => ({ openai: true, anthropic: false, google: false, ollama: true }),
+    default: () => ({
+      openai: true,
+      anthropic: false,
+      google: false,
+      ollama: true,
+    }),
   })
   providers: {
     openai: boolean;
@@ -53,4 +63,5 @@ export class GlobalSettings {
   };
 }
 
-export const GlobalSettingsSchema = SchemaFactory.createForClass(GlobalSettings);
+export const GlobalSettingsSchema =
+  SchemaFactory.createForClass(GlobalSettings);

@@ -1,4 +1,8 @@
-import { ConflictException, ForbiddenException, UnauthorizedException } from '@nestjs/common';
+import {
+  ConflictException,
+  ForbiddenException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { getModelToken } from '@nestjs/mongoose';
@@ -77,49 +81,77 @@ describe('AuthService', () => {
 
   describe('login()', () => {
     it('should return accessToken on valid credentials', async () => {
-      tenantFindOne.mockReturnValue({ lean: () => ({ exec: () => Promise.resolve(mockTenant) }) });
+      tenantFindOne.mockReturnValue({
+        lean: () => ({ exec: () => Promise.resolve(mockTenant) }),
+      });
       userFindOne.mockReturnValue({ exec: () => Promise.resolve(mockUser) });
 
-      const result = await service.login({ email: 'test@example.com', password: 'password123' });
+      const result = await service.login({
+        email: 'test@example.com',
+        password: 'password123',
+      });
       expect(result.accessToken).toBe('mock-token');
       expect(result.user.email).toBe('test@example.com');
     });
 
     it('should throw UnauthorizedException on wrong password', async () => {
-      tenantFindOne.mockReturnValue({ lean: () => ({ exec: () => Promise.resolve(mockTenant) }) });
+      tenantFindOne.mockReturnValue({
+        lean: () => ({ exec: () => Promise.resolve(mockTenant) }),
+      });
       userFindOne.mockReturnValue({ exec: () => Promise.resolve(mockUser) });
 
-      await expect(service.login({ email: 'test@example.com', password: 'wrongpass' }))
-        .rejects.toThrow(UnauthorizedException);
+      await expect(
+        service.login({ email: 'test@example.com', password: 'wrongpass' }),
+      ).rejects.toThrow(UnauthorizedException);
     });
 
     it('should throw UnauthorizedException when user not found', async () => {
-      tenantFindOne.mockReturnValue({ lean: () => ({ exec: () => Promise.resolve(mockTenant) }) });
+      tenantFindOne.mockReturnValue({
+        lean: () => ({ exec: () => Promise.resolve(mockTenant) }),
+      });
       userFindOne.mockReturnValue({ exec: () => Promise.resolve(null) });
 
-      await expect(service.login({ email: 'nouser@example.com', password: 'password123' }))
-        .rejects.toThrow(UnauthorizedException);
+      await expect(
+        service.login({ email: 'nouser@example.com', password: 'password123' }),
+      ).rejects.toThrow(UnauthorizedException);
     });
   });
 
   describe('createUser()', () => {
     it('should create user successfully', async () => {
-      userFindOne.mockReturnValue({ lean: () => ({ exec: () => Promise.resolve(null) }) });
-      userCreate.mockResolvedValue({ ...mockUser, toObject: () => ({ email: 'new@test.com' }) });
+      userFindOne.mockReturnValue({
+        lean: () => ({ exec: () => Promise.resolve(null) }),
+      });
+      userCreate.mockResolvedValue({
+        ...mockUser,
+        toObject: () => ({ email: 'new@test.com' }),
+      });
 
       const result = await service.createUser(
-        { userId: mockUserId.toString(), tenantId: mockTenantId.toString(), email: 'admin@test.com', role: 'admin' },
+        {
+          userId: mockUserId.toString(),
+          tenantId: mockTenantId.toString(),
+          email: 'admin@test.com',
+          role: 'admin',
+        },
         { email: 'new@test.com', password: 'pass12345', name: 'New User' },
       );
       expect(result.email).toBe('new@test.com');
     });
 
     it('should throw ConflictException on duplicate email', async () => {
-      userFindOne.mockReturnValue({ lean: () => ({ exec: () => Promise.resolve(mockUser) }) });
+      userFindOne.mockReturnValue({
+        lean: () => ({ exec: () => Promise.resolve(mockUser) }),
+      });
 
       await expect(
         service.createUser(
-          { userId: mockUserId.toString(), tenantId: mockTenantId.toString(), email: 'admin@test.com', role: 'admin' },
+          {
+            userId: mockUserId.toString(),
+            tenantId: mockTenantId.toString(),
+            email: 'admin@test.com',
+            role: 'admin',
+          },
           { email: 'test@example.com', password: 'pass12345', name: 'Dup' },
         ),
       ).rejects.toThrow(ConflictException);
@@ -128,7 +160,12 @@ describe('AuthService', () => {
     it('should throw ForbiddenException for non-admin user', async () => {
       await expect(
         service.createUser(
-          { userId: mockUserId.toString(), tenantId: mockTenantId.toString(), email: 'user@test.com', role: 'member' },
+          {
+            userId: mockUserId.toString(),
+            tenantId: mockTenantId.toString(),
+            email: 'user@test.com',
+            role: 'member',
+          },
           { email: 'new@test.com', password: 'pass12345', name: 'New' },
         ),
       ).rejects.toThrow(ForbiddenException);

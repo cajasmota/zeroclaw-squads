@@ -15,7 +15,10 @@ export class Aes256EncryptionService {
   encrypt(plainText: string): string {
     const iv = crypto.randomBytes(16);
     const cipher = crypto.createCipheriv(this.algorithm, this.key, iv);
-    const encrypted = Buffer.concat([cipher.update(plainText, 'utf8'), cipher.final()]);
+    const encrypted = Buffer.concat([
+      cipher.update(plainText, 'utf8'),
+      cipher.final(),
+    ]);
     return `${iv.toString('hex')}:${encrypted.toString('hex')}`;
   }
 
@@ -24,6 +27,9 @@ export class Aes256EncryptionService {
     const iv = Buffer.from(ivHex, 'hex');
     const encrypted = Buffer.from(encryptedHex, 'hex');
     const decipher = crypto.createDecipheriv(this.algorithm, this.key, iv);
-    return Buffer.concat([decipher.update(encrypted), decipher.final()]).toString('utf8');
+    return Buffer.concat([
+      decipher.update(encrypted),
+      decipher.final(),
+    ]).toString('utf8');
   }
 }

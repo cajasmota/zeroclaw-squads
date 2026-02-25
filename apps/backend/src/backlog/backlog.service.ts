@@ -14,7 +14,8 @@ export class BacklogService {
     @InjectModel(Epic.name) private readonly epicModel: Model<EpicDocument>,
     @InjectModel(Story.name) private readonly storyModel: Model<StoryDocument>,
     @InjectModel(Task.name) private readonly taskModel: Model<TaskDocument>,
-    @InjectModel(Sprint.name) private readonly sprintModel: Model<SprintDocument>,
+    @InjectModel(Sprint.name)
+    private readonly sprintModel: Model<SprintDocument>,
     private readonly eventEmitter: EventEmitter2,
     private readonly gateway: AesGateway,
   ) {}
@@ -22,25 +23,54 @@ export class BacklogService {
   // ── Epics ──────────────────────────────────────────────────────────────────
 
   async findEpics(projectId: Types.ObjectId, tenantId: Types.ObjectId) {
-    return this.epicModel.find({ projectId, tenantId }).sort({ order: 1 }).lean().exec();
+    return this.epicModel
+      .find({ projectId, tenantId })
+      .sort({ order: 1 })
+      .lean()
+      .exec();
   }
 
-  async createEpic(projectId: Types.ObjectId, tenantId: Types.ObjectId, dto: Partial<Epic>) {
-    return (await this.epicModel.create({ projectId, tenantId, ...dto })).toObject();
+  async createEpic(
+    projectId: Types.ObjectId,
+    tenantId: Types.ObjectId,
+    dto: Partial<Epic>,
+  ) {
+    return (
+      await this.epicModel.create({ projectId, tenantId, ...dto })
+    ).toObject();
   }
 
-  async updateEpic(projectId: Types.ObjectId, tenantId: Types.ObjectId, epicId: string, dto: Partial<Epic>) {
-    const doc = await this.epicModel.findOneAndUpdate(
-      { _id: new Types.ObjectId(epicId), projectId, tenantId },
-      { $set: dto },
-      { new: true },
-    ).lean().exec();
+  async updateEpic(
+    projectId: Types.ObjectId,
+    tenantId: Types.ObjectId,
+    epicId: string,
+    dto: Partial<Epic>,
+  ) {
+    const doc = await this.epicModel
+      .findOneAndUpdate(
+        { _id: new Types.ObjectId(epicId), projectId, tenantId },
+        { $set: dto },
+        { new: true },
+      )
+      .lean()
+      .exec();
     if (!doc) throw new NotFoundException(`Epic ${epicId} not found`);
     return doc;
   }
 
-  async deleteEpic(projectId: Types.ObjectId, tenantId: Types.ObjectId, epicId: string) {
-    const doc = await this.epicModel.findOneAndDelete({ _id: new Types.ObjectId(epicId), projectId, tenantId }).lean().exec();
+  async deleteEpic(
+    projectId: Types.ObjectId,
+    tenantId: Types.ObjectId,
+    epicId: string,
+  ) {
+    const doc = await this.epicModel
+      .findOneAndDelete({
+        _id: new Types.ObjectId(epicId),
+        projectId,
+        tenantId,
+      })
+      .lean()
+      .exec();
     if (!doc) throw new NotFoundException(`Epic ${epicId} not found`);
     return { message: 'Epic deleted' };
   }
@@ -59,19 +89,37 @@ export class BacklogService {
     return this.storyModel.find(query).sort({ order: 1 }).lean().exec();
   }
 
-  async createStory(projectId: Types.ObjectId, tenantId: Types.ObjectId, dto: Partial<Story>) {
-    return (await this.storyModel.create({ projectId, tenantId, ...dto })).toObject();
+  async createStory(
+    projectId: Types.ObjectId,
+    tenantId: Types.ObjectId,
+    dto: Partial<Story>,
+  ) {
+    return (
+      await this.storyModel.create({ projectId, tenantId, ...dto })
+    ).toObject();
   }
 
-  async updateStory(projectId: Types.ObjectId, tenantId: Types.ObjectId, storyId: string, dto: Partial<Story>) {
-    const doc = await this.storyModel.findOneAndUpdate(
-      { _id: new Types.ObjectId(storyId), projectId, tenantId },
-      { $set: dto },
-      { new: true },
-    ).lean().exec();
+  async updateStory(
+    projectId: Types.ObjectId,
+    tenantId: Types.ObjectId,
+    storyId: string,
+    dto: Partial<Story>,
+  ) {
+    const doc = await this.storyModel
+      .findOneAndUpdate(
+        { _id: new Types.ObjectId(storyId), projectId, tenantId },
+        { $set: dto },
+        { new: true },
+      )
+      .lean()
+      .exec();
     if (!doc) throw new NotFoundException(`Story ${storyId} not found`);
     if (dto.assignedTo) {
-      this.eventEmitter.emit('story.assigned', { storyId, projectId: projectId.toString(), tenantId: tenantId.toString() });
+      this.eventEmitter.emit('story.assigned', {
+        storyId,
+        projectId: projectId.toString(),
+        tenantId: tenantId.toString(),
+      });
     }
     return doc;
   }
@@ -84,47 +132,97 @@ export class BacklogService {
     workflowNodeStatus?: string,
   ) {
     const update: Record<string, any> = { status };
-    if (workflowNodeStatus !== undefined) update.workflowNodeStatus = workflowNodeStatus;
+    if (workflowNodeStatus !== undefined)
+      update.workflowNodeStatus = workflowNodeStatus;
 
-    const doc = await this.storyModel.findOneAndUpdate(
-      { _id: new Types.ObjectId(storyId), projectId, tenantId },
-      { $set: update },
-      { new: true },
-    ).lean().exec();
+    const doc = await this.storyModel
+      .findOneAndUpdate(
+        { _id: new Types.ObjectId(storyId), projectId, tenantId },
+        { $set: update },
+        { new: true },
+      )
+      .lean()
+      .exec();
     if (!doc) throw new NotFoundException(`Story ${storyId} not found`);
 
-    this.gateway.emitStoryStatus(projectId.toString(), storyId, status, workflowNodeStatus);
+    this.gateway.emitStoryStatus(
+      projectId.toString(),
+      storyId,
+      status,
+      workflowNodeStatus,
+    );
     return doc;
   }
 
-  async deleteStory(projectId: Types.ObjectId, tenantId: Types.ObjectId, storyId: string) {
-    const doc = await this.storyModel.findOneAndDelete({ _id: new Types.ObjectId(storyId), projectId, tenantId }).lean().exec();
+  async deleteStory(
+    projectId: Types.ObjectId,
+    tenantId: Types.ObjectId,
+    storyId: string,
+  ) {
+    const doc = await this.storyModel
+      .findOneAndDelete({
+        _id: new Types.ObjectId(storyId),
+        projectId,
+        tenantId,
+      })
+      .lean()
+      .exec();
     if (!doc) throw new NotFoundException(`Story ${storyId} not found`);
     return { message: 'Story deleted' };
   }
 
   // ── Tasks ──────────────────────────────────────────────────────────────────
 
-  async findTasks(storyId: string, projectId: Types.ObjectId, tenantId: Types.ObjectId) {
-    return this.taskModel.find({ storyId: new Types.ObjectId(storyId), projectId, tenantId }).sort({ order: 1 }).lean().exec();
+  async findTasks(
+    storyId: string,
+    projectId: Types.ObjectId,
+    tenantId: Types.ObjectId,
+  ) {
+    return this.taskModel
+      .find({ storyId: new Types.ObjectId(storyId), projectId, tenantId })
+      .sort({ order: 1 })
+      .lean()
+      .exec();
   }
 
-  async createTask(storyId: string, projectId: Types.ObjectId, tenantId: Types.ObjectId, dto: Partial<Task>) {
-    return (await this.taskModel.create({ storyId: new Types.ObjectId(storyId), projectId, tenantId, ...dto })).toObject();
+  async createTask(
+    storyId: string,
+    projectId: Types.ObjectId,
+    tenantId: Types.ObjectId,
+    dto: Partial<Task>,
+  ) {
+    return (
+      await this.taskModel.create({
+        storyId: new Types.ObjectId(storyId),
+        projectId,
+        tenantId,
+        ...dto,
+      })
+    ).toObject();
   }
 
-  async updateTask(tenantId: Types.ObjectId, taskId: string, dto: Partial<Task>) {
-    const doc = await this.taskModel.findOneAndUpdate(
-      { _id: new Types.ObjectId(taskId), tenantId },
-      { $set: dto },
-      { new: true },
-    ).lean().exec();
+  async updateTask(
+    tenantId: Types.ObjectId,
+    taskId: string,
+    dto: Partial<Task>,
+  ) {
+    const doc = await this.taskModel
+      .findOneAndUpdate(
+        { _id: new Types.ObjectId(taskId), tenantId },
+        { $set: dto },
+        { new: true },
+      )
+      .lean()
+      .exec();
     if (!doc) throw new NotFoundException(`Task ${taskId} not found`);
     return doc;
   }
 
   async deleteTask(tenantId: Types.ObjectId, taskId: string) {
-    const doc = await this.taskModel.findOneAndDelete({ _id: new Types.ObjectId(taskId), tenantId }).lean().exec();
+    const doc = await this.taskModel
+      .findOneAndDelete({ _id: new Types.ObjectId(taskId), tenantId })
+      .lean()
+      .exec();
     if (!doc) throw new NotFoundException(`Task ${taskId} not found`);
     return { message: 'Task deleted' };
   }
@@ -135,23 +233,47 @@ export class BacklogService {
     return this.sprintModel.find({ projectId, tenantId }).lean().exec();
   }
 
-  async createSprint(projectId: Types.ObjectId, tenantId: Types.ObjectId, dto: Partial<Sprint>) {
-    return (await this.sprintModel.create({ projectId, tenantId, ...dto })).toObject();
+  async createSprint(
+    projectId: Types.ObjectId,
+    tenantId: Types.ObjectId,
+    dto: Partial<Sprint>,
+  ) {
+    return (
+      await this.sprintModel.create({ projectId, tenantId, ...dto })
+    ).toObject();
   }
 
-  async updateSprint(projectId: Types.ObjectId, tenantId: Types.ObjectId, sprintId: string, dto: Partial<Sprint>) {
-    const doc = await this.sprintModel.findOneAndUpdate(
-      { _id: new Types.ObjectId(sprintId), projectId, tenantId },
-      { $set: dto },
-      { new: true },
-    ).lean().exec();
+  async updateSprint(
+    projectId: Types.ObjectId,
+    tenantId: Types.ObjectId,
+    sprintId: string,
+    dto: Partial<Sprint>,
+  ) {
+    const doc = await this.sprintModel
+      .findOneAndUpdate(
+        { _id: new Types.ObjectId(sprintId), projectId, tenantId },
+        { $set: dto },
+        { new: true },
+      )
+      .lean()
+      .exec();
     if (!doc) throw new NotFoundException(`Sprint ${sprintId} not found`);
     return doc;
   }
 
-  async markSprintReady(projectId: Types.ObjectId, tenantId: Types.ObjectId, sprintId: string) {
-    const sprint = await this.updateSprint(projectId, tenantId, sprintId, { isReady: true });
-    this.eventEmitter.emit('sprint.ready', { sprintId, projectId: projectId.toString(), tenantId: tenantId.toString() });
+  async markSprintReady(
+    projectId: Types.ObjectId,
+    tenantId: Types.ObjectId,
+    sprintId: string,
+  ) {
+    const sprint = await this.updateSprint(projectId, tenantId, sprintId, {
+      isReady: true,
+    });
+    this.eventEmitter.emit('sprint.ready', {
+      sprintId,
+      projectId: projectId.toString(),
+      tenantId: tenantId.toString(),
+    });
     return sprint;
   }
 }

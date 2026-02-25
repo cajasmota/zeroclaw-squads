@@ -1,4 +1,13 @@
-import { Body, Controller, Headers, HttpCode, HttpException, HttpStatus, Logger, Post } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Headers,
+  HttpCode,
+  HttpException,
+  HttpStatus,
+  Logger,
+  Post,
+} from '@nestjs/common';
 import * as crypto from 'crypto';
 import { ConfigService } from '@nestjs/config';
 import { EventEmitter2 } from '@nestjs/event-emitter';
@@ -15,7 +24,11 @@ export class SlackEventsController {
     private readonly eventEmitter: EventEmitter2,
   ) {}
 
-  verifySlackSignature(body: string, timestamp: string, signature: string): boolean {
+  verifySlackSignature(
+    body: string,
+    timestamp: string,
+    signature: string,
+  ): boolean {
     const secret = this.configService.get<string>('SLACK_SIGNING_SECRET', '');
     if (!secret) return false;
 
@@ -39,7 +52,10 @@ export class SlackEventsController {
     if (signature && timestamp) {
       const rawBody = JSON.stringify(body);
       if (!this.verifySlackSignature(rawBody, timestamp, signature)) {
-        throw new HttpException('Invalid Slack signature', HttpStatus.UNAUTHORIZED);
+        throw new HttpException(
+          'Invalid Slack signature',
+          HttpStatus.UNAUTHORIZED,
+        );
       }
     }
 

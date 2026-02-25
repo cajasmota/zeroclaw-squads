@@ -4,7 +4,10 @@ import { BacklogModule } from '../backlog/backlog.module';
 import { WebsocketModule } from '../websocket/websocket.module';
 import { WorkflowRun, WorkflowRunSchema } from './workflow-run.schema';
 import { WorkflowStoryBridgeService } from './workflow-story-bridge.service';
-import { WorkflowTemplate, WorkflowTemplateSchema } from './workflow-template.schema';
+import {
+  WorkflowTemplate,
+  WorkflowTemplateSchema,
+} from './workflow-template.schema';
 import { WorkflowsController } from './workflows.controller';
 import { WorkflowsService } from './workflows.service';
 

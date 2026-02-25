@@ -1,4 +1,13 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
+  UseGuards,
+} from '@nestjs/common';
 import { Types } from 'mongoose';
 import { RequestUser } from '@aes/types';
 import { AdminOnly } from '../common/decorators/admin-only.decorator';
@@ -50,7 +59,11 @@ export class AuthController {
     @Param('id') id: string,
     @Body() dto: UpdateUserDto,
   ) {
-    return this.authService.updateUser(new Types.ObjectId(user.tenantId), id, dto);
+    return this.authService.updateUser(
+      new Types.ObjectId(user.tenantId),
+      id,
+      dto,
+    );
   }
 
   @Delete('users/:id')

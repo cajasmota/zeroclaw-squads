@@ -31,11 +31,15 @@ describe('ConfigModule', () => {
   });
 
   it('should resolve MONGODB_URI from env', () => {
-    expect(configService.get('MONGODB_URI')).toBe('mongodb://localhost:27017/test');
+    expect(configService.get('MONGODB_URI')).toBe(
+      'mongodb://localhost:27017/test',
+    );
   });
 
   it('should resolve JWT_SECRET from env', () => {
-    expect(configService.get('JWT_SECRET')).toBe('test-secret-32-chars-long-string!');
+    expect(configService.get('JWT_SECRET')).toBe(
+      'test-secret-32-chars-long-string!',
+    );
   });
 
   it('should resolve JWT_EXPIRES_IN from env', () => {

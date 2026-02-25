@@ -20,7 +20,8 @@ import { UpdateUserDto } from './dto/update-user.dto';
 @Injectable()
 export class AuthService {
   constructor(
-    @InjectModel(Tenant.name) private readonly tenantModel: Model<TenantDocument>,
+    @InjectModel(Tenant.name)
+    private readonly tenantModel: Model<TenantDocument>,
     @InjectModel(User.name) private readonly userModel: Model<UserDocument>,
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
@@ -32,9 +33,12 @@ export class AuthService {
     if (dto.tenantId) {
       tenantId = new Types.ObjectId(dto.tenantId);
     } else {
-      const defaultTenant = await this.tenantModel.findOne({ slug: 'default' }).lean().exec();
+      const defaultTenant = await this.tenantModel
+        .findOne({ slug: 'default' })
+        .lean()
+        .exec();
       if (!defaultTenant) throw new UnauthorizedException('No tenant found');
-      tenantId = defaultTenant._id as Types.ObjectId;
+      tenantId = defaultTenant._id;
     }
 
     const user = await this.userModel
@@ -47,7 +51,7 @@ export class AuthService {
     if (!isMatch) throw new UnauthorizedException('Invalid credentials');
 
     const payload: JwtPayload = {
-      sub: (user._id as Types.ObjectId).toString(),
+      sub: user._id.toString(),
       tenantId: tenantId.toString(),
       email: user.email,
       role: user.role as 'admin' | 'member',
@@ -57,7 +61,7 @@ export class AuthService {
     return {
       accessToken,
       user: {
-        id: (user._id as Types.ObjectId).toString(),
+        id: user._id.toString(),
         email: user.email,
         name: user.name,
         role: user.role,
@@ -72,8 +76,12 @@ export class AuthService {
 
     const tenantId = new Types.ObjectId(currentUser.tenantId);
 
-    const existing = await this.userModel.findOne({ tenantId, email: dto.email }).lean().exec();
-    if (existing) throw new ConflictException('Email already exists in this tenant');
+    const existing = await this.userModel
+      .findOne({ tenantId, email: dto.email })
+      .lean()
+      .exec();
+    if (existing)
+      throw new ConflictException('Email already exists in this tenant');
 
     const passwordHash = await bcrypt.hash(dto.password, 12);
     const user = await this.userModel.create({

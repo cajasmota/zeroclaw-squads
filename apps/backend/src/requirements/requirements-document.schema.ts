@@ -24,5 +24,6 @@ export class RequirementsDocument {
   order: number;
 }
 
-export const RequirementsDocumentSchema = SchemaFactory.createForClass(RequirementsDocument);
+export const RequirementsDocumentSchema =
+  SchemaFactory.createForClass(RequirementsDocument);
 RequirementsDocumentSchema.index({ projectId: 1, tenantId: 1 });

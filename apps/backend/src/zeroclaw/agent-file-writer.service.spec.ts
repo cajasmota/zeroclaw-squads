@@ -14,7 +14,11 @@ describe('AgentFileWriterService', () => {
     tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'aes-test-'));
 
     const module: TestingModule = await Test.createTestingModule({
-      providers: [AgentFileWriterService, AieosGeneratorService, ZeroClawConfigGeneratorService],
+      providers: [
+        AgentFileWriterService,
+        AieosGeneratorService,
+        ZeroClawConfigGeneratorService,
+      ],
     }).compile();
 
     service = module.get<AgentFileWriterService>(AgentFileWriterService);
@@ -46,7 +50,9 @@ describe('AgentFileWriterService', () => {
       workspacePath: tmpDir,
     });
 
-    const identity = JSON.parse(fs.readFileSync(path.join(tmpDir, 'identity.json'), 'utf8'));
+    const identity = JSON.parse(
+      fs.readFileSync(path.join(tmpDir, 'identity.json'), 'utf8'),
+    );
     expect(identity).toHaveProperty('standard');
     expect(identity).toHaveProperty('identity');
   });
@@ -58,7 +64,10 @@ describe('AgentFileWriterService', () => {
       workspacePath: tmpDir,
     });
 
-    const toml = fs.readFileSync(path.join(tmpDir, 'zeroclaw.config.toml'), 'utf8');
+    const toml = fs.readFileSync(
+      path.join(tmpDir, 'zeroclaw.config.toml'),
+      'utf8',
+    );
     expect(toml).toContain('name = "ReviewBot"');
   });
 });

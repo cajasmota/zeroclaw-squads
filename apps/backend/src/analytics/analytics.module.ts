@@ -1,6 +1,9 @@
 import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
-import { AgentInstance, AgentInstanceSchema } from '../agent-instances/agent-instance.schema';
+import {
+  AgentInstance,
+  AgentInstanceSchema,
+} from '../agent-instances/agent-instance.schema';
 import { AnalyticsController } from './analytics.controller';
 import { RuntimeTraceArchiveService } from './runtime-trace-archive.service';
 import { Transcript, TranscriptSchema } from './transcript.schema';

@@ -9,7 +9,9 @@ import { SettingsController } from './settings.controller';
 
 @Module({
   imports: [
-    MongooseModule.forFeature([{ name: GlobalSettings.name, schema: GlobalSettingsSchema }]),
+    MongooseModule.forFeature([
+      { name: GlobalSettings.name, schema: GlobalSettingsSchema },
+    ]),
   ],
   providers: [GlobalSettingsService, OllamaService, Aes256EncryptionService],
   controllers: [SettingsController, ModelsController],

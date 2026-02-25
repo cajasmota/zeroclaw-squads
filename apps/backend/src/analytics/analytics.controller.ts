@@ -11,8 +11,10 @@ import { Transcript, TranscriptDocument } from './transcript.schema';
 @UseGuards(JwtAuthGuard)
 export class AnalyticsController {
   constructor(
-    @InjectModel(UsageEvent.name) private readonly usageEventModel: Model<UsageEventDocument>,
-    @InjectModel(Transcript.name) private readonly transcriptModel: Model<TranscriptDocument>,
+    @InjectModel(UsageEvent.name)
+    private readonly usageEventModel: Model<UsageEventDocument>,
+    @InjectModel(Transcript.name)
+    private readonly transcriptModel: Model<TranscriptDocument>,
   ) {}
 
   @Get('burn-rate')
@@ -32,7 +34,11 @@ export class AnalyticsController {
       },
       { $sort: { _id: 1 } },
     ]);
-    return result.map((r) => ({ date: r._id, totalCost: r.totalCost, totalTokens: r.totalTokens }));
+    return result.map((r) => ({
+      date: r._id,
+      totalCost: r.totalCost,
+      totalTokens: r.totalTokens,
+    }));
   }
 
   @Get('distribution')
@@ -65,7 +71,10 @@ export class AnalyticsController {
     const tenantId = new Types.ObjectId(user.tenantId);
     const skip = (parseInt(page) - 1) * parseInt(limit);
     return this.transcriptModel
-      .find({ projectId: new Types.ObjectId(projectId), tenantId }, { entries: 0 })
+      .find(
+        { projectId: new Types.ObjectId(projectId), tenantId },
+        { entries: 0 },
+      )
       .sort({ archivedAt: -1 })
       .skip(skip)
       .limit(parseInt(limit))

@@ -16,15 +16,26 @@ jest.mock('chokidar', () => ({
 describe('UsageMonitorService', () => {
   let service: UsageMonitorService;
   const mockCreate = jest.fn().mockResolvedValue({});
-  const mockFindOne = jest.fn().mockReturnValue({ lean: () => ({ exec: () => Promise.resolve(null) }) });
+  const mockFindOne = jest
+    .fn()
+    .mockReturnValue({ lean: () => ({ exec: () => Promise.resolve(null) }) });
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         UsageMonitorService,
-        { provide: getModelToken(UsageEvent.name), useValue: { create: mockCreate } },
-        { provide: getModelToken(AgentInstance.name), useValue: { findOne: mockFindOne } },
-        { provide: ConfigService, useValue: { get: jest.fn().mockReturnValue('/artifacts') } },
+        {
+          provide: getModelToken(UsageEvent.name),
+          useValue: { create: mockCreate },
+        },
+        {
+          provide: getModelToken(AgentInstance.name),
+          useValue: { findOne: mockFindOne },
+        },
+        {
+          provide: ConfigService,
+          useValue: { get: jest.fn().mockReturnValue('/artifacts') },
+        },
       ],
     }).compile();
 

@@ -29,13 +29,19 @@ export class Story {
   @Prop({ enum: ['high', 'medium', 'low'], default: 'medium' })
   priority: string;
 
-  @Prop({ enum: ['backlog', 'selected', 'in_progress', 'review', 'done'], default: 'backlog' })
+  @Prop({
+    enum: ['backlog', 'selected', 'in_progress', 'review', 'done'],
+    default: 'backlog',
+  })
   status: string;
 
   @Prop({ default: '' })
   workflowNodeStatus: string;
 
-  @Prop({ type: [{ type: SchemaTypes.ObjectId, ref: 'AgentInstance' }], default: [] })
+  @Prop({
+    type: [{ type: SchemaTypes.ObjectId, ref: 'AgentInstance' }],
+    default: [],
+  })
   assignedTo: Types.ObjectId[];
 
   @Prop({ default: false })

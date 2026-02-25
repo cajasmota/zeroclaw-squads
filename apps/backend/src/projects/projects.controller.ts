@@ -1,4 +1,13 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
+  UseGuards,
+} from '@nestjs/common';
 import { Types } from 'mongoose';
 import { RequestUser } from '@aes/types';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
@@ -33,7 +42,11 @@ export class ProjectsController {
     @Param('id') id: string,
     @Body() dto: UpdateProjectDto,
   ) {
-    return this.projectsService.update(new Types.ObjectId(user.tenantId), id, dto);
+    return this.projectsService.update(
+      new Types.ObjectId(user.tenantId),
+      id,
+      dto,
+    );
   }
 
   @Delete(':id')

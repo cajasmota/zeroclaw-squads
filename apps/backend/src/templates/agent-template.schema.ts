@@ -3,7 +3,13 @@ import { Document, SchemaTypes, Types } from 'mongoose';
 
 export type AgentTemplateDocument = AgentTemplate & Document;
 
-export type AgentRole = 'librarian' | 'architect' | 'pm' | 'developer' | 'reviewer' | 'tester';
+export type AgentRole =
+  | 'librarian'
+  | 'architect'
+  | 'pm'
+  | 'developer'
+  | 'reviewer'
+  | 'tester';
 export type LlmProvider = 'ollama' | 'openai' | 'anthropic' | 'google';
 
 @Schema({ timestamps: true })

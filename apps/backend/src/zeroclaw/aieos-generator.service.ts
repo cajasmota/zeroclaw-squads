@@ -11,7 +11,14 @@ export interface AieosPayload {
   [key: string]: any;
 }
 
-const REQUIRED_SECTIONS = ['standard', 'identity', 'psychology', 'linguistics', 'history', 'capabilities'];
+const REQUIRED_SECTIONS = [
+  'standard',
+  'identity',
+  'psychology',
+  'linguistics',
+  'history',
+  'capabilities',
+];
 
 @Injectable()
 export class AieosGeneratorService {
@@ -68,7 +75,10 @@ export class AieosGeneratorService {
             ...existing.psychology?.traits?.ocean,
           },
         },
-        moral_compass: { alignment: 'Lawful Good', ...existing.psychology?.moral_compass },
+        moral_compass: {
+          alignment: 'Lawful Good',
+          ...existing.psychology?.moral_compass,
+        },
         ...existing.psychology,
       },
       linguistics: {
@@ -81,9 +91,14 @@ export class AieosGeneratorService {
         ...existing.linguistics,
       },
       history: {
-        origin_story: existing.history?.origin_story ?? `AI agent named ${instance.displayName}`,
+        origin_story:
+          existing.history?.origin_story ??
+          `AI agent named ${instance.displayName}`,
         occupation: {
-          title: existing.history?.occupation?.title ?? instance.config?.skills ?? 'Software Engineer',
+          title:
+            existing.history?.occupation?.title ??
+            instance.config?.skills ??
+            'Software Engineer',
           industry: 'Technology',
           ...existing.history?.occupation,
         },

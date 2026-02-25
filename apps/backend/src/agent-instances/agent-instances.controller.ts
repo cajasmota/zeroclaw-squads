@@ -1,4 +1,12 @@
-import { Body, Controller, Get, Param, Patch, Post, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  Patch,
+  Post,
+  UseGuards,
+} from '@nestjs/common';
 import { Types } from 'mongoose';
 import { RequestUser } from '@aes/types';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
@@ -23,16 +31,28 @@ export class AgentInstancesController {
 
   @Get(':id')
   findById(@CurrentUser() user: RequestUser, @Param('id') id: string) {
-    return this.agentInstancesService.findById(id, new Types.ObjectId(user.tenantId));
+    return this.agentInstancesService.findById(
+      id,
+      new Types.ObjectId(user.tenantId),
+    );
   }
 
   @Patch(':id')
   update(
     @CurrentUser() user: RequestUser,
     @Param('id') id: string,
-    @Body() body: { soul?: string; aieos_identity?: Record<string, any>; displayName?: string },
+    @Body()
+    body: {
+      soul?: string;
+      aieos_identity?: Record<string, any>;
+      displayName?: string;
+    },
   ) {
-    return this.agentInstancesService.updateSoulOrIdentity(id, new Types.ObjectId(user.tenantId), body);
+    return this.agentInstancesService.updateSoulOrIdentity(
+      id,
+      new Types.ObjectId(user.tenantId),
+      body,
+    );
   }
 
   @Post(':id/sync')
@@ -40,7 +60,8 @@ export class AgentInstancesController {
     @CurrentUser() user: RequestUser,
     @Param('projectId') projectId: string,
     @Param('id') id: string,
-    @Body() body: { fields: { soul?: boolean; aieos?: boolean; config?: boolean } },
+    @Body()
+    body: { fields: { soul?: boolean; aieos?: boolean; config?: boolean } },
   ) {
     return this.agentInstancesService.syncFromTemplate(
       new Types.ObjectId(user.tenantId),

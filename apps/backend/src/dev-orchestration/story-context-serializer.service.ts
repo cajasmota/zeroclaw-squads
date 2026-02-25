@@ -19,7 +19,8 @@ export class StoryContextSerializerService {
     ];
     if (story.description) lines.push(`DESCRIPTION: ${story.description}`);
     if (story.branchName) lines.push(`BRANCH: ${story.branchName}`);
-    if (story.acceptanceCriteria) lines.push(`ACCEPTANCE_CRITERIA:\n${story.acceptanceCriteria}`);
+    if (story.acceptanceCriteria)
+      lines.push(`ACCEPTANCE_CRITERIA:\n${story.acceptanceCriteria}`);
     return lines.join('\n');
   }
 }

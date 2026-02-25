@@ -48,22 +48,37 @@ describe('SeedService', () => {
   afterEach(() => jest.clearAllMocks());
 
   it('should create tenant and admin when DB is empty', async () => {
-    const mockTenant = { _id: 'tenant-id', toObject: () => ({ _id: 'tenant-id' }) };
-    tenantFindOne.mockReturnValue({ lean: () => ({ exec: () => Promise.resolve(null) }) });
+    const mockTenant = {
+      _id: 'tenant-id',
+      toObject: () => ({ _id: 'tenant-id' }),
+    };
+    tenantFindOne.mockReturnValue({
+      lean: () => ({ exec: () => Promise.resolve(null) }),
+    });
     tenantCreate.mockResolvedValue(mockTenant);
-    userFindOne.mockReturnValue({ lean: () => ({ exec: () => Promise.resolve(null) }) });
+    userFindOne.mockReturnValue({
+      lean: () => ({ exec: () => Promise.resolve(null) }),
+    });
     userCreate.mockResolvedValue({});
 
     await service.seedDefaultTenantAndAdmin();
 
-    expect(tenantCreate).toHaveBeenCalledWith(expect.objectContaining({ slug: 'default' }));
-    expect(userCreate).toHaveBeenCalledWith(expect.objectContaining({ role: 'admin' }));
+    expect(tenantCreate).toHaveBeenCalledWith(
+      expect.objectContaining({ slug: 'default' }),
+    );
+    expect(userCreate).toHaveBeenCalledWith(
+      expect.objectContaining({ role: 'admin' }),
+    );
   });
 
   it('should skip seeding when tenant and admin already exist', async () => {
     const mockTenant = { _id: 'existing-tenant' };
-    tenantFindOne.mockReturnValue({ lean: () => ({ exec: () => Promise.resolve(mockTenant) }) });
-    userFindOne.mockReturnValue({ lean: () => ({ exec: () => Promise.resolve({ role: 'admin' }) }) });
+    tenantFindOne.mockReturnValue({
+      lean: () => ({ exec: () => Promise.resolve(mockTenant) }),
+    });
+    userFindOne.mockReturnValue({
+      lean: () => ({ exec: () => Promise.resolve({ role: 'admin' }) }),
+    });
 
     await service.seedDefaultTenantAndAdmin();
 

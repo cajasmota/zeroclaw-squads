@@ -18,21 +18,29 @@ describe('AesGateway', () => {
 
   it('should emit agent log event', () => {
     gateway.emitAgentLog('agent-1', 'project-1', 'Hello', 'stdout', 'run-1');
-    expect((gateway as any).server.to).toHaveBeenCalledWith('project:project-1');
+    expect((gateway as any).server.to).toHaveBeenCalledWith(
+      'project:project-1',
+    );
   });
 
   it('should emit story status event', () => {
     gateway.emitStoryStatus('project-1', 'story-1', 'in_progress');
-    expect((gateway as any).server.to).toHaveBeenCalledWith('project:project-1');
+    expect((gateway as any).server.to).toHaveBeenCalledWith(
+      'project:project-1',
+    );
   });
 
   it('should emit agent status event', () => {
     gateway.emitAgentStatus('project-1', 'agent-1', 'busy');
-    expect((gateway as any).server.to).toHaveBeenCalledWith('project:project-1');
+    expect((gateway as any).server.to).toHaveBeenCalledWith(
+      'project:project-1',
+    );
   });
 
   it('should emit workflow node event', () => {
     gateway.emitWorkflowNode('project-1', 'run-1', 'node-1', 'completed');
-    expect((gateway as any).server.to).toHaveBeenCalledWith('project:project-1');
+    expect((gateway as any).server.to).toHaveBeenCalledWith(
+      'project:project-1',
+    );
   });
 });

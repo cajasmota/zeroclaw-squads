@@ -38,7 +38,7 @@ The control center is where users monitor and interact with a running project. T
   - [x] "Trigger Knowledge Ingestion" button:
     - [x] Calls `POST /projects/:id/librarian/ingest`
     - [x] Shows loading/progress state
-  - [ ] Librarian indexing status badge (idle / indexing / last indexed timestamp)
+  - [x] Librarian indexing status badge (idle / indexing / last indexed timestamp)
   - [x] Active stories count by status
   - [x] WebSocket subscription to agent status changes (real-time updates)
 - [x] Build **Agents Tab** (`/app/projects/[id]/agents/`):
@@ -61,7 +61,7 @@ The control center is where users monitor and interact with a running project. T
     - [x] **Edit Mode** toggle (top-right button):
       - [x] Display Name input
       - [x] Soul editor (Shadcn `Textarea`)
-      - [ ] AIEOS Identity JSON editor (raw JSON textarea with validation)
+      - [x] AIEOS Identity JSON editor (raw JSON textarea with validation)
       - [x] Save button → `PATCH /projects/:id/agents/:agentId`
 - [x] Set up WebSocket client in frontend to subscribe to agent status events
 - [x] Write component tests for `AgentCard`, `AgentProfileModal`

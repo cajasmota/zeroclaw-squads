@@ -16,7 +16,13 @@ const mockTemplate = {
   tags: ['react', 'typescript'],
   soul: 'You are a developer',
   aieos_identity: { version: '1.1' },
-  config: { model: 'gpt-4', provider: 'openai', skills: '', canWriteCode: true, mcpServers: [] },
+  config: {
+    model: 'gpt-4',
+    provider: 'openai',
+    skills: '',
+    canWriteCode: true,
+    mcpServers: [],
+  },
   avatarUrl: '',
   toObject: () => ({ ...mockTemplate }),
 };
@@ -56,7 +62,13 @@ describe('TemplatesService', () => {
 
   describe('findAll()', () => {
     it('should return paginated list', async () => {
-      modelFind.mockReturnValue({ skip: () => ({ limit: () => ({ lean: () => ({ exec: () => Promise.resolve([mockTemplate]) }) }) }) });
+      modelFind.mockReturnValue({
+        skip: () => ({
+          limit: () => ({
+            lean: () => ({ exec: () => Promise.resolve([mockTemplate]) }),
+          }),
+        }),
+      });
       modelCountDocuments.mockReturnValue({ exec: () => Promise.resolve(1) });
 
       const result = await service.findAll(tenantId);
@@ -65,7 +77,13 @@ describe('TemplatesService', () => {
     });
 
     it('should filter by role', async () => {
-      modelFind.mockReturnValue({ skip: () => ({ limit: () => ({ lean: () => ({ exec: () => Promise.resolve([mockTemplate]) }) }) }) });
+      modelFind.mockReturnValue({
+        skip: () => ({
+          limit: () => ({
+            lean: () => ({ exec: () => Promise.resolve([mockTemplate]) }),
+          }),
+        }),
+      });
       modelCountDocuments.mockReturnValue({ exec: () => Promise.resolve(1) });
 
       const result = await service.findAll(tenantId, { role: 'developer' });
@@ -75,16 +93,22 @@ describe('TemplatesService', () => {
 
   describe('findById()', () => {
     it('should return template when found', async () => {
-      modelFindOne.mockReturnValue({ lean: () => ({ exec: () => Promise.resolve(mockTemplate) }) });
+      modelFindOne.mockReturnValue({
+        lean: () => ({ exec: () => Promise.resolve(mockTemplate) }),
+      });
 
       const result = await service.findById(tenantId, templateId.toString());
       expect(result.displayName).toBe('Test Developer');
     });
 
     it('should throw NotFoundException when not found', async () => {
-      modelFindOne.mockReturnValue({ lean: () => ({ exec: () => Promise.resolve(null) }) });
+      modelFindOne.mockReturnValue({
+        lean: () => ({ exec: () => Promise.resolve(null) }),
+      });
 
-      await expect(service.findById(tenantId, templateId.toString())).rejects.toThrow(NotFoundException);
+      await expect(
+        service.findById(tenantId, templateId.toString()),
+      ).rejects.toThrow(NotFoundException);
     });
   });
 
@@ -103,26 +127,37 @@ describe('TemplatesService', () => {
   describe('update()', () => {
     it('should update a template', async () => {
       modelFindOneAndUpdate.mockReturnValue({
-        lean: () => ({ exec: () => Promise.resolve({ ...mockTemplate, displayName: 'Updated' }) }),
+        lean: () => ({
+          exec: () =>
+            Promise.resolve({ ...mockTemplate, displayName: 'Updated' }),
+        }),
       });
 
-      const result = await service.update(tenantId, templateId.toString(), { displayName: 'Updated' });
+      const result = await service.update(tenantId, templateId.toString(), {
+        displayName: 'Updated',
+      });
       expect(result.displayName).toBe('Updated');
     });
   });
 
   describe('delete()', () => {
     it('should delete a template', async () => {
-      modelFindOneAndDelete.mockReturnValue({ lean: () => ({ exec: () => Promise.resolve(mockTemplate) }) });
+      modelFindOneAndDelete.mockReturnValue({
+        lean: () => ({ exec: () => Promise.resolve(mockTemplate) }),
+      });
 
       const result = await service.delete(tenantId, templateId.toString());
       expect(result.message).toBe('Template deleted');
     });
 
     it('should throw NotFoundException when template not found', async () => {
-      modelFindOneAndDelete.mockReturnValue({ lean: () => ({ exec: () => Promise.resolve(null) }) });
+      modelFindOneAndDelete.mockReturnValue({
+        lean: () => ({ exec: () => Promise.resolve(null) }),
+      });
 
-      await expect(service.delete(tenantId, templateId.toString())).rejects.toThrow(NotFoundException);
+      await expect(
+        service.delete(tenantId, templateId.toString()),
+      ).rejects.toThrow(NotFoundException);
     });
   });
 });

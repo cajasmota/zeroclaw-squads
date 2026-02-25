@@ -1,6 +1,10 @@
 // Mock ESM-only packages
-jest.mock('@octokit/rest', () => ({ Octokit: jest.fn().mockImplementation(() => ({})) }));
-jest.mock('@octokit/auth-app', () => ({ createAppAuth: jest.fn().mockReturnValue(jest.fn()) }));
+jest.mock('@octokit/rest', () => ({
+  Octokit: jest.fn().mockImplementation(() => ({})),
+}));
+jest.mock('@octokit/auth-app', () => ({
+  createAppAuth: jest.fn().mockReturnValue(jest.fn()),
+}));
 
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { getModelToken } from '@nestjs/mongoose';
@@ -20,14 +24,25 @@ describe('TicketDialogueService', () => {
   const tenantId = new Types.ObjectId();
   const storyId = new Types.ObjectId().toString();
 
-  const mockComment = { _id: new Types.ObjectId(), author: 'human', content: 'Test', toObject: () => ({}) };
+  const mockComment = {
+    _id: new Types.ObjectId(),
+    author: 'human',
+    content: 'Test',
+    toObject: () => ({}),
+  };
   const mockCommentModel = {
-    find: jest.fn().mockReturnValue({ sort: () => ({ lean: () => ({ exec: () => Promise.resolve([]) }) }) }),
+    find: jest.fn().mockReturnValue({
+      sort: () => ({ lean: () => ({ exec: () => Promise.resolve([]) }) }),
+    }),
     create: jest.fn().mockResolvedValue(mockComment),
   };
 
   const mockBacklog = {
-    findStories: jest.fn().mockResolvedValue([{ _id: new Types.ObjectId(), assignedTo: [], waitingForAnswer: false }]),
+    findStories: jest
+      .fn()
+      .mockResolvedValue([
+        { _id: new Types.ObjectId(), assignedTo: [], waitingForAnswer: false },
+      ]),
     updateStory: jest.fn().mockResolvedValue({}),
     updateStatus: jest.fn().mockResolvedValue({}),
   };
@@ -36,10 +51,19 @@ describe('TicketDialogueService', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         TicketDialogueService,
-        { provide: getModelToken(TicketComment.name), useValue: mockCommentModel },
+        {
+          provide: getModelToken(TicketComment.name),
+          useValue: mockCommentModel,
+        },
         { provide: BacklogService, useValue: mockBacklog },
-        { provide: ZeroClawProcessManagerService, useValue: { injectStdin: jest.fn(), poke: jest.fn() } },
-        { provide: SlackService, useValue: { postThreadReplyAsAgent: jest.fn() } },
+        {
+          provide: ZeroClawProcessManagerService,
+          useValue: { injectStdin: jest.fn(), poke: jest.fn() },
+        },
+        {
+          provide: SlackService,
+          useValue: { postThreadReplyAsAgent: jest.fn() },
+        },
         { provide: AesGateway, useValue: { server: null } },
         { provide: EventEmitter2, useValue: { emit: jest.fn() } },
         { provide: GitHubPRService, useValue: {} },
@@ -60,7 +84,14 @@ describe('TicketDialogueService', () => {
 
   describe('postHumanComment()', () => {
     it('should create a comment with author human', async () => {
-      await service.postHumanComment(storyId, projectId, tenantId, 'user1', 'Alice', 'Hello agent!');
+      await service.postHumanComment(
+        storyId,
+        projectId,
+        tenantId,
+        'user1',
+        'Alice',
+        'Hello agent!',
+      );
       expect(mockCommentModel.create).toHaveBeenCalledWith(
         expect.objectContaining({ author: 'human', content: 'Hello agent!' }),
       );
@@ -69,9 +100,18 @@ describe('TicketDialogueService', () => {
 
   describe('approveStory()', () => {
     it('should clear waitingForApproval and post approval comment', async () => {
-      const result = await service.approveStory(storyId, projectId, tenantId, 'user1', 'Alice');
+      const result = await service.approveStory(
+        storyId,
+        projectId,
+        tenantId,
+        'user1',
+        'Alice',
+      );
       expect(mockBacklog.updateStory).toHaveBeenCalledWith(
-        projectId, tenantId, storyId, expect.objectContaining({ waitingForApproval: false }),
+        projectId,
+        tenantId,
+        storyId,
+        expect.objectContaining({ waitingForApproval: false }),
       );
       expect(result).toHaveProperty('message', 'Story approved');
     });
@@ -81,7 +121,10 @@ describe('TicketDialogueService', () => {
     it('should set waitingForAnswer true', async () => {
       await service.setWaitingForAnswer(storyId, projectId, tenantId);
       expect(mockBacklog.updateStory).toHaveBeenCalledWith(
-        projectId, tenantId, storyId, expect.objectContaining({ waitingForAnswer: true }),
+        projectId,
+        tenantId,
+        storyId,
+        expect.objectContaining({ waitingForAnswer: true }),
       );
     });
   });

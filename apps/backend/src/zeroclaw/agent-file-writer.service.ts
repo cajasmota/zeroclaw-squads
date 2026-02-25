@@ -13,15 +13,13 @@ export class AgentFileWriterService {
     private readonly configGenerator: ZeroClawConfigGeneratorService,
   ) {}
 
-  writeAgentFiles(
-    instance: {
-      displayName: string;
-      aieos_identity?: Record<string, any> | null;
-      soul?: string;
-      config: { model: string; provider: string; mcpServers: any[] };
-      workspacePath: string;
-    },
-  ): void {
+  writeAgentFiles(instance: {
+    displayName: string;
+    aieos_identity?: Record<string, any> | null;
+    soul?: string;
+    config: { model: string; provider: string; mcpServers: any[] };
+    workspacePath: string;
+  }): void {
     const { workspacePath } = instance;
 
     // Ensure all subdirectories exist
@@ -31,7 +29,11 @@ export class AgentFileWriterService {
 
     // Write zeroclaw.config.toml
     const configToml = this.configGenerator.generateConfig(instance);
-    fs.writeFileSync(path.join(workspacePath, 'zeroclaw.config.toml'), configToml, 'utf8');
+    fs.writeFileSync(
+      path.join(workspacePath, 'zeroclaw.config.toml'),
+      configToml,
+      'utf8',
+    );
 
     // Write identity.json (AIEOS v1.1)
     const aieos = this.aieosGenerator.generate(instance);

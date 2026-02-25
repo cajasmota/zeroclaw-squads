@@ -21,7 +21,9 @@ describe('DevelopmentOrchestrationService', () => {
 
   const mockBacklog = {
     findStories: jest.fn().mockResolvedValue([]),
-    updateStory: jest.fn().mockResolvedValue({ _id: storyId, branchName: `feature/${storyId}` }),
+    updateStory: jest
+      .fn()
+      .mockResolvedValue({ _id: storyId, branchName: `feature/${storyId}` }),
     updateStatus: jest.fn().mockResolvedValue({}),
   };
 
@@ -32,8 +34,12 @@ describe('DevelopmentOrchestrationService', () => {
 
   const mockInstanceModel = {
     findOne: jest.fn().mockReturnValue({ exec: () => Promise.resolve(null) }),
-    find: jest.fn().mockReturnValue({ lean: () => ({ exec: () => Promise.resolve([]) }) }),
-    findById: jest.fn().mockReturnValue({ lean: () => ({ exec: () => Promise.resolve(null) }) }),
+    find: jest
+      .fn()
+      .mockReturnValue({ lean: () => ({ exec: () => Promise.resolve([]) }) }),
+    findById: jest
+      .fn()
+      .mockReturnValue({ lean: () => ({ exec: () => Promise.resolve(null) }) }),
   };
 
   beforeEach(async () => {
@@ -41,32 +47,57 @@ describe('DevelopmentOrchestrationService', () => {
       providers: [
         DevelopmentOrchestrationService,
         StoryContextSerializerService,
-        { provide: getModelToken(AgentInstance.name), useValue: mockInstanceModel },
+        {
+          provide: getModelToken(AgentInstance.name),
+          useValue: mockInstanceModel,
+        },
         { provide: BacklogService, useValue: mockBacklog },
-        { provide: ZeroClawProcessManagerService, useValue: mockProcessManager },
-        { provide: AgentAvailabilityService, useValue: { getAvailableAgent: jest.fn().mockResolvedValue(null) } },
+        {
+          provide: ZeroClawProcessManagerService,
+          useValue: mockProcessManager,
+        },
+        {
+          provide: AgentAvailabilityService,
+          useValue: { getAvailableAgent: jest.fn().mockResolvedValue(null) },
+        },
         { provide: SlackService, useValue: { postAsAgent: jest.fn() } },
         { provide: EventEmitter2, useValue: { emit: jest.fn() } },
         { provide: AesGateway, useValue: { emitStoryStatus: jest.fn() } },
       ],
     }).compile();
 
-    service = module.get<DevelopmentOrchestrationService>(DevelopmentOrchestrationService);
+    service = module.get<DevelopmentOrchestrationService>(
+      DevelopmentOrchestrationService,
+    );
   });
 
   afterEach(() => jest.clearAllMocks());
 
   describe('assignStory()', () => {
     it('should update story status to in_progress and emit story.assigned', async () => {
-      const result = await service.assignStory(storyId.toString(), agentId.toString(), projectId, tenantId);
-      expect(mockBacklog.updateStatus).toHaveBeenCalledWith(storyId.toString(), projectId, tenantId, 'in_progress');
+      const result = await service.assignStory(
+        storyId.toString(),
+        agentId.toString(),
+        projectId,
+        tenantId,
+      );
+      expect(mockBacklog.updateStatus).toHaveBeenCalledWith(
+        storyId.toString(),
+        projectId,
+        tenantId,
+        'in_progress',
+      );
     });
   });
 
   describe('handleSprintReady()', () => {
     it('should not throw when no PM agent is found', async () => {
       await expect(
-        service.handleSprintReady({ sprintId: 'sprint1', projectId: projectId.toString(), tenantId: tenantId.toString() }),
+        service.handleSprintReady({
+          sprintId: 'sprint1',
+          projectId: projectId.toString(),
+          tenantId: tenantId.toString(),
+        }),
       ).resolves.not.toThrow();
     });
   });
@@ -74,9 +105,16 @@ describe('DevelopmentOrchestrationService', () => {
   describe('handlePRMerged()', () => {
     it('should update story to done on PR merge', async () => {
       const branch = `feature/${storyId}`;
-      mockBacklog.findStories.mockResolvedValueOnce([{ _id: storyId, branchName: branch }]);
+      mockBacklog.findStories.mockResolvedValueOnce([
+        { _id: storyId, branchName: branch },
+      ]);
       await service.handlePRMerged(branch, projectId, tenantId);
-      expect(mockBacklog.updateStatus).toHaveBeenCalledWith(storyId.toString(), projectId, tenantId, 'done');
+      expect(mockBacklog.updateStatus).toHaveBeenCalledWith(
+        storyId.toString(),
+        projectId,
+        tenantId,
+        'done',
+      );
     });
   });
 });

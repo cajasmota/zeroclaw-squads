@@ -10,7 +10,13 @@ export class GitHubAppService {
   constructor(private readonly encryption: Aes256EncryptionService) {}
 
   async getInstallationToken(project: {
-    config: { githubApp?: { appId?: string; privateKey?: string; installationId?: string } };
+    config: {
+      githubApp?: {
+        appId?: string;
+        privateKey?: string;
+        installationId?: string;
+      };
+    };
   }): Promise<string> {
     const app = project.config?.githubApp;
     if (!app?.appId || !app?.privateKey || !app?.installationId) {
@@ -29,7 +35,13 @@ export class GitHubAppService {
   }
 
   async getAuthenticatedOctokit(project: {
-    config: { githubApp?: { appId?: string; privateKey?: string; installationId?: string } };
+    config: {
+      githubApp?: {
+        appId?: string;
+        privateKey?: string;
+        installationId?: string;
+      };
+    };
   }): Promise<Octokit> {
     const token = await this.getInstallationToken(project);
     return new Octokit({ auth: token });

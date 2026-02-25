@@ -17,9 +17,25 @@ const mockProject = {
   slug: 'test-project',
   brandColor: '#004176',
   status: 'active',
-  roles: { librarian: null, architect: null, pm: null, developer: [], reviewer: [], optional: [] },
-  config: { slackToken: '', slackChannelId: '', repoUrl: '', githubApp: {}, inviteUsers: [], llmKeys: {} },
-  toObject: function() { return { ...this }; },
+  roles: {
+    librarian: null,
+    architect: null,
+    pm: null,
+    developer: [],
+    reviewer: [],
+    optional: [],
+  },
+  config: {
+    slackToken: '',
+    slackChannelId: '',
+    repoUrl: '',
+    githubApp: {},
+    inviteUsers: [],
+    llmKeys: {},
+  },
+  toObject: function () {
+    return { ...this };
+  },
 };
 
 const modelFind = jest.fn();
@@ -33,13 +49,24 @@ describe('ProjectsService', () => {
   let mockEventEmitter: Partial<EventEmitter2>;
 
   beforeEach(async () => {
-    mockEncryption = { encrypt: jest.fn((v) => `enc:${v}`), decrypt: jest.fn((v) => v.replace('enc:', '')) };
+    mockEncryption = {
+      encrypt: jest.fn((v) => `enc:${v}`),
+      decrypt: jest.fn((v) => v.replace('enc:', '')),
+    };
     mockEventEmitter = { emit: jest.fn() };
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         ProjectsService,
-        { provide: getModelToken(Project.name), useValue: { find: modelFind, findOne: modelFindOne, create: modelCreate, findOneAndUpdate: modelFindOneAndUpdate } },
+        {
+          provide: getModelToken(Project.name),
+          useValue: {
+            find: modelFind,
+            findOne: modelFindOne,
+            create: modelCreate,
+            findOneAndUpdate: modelFindOneAndUpdate,
+          },
+        },
         { provide: Aes256EncryptionService, useValue: mockEncryption },
         { provide: EventEmitter2, useValue: mockEventEmitter },
       ],
@@ -52,19 +79,29 @@ describe('ProjectsService', () => {
 
   describe('create()', () => {
     it('should create a project with auto-generated slug', async () => {
-      modelFindOne.mockReturnValue({ lean: () => ({ exec: () => Promise.resolve(null) }) });
+      modelFindOne.mockReturnValue({
+        lean: () => ({ exec: () => Promise.resolve(null) }),
+      });
       modelCreate.mockResolvedValue(mockProject);
 
       const result = await service.create(tenantId, { name: 'Test Project' });
       expect(result.slug).toBe('test-project');
-      expect(mockEventEmitter.emit).toHaveBeenCalledWith('project.created', expect.any(Object));
+      expect(mockEventEmitter.emit).toHaveBeenCalledWith(
+        'project.created',
+        expect.any(Object),
+      );
     });
 
     it('should encrypt sensitive config fields', async () => {
-      modelFindOne.mockReturnValue({ lean: () => ({ exec: () => Promise.resolve(null) }) });
+      modelFindOne.mockReturnValue({
+        lean: () => ({ exec: () => Promise.resolve(null) }),
+      });
       modelCreate.mockResolvedValue(mockProject);
 
-      await service.create(tenantId, { name: 'Test Project', config: { slackToken: 'token123' } });
+      await service.create(tenantId, {
+        name: 'Test Project',
+        config: { slackToken: 'token123' },
+      });
       expect(mockEncryption.encrypt).toHaveBeenCalledWith('token123');
     });
   });
@@ -76,7 +113,9 @@ describe('ProjectsService', () => {
         config: { ...mockProject.config, slackToken: 'enc:token' },
       };
       modelFindOne.mockReturnValue({
-        populate: () => ({ lean: () => ({ exec: () => Promise.resolve(projWithToken) }) }),
+        populate: () => ({
+          lean: () => ({ exec: () => Promise.resolve(projWithToken) }),
+        }),
       });
 
       const result = await service.findById(tenantId, projectId.toString());
@@ -84,8 +123,14 @@ describe('ProjectsService', () => {
     });
 
     it('should throw NotFoundException when not found', async () => {
-      modelFindOne.mockReturnValue({ populate: () => ({ lean: () => ({ exec: () => Promise.resolve(null) }) }) });
-      await expect(service.findById(tenantId, projectId.toString())).rejects.toThrow(NotFoundException);
+      modelFindOne.mockReturnValue({
+        populate: () => ({
+          lean: () => ({ exec: () => Promise.resolve(null) }),
+        }),
+      });
+      await expect(
+        service.findById(tenantId, projectId.toString()),
+      ).rejects.toThrow(NotFoundException);
     });
   });
 });

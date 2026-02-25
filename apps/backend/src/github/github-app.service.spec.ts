@@ -8,7 +8,9 @@ jest.mock('@octokit/rest', () => ({
 }));
 
 jest.mock('@octokit/auth-app', () => ({
-  createAppAuth: jest.fn().mockReturnValue(jest.fn().mockResolvedValue({ token: 'mock-token' })),
+  createAppAuth: jest
+    .fn()
+    .mockReturnValue(jest.fn().mockResolvedValue({ token: 'mock-token' })),
 }));
 
 describe('GitHubAppService', () => {
@@ -29,7 +31,11 @@ describe('GitHubAppService', () => {
   it('should get installation token using app credentials', async () => {
     const project = {
       config: {
-        githubApp: { appId: '123', privateKey: 'mock-key', installationId: '456' },
+        githubApp: {
+          appId: '123',
+          privateKey: 'mock-key',
+          installationId: '456',
+        },
       },
     };
     const token = await service.getInstallationToken(project);
@@ -38,6 +44,8 @@ describe('GitHubAppService', () => {
 
   it('should throw when GitHub App credentials are missing', async () => {
     const project = { config: {} };
-    await expect(service.getInstallationToken(project)).rejects.toThrow('GitHub App credentials not configured');
+    await expect(service.getInstallationToken(project)).rejects.toThrow(
+      'GitHub App credentials not configured',
+    );
   });
 });

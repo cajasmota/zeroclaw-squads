@@ -12,11 +12,16 @@ export class SettingsController {
 
   @Get()
   getSettings(@CurrentUser() user: RequestUser) {
-    return this.settingsService.getForDisplay(new Types.ObjectId(user.tenantId));
+    return this.settingsService.getForDisplay(
+      new Types.ObjectId(user.tenantId),
+    );
   }
 
   @Patch()
-  updateSettings(@CurrentUser() user: RequestUser, @Body() dto: Record<string, any>) {
+  updateSettings(
+    @CurrentUser() user: RequestUser,
+    @Body() dto: Record<string, any>,
+  ) {
     return this.settingsService.update(new Types.ObjectId(user.tenantId), dto);
   }
 }

@@ -40,12 +40,18 @@ export class TemplatesController {
 
   @Get(':id')
   findById(@CurrentUser() user: RequestUser, @Param('id') id: string) {
-    return this.templatesService.findById(new Types.ObjectId(user.tenantId), id);
+    return this.templatesService.findById(
+      new Types.ObjectId(user.tenantId),
+      id,
+    );
   }
 
   @Get(':id/export')
   exportJson(@CurrentUser() user: RequestUser, @Param('id') id: string) {
-    return this.templatesService.exportJson(new Types.ObjectId(user.tenantId), id);
+    return this.templatesService.exportJson(
+      new Types.ObjectId(user.tenantId),
+      id,
+    );
   }
 
   @Post()
@@ -55,7 +61,10 @@ export class TemplatesController {
 
   @Post('import')
   importJson(@CurrentUser() user: RequestUser, @Body() payload: any) {
-    return this.templatesService.importJson(new Types.ObjectId(user.tenantId), payload);
+    return this.templatesService.importJson(
+      new Types.ObjectId(user.tenantId),
+      payload,
+    );
   }
 
   @Patch(':id')
@@ -64,7 +73,11 @@ export class TemplatesController {
     @Param('id') id: string,
     @Body() dto: UpdateTemplateDto,
   ) {
-    return this.templatesService.update(new Types.ObjectId(user.tenantId), id, dto);
+    return this.templatesService.update(
+      new Types.ObjectId(user.tenantId),
+      id,
+      dto,
+    );
   }
 
   @Delete(':id')

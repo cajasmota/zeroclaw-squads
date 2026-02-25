@@ -1,6 +1,9 @@
 import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
-import { AgentInstance, AgentInstanceSchema } from '../agent-instances/agent-instance.schema';
+import {
+  AgentInstance,
+  AgentInstanceSchema,
+} from '../agent-instances/agent-instance.schema';
 import { BacklogModule } from '../backlog/backlog.module';
 import { ProjectInitializerModule } from '../project-initializer/project-initializer.module';
 import { WebsocketModule } from '../websocket/websocket.module';
@@ -12,7 +15,9 @@ import { StoryContextSerializerService } from './story-context-serializer.servic
 
 @Module({
   imports: [
-    MongooseModule.forFeature([{ name: AgentInstance.name, schema: AgentInstanceSchema }]),
+    MongooseModule.forFeature([
+      { name: AgentInstance.name, schema: AgentInstanceSchema },
+    ]),
     BacklogModule,
     ZeroClawModule,
     WebsocketModule,

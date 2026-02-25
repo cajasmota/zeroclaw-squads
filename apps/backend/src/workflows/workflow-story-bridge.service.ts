@@ -31,18 +31,37 @@ export class WorkflowStoryBridgeService {
     try {
       const projectId = new Types.ObjectId(payload.projectId);
       const tenantId = new Types.ObjectId(payload.tenantId);
-      const description = payload.node?.description ?? payload.nodeDescription ?? payload.nodeId;
+      const description =
+        payload.node?.description ?? payload.nodeDescription ?? payload.nodeId;
 
-      await this.backlogService.updateStory(projectId, tenantId, payload.storyId, {
-        workflowNodeStatus: description,
-      });
+      await this.backlogService.updateStory(
+        projectId,
+        tenantId,
+        payload.storyId,
+        {
+          workflowNodeStatus: description,
+        },
+      );
 
       // Auto-move Kanban if configured
-      if (payload.node?.kanbanStatus && payload.node.kanbanStatusTrigger === 'on_start') {
-        await this.backlogService.updateStatus(payload.storyId, projectId, tenantId, payload.node.kanbanStatus);
+      if (
+        payload.node?.kanbanStatus &&
+        payload.node.kanbanStatusTrigger === 'on_start'
+      ) {
+        await this.backlogService.updateStatus(
+          payload.storyId,
+          projectId,
+          tenantId,
+          payload.node.kanbanStatus,
+        );
       }
 
-      this.gateway.emitStoryStatus(payload.projectId, payload.storyId, 'workflow_update', description);
+      this.gateway.emitStoryStatus(
+        payload.projectId,
+        payload.storyId,
+        'workflow_update',
+        description,
+      );
     } catch (e) {
       this.logger.error(`Failed to handle workflow.node.started: ${e.message}`);
     }
@@ -54,17 +73,33 @@ export class WorkflowStoryBridgeService {
     try {
       const projectId = new Types.ObjectId(payload.projectId);
       const tenantId = new Types.ObjectId(payload.tenantId);
-      const description = payload.node?.description ?? payload.nodeDescription ?? payload.nodeId;
+      const description =
+        payload.node?.description ?? payload.nodeDescription ?? payload.nodeId;
 
-      await this.backlogService.updateStory(projectId, tenantId, payload.storyId, {
-        workflowNodeStatus: `Completed: ${description}`,
-      });
+      await this.backlogService.updateStory(
+        projectId,
+        tenantId,
+        payload.storyId,
+        {
+          workflowNodeStatus: `Completed: ${description}`,
+        },
+      );
 
-      if (payload.node?.kanbanStatus && payload.node.kanbanStatusTrigger === 'on_complete') {
-        await this.backlogService.updateStatus(payload.storyId, projectId, tenantId, payload.node.kanbanStatus);
+      if (
+        payload.node?.kanbanStatus &&
+        payload.node.kanbanStatusTrigger === 'on_complete'
+      ) {
+        await this.backlogService.updateStatus(
+          payload.storyId,
+          projectId,
+          tenantId,
+          payload.node.kanbanStatus,
+        );
       }
     } catch (e) {
-      this.logger.error(`Failed to handle workflow.node.completed: ${e.message}`);
+      this.logger.error(
+        `Failed to handle workflow.node.completed: ${e.message}`,
+      );
     }
   }
 
@@ -75,10 +110,20 @@ export class WorkflowStoryBridgeService {
       const projectId = new Types.ObjectId(payload.projectId);
       const tenantId = new Types.ObjectId(payload.tenantId);
 
-      await this.backlogService.updateStory(projectId, tenantId, payload.storyId, {
-        workflowNodeStatus: `Error: ${payload.error ?? 'Unknown error'}`,
-      });
-      await this.backlogService.updateStatus(payload.storyId, projectId, tenantId, 'backlog');
+      await this.backlogService.updateStory(
+        projectId,
+        tenantId,
+        payload.storyId,
+        {
+          workflowNodeStatus: `Error: ${payload.error ?? 'Unknown error'}`,
+        },
+      );
+      await this.backlogService.updateStatus(
+        payload.storyId,
+        projectId,
+        tenantId,
+        'backlog',
+      );
     } catch (e) {
       this.logger.error(`Failed to handle workflow.node.failed: ${e.message}`);
     }
@@ -91,12 +136,19 @@ export class WorkflowStoryBridgeService {
       const projectId = new Types.ObjectId(payload.projectId);
       const tenantId = new Types.ObjectId(payload.tenantId);
 
-      await this.backlogService.updateStory(projectId, tenantId, payload.storyId, {
-        workflowNodeStatus: 'Waiting for Approval',
-        waitingForApproval: true,
-      } as any);
+      await this.backlogService.updateStory(
+        projectId,
+        tenantId,
+        payload.storyId,
+        {
+          workflowNodeStatus: 'Waiting for Approval',
+          waitingForApproval: true,
+        } as any,
+      );
     } catch (e) {
-      this.logger.error(`Failed to handle workflow.node.approval_needed: ${e.message}`);
+      this.logger.error(
+        `Failed to handle workflow.node.approval_needed: ${e.message}`,
+      );
     }
   }
 }

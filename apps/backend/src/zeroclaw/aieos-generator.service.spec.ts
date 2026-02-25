@@ -37,7 +37,10 @@ describe('AieosGeneratorService', () => {
 
   describe('generate()', () => {
     it('should produce all 5 required AIEOS sections', () => {
-      const result = service.generate({ displayName: 'Bot', aieos_identity: null });
+      const result = service.generate({
+        displayName: 'Bot',
+        aieos_identity: null,
+      });
       expect(result).toHaveProperty('standard');
       expect(result).toHaveProperty('identity');
       expect(result).toHaveProperty('psychology');

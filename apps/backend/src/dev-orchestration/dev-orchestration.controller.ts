@@ -8,7 +8,9 @@ import { DevelopmentOrchestrationService } from './development-orchestration.ser
 @Controller('projects/:projectId/stories')
 @UseGuards(JwtAuthGuard)
 export class DevOrchestrationController {
-  constructor(private readonly orchestration: DevelopmentOrchestrationService) {}
+  constructor(
+    private readonly orchestration: DevelopmentOrchestrationService,
+  ) {}
 
   @Post(':storyId/assign')
   assignStory(

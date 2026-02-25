@@ -23,7 +23,10 @@ export class LibrarianController {
   }
 
   @Post('tools/:toolName')
-  async callTool(@Param('toolName') toolName: string, @Body() params: Record<string, any>) {
+  async callTool(
+    @Param('toolName') toolName: string,
+    @Body() params: Record<string, any>,
+  ) {
     return this.mcp.handleToolCall(toolName, params);
   }
 }

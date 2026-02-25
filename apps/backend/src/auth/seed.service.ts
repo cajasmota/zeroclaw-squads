@@ -11,7 +11,8 @@ export class SeedService implements OnApplicationBootstrap {
   private readonly logger = new Logger(SeedService.name);
 
   constructor(
-    @InjectModel(Tenant.name) private readonly tenantModel: Model<TenantDocument>,
+    @InjectModel(Tenant.name)
+    private readonly tenantModel: Model<TenantDocument>,
     @InjectModel(User.name) private readonly userModel: Model<UserDocument>,
     private readonly configService: ConfigService,
   ) {}
@@ -21,10 +22,17 @@ export class SeedService implements OnApplicationBootstrap {
   }
 
   async seedDefaultTenantAndAdmin() {
-    let tenant = await this.tenantModel.findOne({ slug: 'default' }).lean().exec();
+    let tenant = await this.tenantModel
+      .findOne({ slug: 'default' })
+      .lean()
+      .exec();
     if (!tenant) {
       const appName = this.configService.get<string>('APP_NAME', 'AES');
-      const created = await this.tenantModel.create({ name: appName, slug: 'default', status: 'active' });
+      const created = await this.tenantModel.create({
+        name: appName,
+        slug: 'default',
+        status: 'active',
+      });
       tenant = created.toObject();
       this.logger.log(`Created default tenant: ${appName}`);
     }
@@ -35,9 +43,18 @@ export class SeedService implements OnApplicationBootstrap {
       .exec();
 
     if (!adminExists) {
-      const email = this.configService.get<string>('ADMIN_EMAIL', 'admin@aes.local');
-      const password = this.configService.get<string>('ADMIN_PASSWORD', 'changeme123!');
-      const name = this.configService.get<string>('ADMIN_NAME', 'Administrator');
+      const email = this.configService.get<string>(
+        'ADMIN_EMAIL',
+        'admin@aes.local',
+      );
+      const password = this.configService.get<string>(
+        'ADMIN_PASSWORD',
+        'changeme123!',
+      );
+      const name = this.configService.get<string>(
+        'ADMIN_NAME',
+        'Administrator',
+      );
 
       const passwordHash = await bcrypt.hash(password, 12);
       await this.userModel.create({

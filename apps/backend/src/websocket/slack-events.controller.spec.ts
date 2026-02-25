@@ -8,7 +8,11 @@ import { SlackChannelMappingService } from './slack-channel-mapping.service';
 
 const SIGNING_SECRET = 'test-signing-secret-12345678';
 
-function buildSignature(secret: string, timestamp: string, body: string): string {
+function buildSignature(
+  secret: string,
+  timestamp: string,
+  body: string,
+): string {
   const sig = `v0:${timestamp}:${body}`;
   const hmac = crypto.createHmac('sha256', secret);
   return `v0=${hmac.update(sig).digest('hex')}`;
@@ -25,7 +29,11 @@ describe('SlackEventsController', () => {
       providers: [
         {
           provide: ConfigService,
-          useValue: { get: jest.fn((key: string, def: any) => key === 'SLACK_SIGNING_SECRET' ? SIGNING_SECRET : def) },
+          useValue: {
+            get: jest.fn((key: string, def: any) =>
+              key === 'SLACK_SIGNING_SECRET' ? SIGNING_SECRET : def,
+            ),
+          },
         },
         {
           provide: SlackChannelMappingService,
@@ -53,7 +61,9 @@ describe('SlackEventsController', () => {
     it('should return false for invalid signature', () => {
       const timestamp = '1618000000';
       const body = '{"type":"event_callback"}';
-      expect(controller.verifySlackSignature(body, timestamp, 'v0=badhash')).toBe(false);
+      expect(
+        controller.verifySlackSignature(body, timestamp, 'v0=badhash'),
+      ).toBe(false);
     });
 
     it('should return false if SLACK_SIGNING_SECRET is empty', () => {
@@ -61,7 +71,10 @@ describe('SlackEventsController', () => {
         controllers: [SlackEventsController],
         providers: [
           { provide: ConfigService, useValue: { get: jest.fn(() => '') } },
-          { provide: SlackChannelMappingService, useValue: { getProjectByChannel: jest.fn() } },
+          {
+            provide: SlackChannelMappingService,
+            useValue: { getProjectByChannel: jest.fn() },
+          },
           { provide: EventEmitter2, useValue: { emit: jest.fn() } },
         ],
       });
@@ -95,7 +108,10 @@ describe('SlackEventsController', () => {
 
     it('should skip bot messages', async () => {
       const result = await controller.handleSlackEvent(
-        { type: 'event_callback', event: { type: 'message', bot_id: 'B123', text: 'Hello' } },
+        {
+          type: 'event_callback',
+          event: { type: 'message', bot_id: 'B123', text: 'Hello' },
+        },
         '',
         '',
       );
@@ -105,7 +121,10 @@ describe('SlackEventsController', () => {
 
     it('should skip A2A flagged messages', async () => {
       const result = await controller.handleSlackEvent(
-        { type: 'event_callback', event: { type: 'message', text: '[A2A] agent message' } },
+        {
+          type: 'event_callback',
+          event: { type: 'message', text: '[A2A] agent message' },
+        },
         '',
         '',
       );
@@ -114,7 +133,10 @@ describe('SlackEventsController', () => {
     });
 
     it('should emit slack.message.received for valid human message', async () => {
-      getProjectMock.mockResolvedValue({ projectId: 'proj-1', tenantId: 'tenant-1' });
+      getProjectMock.mockResolvedValue({
+        projectId: 'proj-1',
+        tenantId: 'tenant-1',
+      });
       const result = await controller.handleSlackEvent(
         {
           type: 'event_callback',
@@ -124,17 +146,23 @@ describe('SlackEventsController', () => {
         '',
       );
       expect(result).toEqual({ ok: true });
-      expect(emitMock).toHaveBeenCalledWith('slack.message.received', expect.objectContaining({
-        projectId: 'proj-1',
-        tenantId: 'tenant-1',
-        text: 'Hello agent!',
-      }));
+      expect(emitMock).toHaveBeenCalledWith(
+        'slack.message.received',
+        expect.objectContaining({
+          projectId: 'proj-1',
+          tenantId: 'tenant-1',
+          text: 'Hello agent!',
+        }),
+      );
     });
 
     it('should not emit if channel has no project mapping', async () => {
       getProjectMock.mockResolvedValue(null);
       await controller.handleSlackEvent(
-        { type: 'event_callback', event: { type: 'message', channel: 'C999', text: 'Hello' } },
+        {
+          type: 'event_callback',
+          event: { type: 'message', channel: 'C999', text: 'Hello' },
+        },
         '',
         '',
       );

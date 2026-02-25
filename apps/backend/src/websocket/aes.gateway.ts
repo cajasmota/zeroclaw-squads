@@ -36,7 +36,13 @@ export class AesGateway implements OnGatewayConnection, OnGatewayDisconnect {
     this.server.to(`project:${projectId}`).emit(event, data);
   }
 
-  emitAgentLog(agentInstanceId: string, projectId: string, line: string, type: 'stdout' | 'stderr', runId?: string) {
+  emitAgentLog(
+    agentInstanceId: string,
+    projectId: string,
+    line: string,
+    type: 'stdout' | 'stderr',
+    runId?: string,
+  ) {
     this.emitToProject(projectId, 'agent:log', {
       agentInstanceId,
       line,
@@ -46,19 +52,42 @@ export class AesGateway implements OnGatewayConnection, OnGatewayDisconnect {
     });
   }
 
-  emitStoryStatus(projectId: string, storyId: string, status: string, workflowNodeStatus?: string) {
-    this.emitToProject(projectId, 'story:status', { storyId, status, workflowNodeStatus });
+  emitStoryStatus(
+    projectId: string,
+    storyId: string,
+    status: string,
+    workflowNodeStatus?: string,
+  ) {
+    this.emitToProject(projectId, 'story:status', {
+      storyId,
+      status,
+      workflowNodeStatus,
+    });
   }
 
   emitAgentStatus(projectId: string, agentInstanceId: string, status: string) {
     this.emitToProject(projectId, 'agent:status', { agentInstanceId, status });
   }
 
-  emitWorkflowNode(projectId: string, runId: string, nodeId: string, status: string) {
+  emitWorkflowNode(
+    projectId: string,
+    runId: string,
+    nodeId: string,
+    status: string,
+  ) {
     this.emitToProject(projectId, 'workflow:node', { runId, nodeId, status });
   }
 
-  emitApprovalNeeded(projectId: string, runId: string, nodeId: string, description: string) {
-    this.emitToProject(projectId, 'approval:needed', { runId, nodeId, description });
+  emitApprovalNeeded(
+    projectId: string,
+    runId: string,
+    nodeId: string,
+    description: string,
+  ) {
+    this.emitToProject(projectId, 'approval:needed', {
+      runId,
+      nodeId,
+      description,
+    });
   }
 }

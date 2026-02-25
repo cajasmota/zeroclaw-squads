@@ -1,27 +1,42 @@
-import { Injectable, Logger, OnApplicationBootstrap, OnApplicationShutdown } from '@nestjs/common';
+import {
+  Injectable,
+  Logger,
+  OnApplicationBootstrap,
+  OnApplicationShutdown,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectModel } from '@nestjs/mongoose';
 import * as chokidar from 'chokidar';
 import * as fs from 'fs';
 import * as path from 'path';
 import { Model, Types } from 'mongoose';
-import { AgentInstance, AgentInstanceDocument } from '../agent-instances/agent-instance.schema';
+import {
+  AgentInstance,
+  AgentInstanceDocument,
+} from '../agent-instances/agent-instance.schema';
 import { UsageEvent, UsageEventDocument } from './usage-event.schema';
 
 @Injectable()
-export class UsageMonitorService implements OnApplicationBootstrap, OnApplicationShutdown {
+export class UsageMonitorService
+  implements OnApplicationBootstrap, OnApplicationShutdown
+{
   private readonly logger = new Logger(UsageMonitorService.name);
   private watcher: chokidar.FSWatcher | null = null;
   private readonly fileOffsets = new Map<string, number>();
 
   constructor(
-    @InjectModel(UsageEvent.name) private readonly usageEventModel: Model<UsageEventDocument>,
-    @InjectModel(AgentInstance.name) private readonly instanceModel: Model<AgentInstanceDocument>,
+    @InjectModel(UsageEvent.name)
+    private readonly usageEventModel: Model<UsageEventDocument>,
+    @InjectModel(AgentInstance.name)
+    private readonly instanceModel: Model<AgentInstanceDocument>,
     private readonly configService: ConfigService,
   ) {}
 
   onApplicationBootstrap() {
-    const artifactsRoot = this.configService.get<string>('ARTIFACTS_ROOT', '/artifacts');
+    const artifactsRoot = this.configService.get<string>(
+      'ARTIFACTS_ROOT',
+      '/artifacts',
+    );
     const globPattern = path.join(artifactsRoot, '**/state/costs.jsonl');
 
     try {
@@ -30,7 +45,9 @@ export class UsageMonitorService implements OnApplicationBootstrap, OnApplicatio
         persistent: true,
       });
 
-      this.watcher.on('change', (filePath: string) => this.processFile(filePath));
+      this.watcher.on('change', (filePath: string) =>
+        this.processFile(filePath),
+      );
       this.watcher.on('add', (filePath: string) => this.processFile(filePath));
       this.logger.log(`Watching: ${globPattern}`);
     } catch (e) {
@@ -54,7 +71,10 @@ export class UsageMonitorService implements OnApplicationBootstrap, OnApplicatio
       fs.closeSync(fd);
       this.fileOffsets.set(filePath, stat.size);
 
-      const lines = buf.toString('utf8').split('\n').filter((l) => l.trim());
+      const lines = buf
+        .toString('utf8')
+        .split('\n')
+        .filter((l) => l.trim());
       for (const line of lines) {
         await this.ingestLine(filePath, line);
       }

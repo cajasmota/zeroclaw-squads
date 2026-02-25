@@ -1,4 +1,13 @@
-import { Body, Controller, Headers, HttpCode, Post, RawBodyRequest, Req, UnauthorizedException } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Headers,
+  HttpCode,
+  Post,
+  RawBodyRequest,
+  Req,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import * as crypto from 'crypto';
 import { ZeroClawProcessManagerService } from '../zeroclaw/zeroclaw-process-manager.service';
@@ -22,17 +31,27 @@ export class GitHubWebhookController {
   ): Promise<{ ok: boolean }> {
     const secret = process.env.GITHUB_WEBHOOK_SECRET;
     if (secret) {
-      this.verifySignature(req.rawBody?.toString() ?? JSON.stringify(payload), signature, secret);
+      this.verifySignature(
+        req.rawBody?.toString() ?? JSON.stringify(payload),
+        signature,
+        secret,
+      );
     }
 
     await this.routeEvent(event, payload);
     return { ok: true };
   }
 
-  private verifySignature(body: string, signature: string, secret: string): void {
+  private verifySignature(
+    body: string,
+    signature: string,
+    secret: string,
+  ): void {
     if (!signature) throw new UnauthorizedException('Missing signature');
     const expected = `sha256=${crypto.createHmac('sha256', secret).update(body).digest('hex')}`;
-    if (!crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(expected))) {
+    if (
+      !crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(expected))
+    ) {
       throw new UnauthorizedException('Invalid webhook signature');
     }
   }
@@ -40,12 +59,20 @@ export class GitHubWebhookController {
   private async routeEvent(event: string, payload: any): Promise<void> {
     if (event === 'pull_request' && payload.action === 'opened') {
       // Signal reviewer agent via SIGUSR1
-      this.eventEmitter.emit('github.pr.opened', { prNumber: payload.pull_request?.number, repoUrl: payload.repository?.clone_url });
+      this.eventEmitter.emit('github.pr.opened', {
+        prNumber: payload.pull_request?.number,
+        repoUrl: payload.repository?.clone_url,
+      });
     } else if (event === 'issue_comment' && payload.action === 'created') {
       // Inject PR comment feedback into developer agent
-      this.eventEmitter.emit('github.pr.comment', { prNumber: payload.issue?.number, body: payload.comment?.body });
+      this.eventEmitter.emit('github.pr.comment', {
+        prNumber: payload.issue?.number,
+        body: payload.comment?.body,
+      });
     } else if (event === 'push' && payload.ref === 'refs/heads/main') {
-      this.eventEmitter.emit('librarian.reindex', { repoUrl: payload.repository?.clone_url });
+      this.eventEmitter.emit('librarian.reindex', {
+        repoUrl: payload.repository?.clone_url,
+      });
     }
   }
 }

@@ -53,7 +53,11 @@ describe('BacklogService', () => {
 
   describe('findEpics()', () => {
     it('should return epics for project', async () => {
-      mockFind.mockReturnValue({ sort: () => ({ lean: () => ({ exec: () => Promise.resolve([{ title: 'Epic 1' }]) }) }) });
+      mockFind.mockReturnValue({
+        sort: () => ({
+          lean: () => ({ exec: () => Promise.resolve([{ title: 'Epic 1' }]) }),
+        }),
+      });
       const result = await service.findEpics(projectId, tenantId);
       expect(result).toHaveLength(1);
     });
@@ -62,9 +66,16 @@ describe('BacklogService', () => {
   describe('updateStatus()', () => {
     it('should update story status and emit WebSocket event', async () => {
       const mockStory = { _id: new Types.ObjectId(), status: 'in_progress' };
-      mockFindOneAndUpdate.mockReturnValue({ lean: () => ({ exec: () => Promise.resolve(mockStory) }) });
+      mockFindOneAndUpdate.mockReturnValue({
+        lean: () => ({ exec: () => Promise.resolve(mockStory) }),
+      });
 
-      await service.updateStatus(mockStory._id.toString(), projectId, tenantId, 'review');
+      await service.updateStatus(
+        mockStory._id.toString(),
+        projectId,
+        tenantId,
+        'review',
+      );
       expect(mockGateway.emitStoryStatus).toHaveBeenCalledWith(
         projectId.toString(),
         mockStory._id.toString(),
@@ -78,10 +89,15 @@ describe('BacklogService', () => {
     it('should mark sprint ready and emit event', async () => {
       const sprintId = new Types.ObjectId();
       const mockSprint = { _id: sprintId, isReady: true };
-      mockFindOneAndUpdate.mockReturnValue({ lean: () => ({ exec: () => Promise.resolve(mockSprint) }) });
+      mockFindOneAndUpdate.mockReturnValue({
+        lean: () => ({ exec: () => Promise.resolve(mockSprint) }),
+      });
 
       await service.markSprintReady(projectId, tenantId, sprintId.toString());
-      expect(mockEventEmitter.emit).toHaveBeenCalledWith('sprint.ready', expect.any(Object));
+      expect(mockEventEmitter.emit).toHaveBeenCalledWith(
+        'sprint.ready',
+        expect.any(Object),
+      );
     });
   });
 });

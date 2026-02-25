@@ -25,9 +25,11 @@ describe('GitWorkspaceService', () => {
     service = module.get<GitWorkspaceService>(GitWorkspaceService);
 
     // Mock exec to call callback immediately
-    (child_process.exec as any).mockImplementation((_cmd: string, callback: Function) => {
-      callback(null, '', '');
-    });
+    (child_process.exec as any).mockImplementation(
+      (_cmd: string, callback: Function) => {
+        callback(null, '', '');
+      },
+    );
   });
 
   afterEach(() => {

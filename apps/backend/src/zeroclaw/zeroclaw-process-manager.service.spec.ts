@@ -24,43 +24,72 @@ describe('ZeroClawProcessManagerService', () => {
         {
           provide: getModelToken(AgentInstance.name),
           useValue: {
-            find: jest.fn().mockReturnValue({ lean: () => ({ exec: () => Promise.resolve([]) }) }),
-            findOne: jest.fn().mockReturnValue({ exec: () => Promise.resolve(null) }),
+            find: jest.fn().mockReturnValue({
+              lean: () => ({ exec: () => Promise.resolve([]) }),
+            }),
+            findOne: jest
+              .fn()
+              .mockReturnValue({ exec: () => Promise.resolve(null) }),
           },
         },
         {
           provide: getModelToken(Story.name),
           useValue: {
-            findOne: jest.fn().mockReturnValue({ lean: () => ({ exec: () => Promise.resolve(null) }) }),
+            findOne: jest.fn().mockReturnValue({
+              lean: () => ({ exec: () => Promise.resolve(null) }),
+            }),
           },
         },
         {
           provide: getModelToken(TicketComment.name),
           useValue: {
-            find: jest.fn().mockReturnValue({ sort: () => ({ lean: () => ({ exec: () => Promise.resolve([]) }) }) }),
+            find: jest.fn().mockReturnValue({
+              sort: () => ({
+                lean: () => ({ exec: () => Promise.resolve([]) }),
+              }),
+            }),
           },
         },
-        { provide: AgentInstancesService, useValue: { updateStatus: jest.fn(), updatePid: jest.fn() } },
-        { provide: GlobalSettingsService, useValue: { resolveLlmKeys: jest.fn().mockResolvedValue({ ollamaEndpoint: 'http://localhost:11434' }) } },
+        {
+          provide: AgentInstancesService,
+          useValue: { updateStatus: jest.fn(), updatePid: jest.fn() },
+        },
+        {
+          provide: GlobalSettingsService,
+          useValue: {
+            resolveLlmKeys: jest
+              .fn()
+              .mockResolvedValue({ ollamaEndpoint: 'http://localhost:11434' }),
+          },
+        },
         { provide: AesGateway, useValue: { emitAgentLog: jest.fn() } },
         { provide: EventEmitter2, useValue: { emit: jest.fn() } },
-        { provide: ConfigService, useValue: { get: jest.fn().mockReturnValue('') } },
+        {
+          provide: ConfigService,
+          useValue: { get: jest.fn().mockReturnValue('') },
+        },
       ],
     }).compile();
 
-    service = module.get<ZeroClawProcessManagerService>(ZeroClawProcessManagerService);
+    service = module.get<ZeroClawProcessManagerService>(
+      ZeroClawProcessManagerService,
+    );
   });
 
   describe('poke()', () => {
     it('should send SIGUSR1 to the given pid', () => {
-      const killSpy = jest.spyOn(process, 'kill').mockImplementation(() => true);
+      const killSpy = jest
+        .spyOn(process, 'kill')
+        .mockImplementation(() => true);
       service.poke(process.pid);
       expect(killSpy).toHaveBeenCalledWith(process.pid, 'SIGUSR1');
       killSpy.mockRestore();
     });
 
     it('should not throw when pid is unreachable', () => {
-      jest.spyOn(process, 'kill').mockImplementation(() => { throw new Error('ESRCH'); });
+      jest.spyOn(process, 'kill').mockImplementation(() => {
+        throw new Error('ESRCH');
+      });
       expect(() => service.poke(99999)).not.toThrow();
       jest.restoreAllMocks();
     });
@@ -72,7 +101,9 @@ describe('ZeroClawProcessManagerService', () => {
     });
 
     it('should return false for unreachable pid', () => {
-      jest.spyOn(process, 'kill').mockImplementation(() => { throw new Error('ESRCH'); });
+      jest.spyOn(process, 'kill').mockImplementation(() => {
+        throw new Error('ESRCH');
+      });
       expect(service.isAlive(99999)).toBe(false);
       jest.restoreAllMocks();
     });
