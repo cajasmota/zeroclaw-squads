@@ -37,3 +37,7 @@ coverage
 
 # Artifacts (agent workspaces)
 /artifacts
+
+# Claude Code local session files
+.claude/ralph-loop.local.md
+.claude/settings.local.json
