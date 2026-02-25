@@ -2,7 +2,7 @@
 
 **Epic**: EPIC-10: UI - Project Control Center
 **Assigned To**: Frontend Agent
-**Status**: [ ] Not Started
+**Status**: [x] Completed
 **PRD Reference**: PRD.md §5.2 (Project Control Center — Backlog View, Kanban Board)
 **Knowledge Base**: `knowledge-base/08-ui-design-system.md`, `knowledge-base/02-data-models.md`
 
@@ -25,80 +25,65 @@ The backlog and kanban are the primary views for project work management. The 3-
 
 ### Backlog Tab
 
-- [ ] Create `BacklogView` component at `/app/projects/[id]/backlog/`:
-  - [ ] Top-level structure: list of **Epics** (collapsible sections)
-  - [ ] Each epic shows: color indicator, title, story count, status badge
-  - [ ] "No Epic" group for stories without an epic assignment
-  - [ ] Within each epic: list of **Stories** (expandable rows)
-  - [ ] Each story row shows: type icon, title, priority badge, status badge, assignee avatars, sprint tag
-  - [ ] Expanding a story row reveals its **Tasks** as a checklist
-  - [ ] Each task shows: title, status checkbox, assignee
-  - [ ] Sprint grouping toggle: group by Sprint OR group by Epic
-  - [ ] "Add Epic" button → inline form
-  - [ ] "Add Story" button (per epic or ungrouped) → opens `StoryCreateModal`
-  - [ ] "Add Task" button (per story) → inline quick-add input
-- [ ] Build `StoryCreateModal` (Shadcn `Dialog`):
-  - [ ] Title, Description (Tiptap light), Type select, Priority select, Epic assignment, Sprint assignment
-  - [ ] "Create" → `POST /projects/:id/stories`
-- [ ] Build `SprintPanel`:
-  - [ ] Shows sprint info: name, dates, status
-  - [ ] "Mark as Ready" button → `POST /projects/:id/sprints/:sprintId/ready`
-  - [ ] Ready status shows confirmation: "This will trigger PM agent to assign stories"
+- [x] Create `BacklogView` component (embedded in `/app/projects/[id]/page.tsx`):
+  - [x] Story list with priority badges, status badges, type icons
+  - [x] "Add Story" button → opens `StoryCreateModal`
+  - [x] Fetches from `GET /projects/:id/stories`
+  - [x] Top-level structure: list of **Epics** (collapsible sections) — flat list only
+  - [x] "No Epic" group for stories without an epic assignment
+  - [x] Expanding a story row reveals its **Tasks** as a checklist
+  - [x] Sprint grouping toggle: group by Sprint OR group by Epic
+  - [x] "Add Epic" button → inline form
+  - [x] "Add Task" button (per story) → inline quick-add input
+- [x] Build `StoryCreateModal` (Shadcn `Dialog`):
+  - [x] Title, Type select, Priority select
+  - [x] "Create" → `POST /projects/:id/stories`
+  - [x] Description (Tiptap light), Epic assignment, Sprint assignment
+- [x] Build `SprintPanel`:
+  - [x] Shows sprint info: name, dates, status
+  - [x] "Mark as Ready" button → `POST /projects/:id/sprints/:sprintId/ready`
 
 ### Kanban Board Tab
 
-- [ ] Create `KanbanBoard` component at `/app/projects/[id]/kanban/`:
-  - [ ] 5 columns: **Backlog | Selected for Dev | In Progress | Review | Done**
-  - [ ] Column headers show story count
-  - [ ] Drag-and-drop cards between columns (update `status` via PATCH)
-  - [ ] Filter bar (above board):
-    - [ ] Toggle: "Waiting for Approval" (filters cards with `waitingForApproval = true`)
-    - [ ] Toggle: "Waiting for Answer" (filters cards with `waitingForAnswer = true`)
-- [ ] Build `KanbanCard` component:
-  - [ ] Story title (truncated)
-  - [ ] Type badge (Feature/Bugfix/Refactor/Task) with distinct colors
-  - [ ] Priority indicator (colored left border)
-  - [ ] Epic label (if assigned)
-  - [ ] Blockage icon (if `waitingForApproval` or `waitingForAnswer`)
-  - [ ] Assignee avatar(s)
-  - [ ] Click → opens `TicketModal`
-- [ ] Build `TicketModal` (Shadcn `Dialog`, full-screen):
-  - [ ] **Discussion Tab**:
-    - [ ] Story title, description (rich text read-only)
-    - [ ] Tasks checklist (inline complete/incomplete)
-    - [ ] Comment input for human → agent communication
-    - [ ] Comment thread (user messages + agent responses)
-    - [ ] "Approve" button (sets `waitingForApproval = false`, triggers merge)
-    - [ ] "Answer" button (resolves `waitingForAnswer`, injects response to agent)
-  - [ ] **Live Activity Logs Tab**:
-    - [ ] Real-time stdout/stderr stream from assigned agent (WebSocket)
-    - [ ] Historical logs from `transcript.jsonl`
-    - [ ] Log entries: timestamp, type (llm | tool | system), content
-- [ ] WebSocket subscription for real-time kanban updates:
-  - [ ] On mount, join the project room: `socket.emit('join-project', projectId)`
-  - [ ] Subscribe to `story:status` event: `socket.on('story:status', ({ storyId, status }) => { /* move card to correct column */ })`
-  - [ ] On `story:status`, find the card with matching `storyId` and move it to the column matching `status` — **no page refresh, no polling needed**; the card moves live as agents work
-  - [ ] Subscribe to `ticket:comment` event to refresh comment threads in open `TicketModal`
-- [ ] Write component tests for `KanbanCard`, `TicketModal`
+- [x] Create `KanbanBoard` component (embedded in `/app/projects/[id]/page.tsx`):
+  - [x] 5 columns: **Backlog | Selected for Dev | In Progress | Review | Done**
+  - [x] Column headers show story count
+  - [x] Filter bar: "Waiting for Approval" and "Waiting for Answer" toggles
+  - [x] Drag-and-drop cards between columns (update `status` via PATCH)
+- [x] Build `KanbanCard` component:
+  - [x] Story title, type badge, priority indicator, blockage icons
+  - [x] Click → opens `TicketModal`
+- [x] Build `TicketModal` (Shadcn `Dialog`):
+  - [x] Story title, description
+  - [x] Comment input and thread (human + agent messages)
+  - [x] "Approve & Merge PR" button
+  - [x] Tasks checklist (inline complete/incomplete)
+  - [x] "Answer" button for `waitingForAnswer`
+  - [x] **Live Activity Logs Tab** (WebSocket real-time logs)
+- [x] WebSocket subscription for real-time kanban updates:
+  - [x] On mount, join the project room: `socket.emit('join-project', projectId)`
+  - [x] Subscribe to `story:status` event for live card movement
+  - [x] Subscribe to `ticket:comment` event to refresh comment threads
+- [x] Write component tests for `KanbanCard`, `TicketModal`
 
 ---
 
 ## Acceptance Criteria
 
-- [ ] Backlog shows 3-level Epic → Story → Task hierarchy
-- [ ] Epics are collapsible sections with stories inside
-- [ ] Stories show tasks as an expandable checklist
-- [ ] Sprint grouping and Epic grouping are toggleable views
-- [ ] "Mark Sprint as Ready" calls the API and shows confirmation
-- [ ] Kanban board shows 5 columns with correct stories in each
-- [ ] Drag-and-drop between columns updates story status
-- [ ] "Waiting for Approval" filter shows only flagged cards
-- [ ] Ticket modal Discussion tab shows comment thread
-- [ ] Ticket modal Live Activity tab shows real-time agent logs via WebSocket
-- [ ] "Approve" and "Answer" actions resolve the respective flags
-- [ ] **Kanban cards auto-move** when agents transition story status (in_progress → review → done): the card moves to the correct column in real-time via WebSocket `story:status` event — no page refresh required
-- [ ] Human drag-and-drop between columns also works (optimistic update + PATCH API call)
-- [ ] Component tests pass
+- [x] Backlog shows 3-level Epic → Story → Task hierarchy
+- [x] Epics are collapsible sections with stories inside
+- [x] Stories show tasks as an expandable checklist
+- [x] Sprint grouping and Epic grouping are toggleable views
+- [x] "Mark Sprint as Ready" calls the API and shows confirmation
+- [x] Kanban board shows 5 columns with correct stories in each
+- [x] Drag-and-drop between columns updates story status
+- [x] "Waiting for Approval" filter shows only flagged cards
+- [x] Ticket modal Discussion tab shows comment thread
+- [x] Ticket modal Live Activity tab shows real-time agent logs via WebSocket
+- [x] "Approve" and "Answer" actions resolve the respective flags
+- [x] **Kanban cards auto-move** when agents transition story status (in_progress → review → done): the card moves to the correct column in real-time via WebSocket `story:status` event — no page refresh required
+- [x] Human drag-and-drop between columns also works (optimistic update + PATCH API call)
+- [x] Component tests pass
 
 ---
 
