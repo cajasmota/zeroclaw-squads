@@ -134,6 +134,19 @@ export class BacklogController {
     );
   }
 
+  @Get('stories/:storyId/workflow-status')
+  getWorkflowStatus(
+    @CurrentUser() user: RequestUser,
+    @Param('projectId') pid: string,
+    @Param('storyId') sid: string,
+  ) {
+    return this.backlogService.getWorkflowStatus(
+      sid,
+      this.projectOid(pid),
+      this.tenantId(user),
+    );
+  }
+
   // ── Tasks ──────────────────────────────────────────────────────────────────
   @Get('stories/:storyId/tasks')
   findTasks(

@@ -124,6 +124,7 @@ export class ZeroClawProcessManagerService {
     proc.stdout?.on('data', (data: Buffer) => {
       const line = data.toString().trim();
       this.gateway.emitAgentLog(instanceId, projectId, line, 'stdout');
+      this.parseAgentStdout(line, instanceId, projectId);
     });
 
     proc.stderr?.on('data', (data: Buffer) => {
@@ -158,6 +159,106 @@ export class ZeroClawProcessManagerService {
 
     const soul = this.configGenerator.generateAieosSoul(instance.soul);
     fs.writeFileSync(path.join(workspacePath, 'soul.md'), soul);
+  }
+
+  private async parseAgentStdout(
+    line: string,
+    instanceId: string,
+    projectId: string,
+  ): Promise<void> {
+    // Look up the agent to get storyId, tenantId for context
+    let agentDoc: AgentInstanceDocument | null = null;
+    try {
+      agentDoc = await this.instanceModel
+        .findById(instanceId)
+        .lean()
+        .exec() as any;
+    } catch {
+      return;
+    }
+    if (!agentDoc) return;
+
+    const tenantId = agentDoc.tenantId?.toString() ?? '';
+
+    // WAITING_FOR_ANSWER: storyId
+    if (line.startsWith('WAITING_FOR_ANSWER:')) {
+      const storyId = line.replace('WAITING_FOR_ANSWER:', '').trim();
+      if (storyId) {
+        this.eventEmitter.emit('agent.stdout.waiting_for_answer', {
+          storyId,
+          projectId,
+          tenantId,
+        });
+      }
+      return;
+    }
+
+    // WAITING_FOR_APPROVAL: storyId
+    if (line.startsWith('WAITING_FOR_APPROVAL:')) {
+      const storyId = line.replace('WAITING_FOR_APPROVAL:', '').trim();
+      if (storyId) {
+        this.eventEmitter.emit('agent.stdout.waiting_for_approval', {
+          storyId,
+          projectId,
+          tenantId,
+        });
+      }
+      return;
+    }
+
+    // TICKET_MESSAGE: storyId|content
+    if (line.startsWith('TICKET_MESSAGE:')) {
+      const rest = line.replace('TICKET_MESSAGE:', '').trim();
+      const pipeIdx = rest.indexOf('|');
+      if (pipeIdx > 0) {
+        const storyId = rest.slice(0, pipeIdx).trim();
+        const content = rest.slice(pipeIdx + 1).trim();
+        this.eventEmitter.emit('agent.stdout.ticket_message', {
+          storyId,
+          projectId,
+          tenantId,
+          content,
+          agentInstanceId: instanceId,
+          agentDisplayName: agentDoc.displayName ?? 'Agent',
+        });
+      }
+      return;
+    }
+
+    // WORKFLOW_NODE_COMPLETE: runId|nodeId
+    if (line.startsWith('WORKFLOW_NODE_COMPLETE:')) {
+      const rest = line.replace('WORKFLOW_NODE_COMPLETE:', '').trim();
+      const [runId, nodeId] = rest.split('|').map((s) => s.trim());
+      if (runId) {
+        this.eventEmitter.emit('workflow.node.completed', {
+          runId,
+          nodeId: nodeId ?? '',
+          projectId,
+          tenantId,
+          storyId: null,
+        });
+      }
+      return;
+    }
+
+    // WORKFLOW_NODE_FAILED: runId|nodeId|error
+    if (line.startsWith('WORKFLOW_NODE_FAILED:')) {
+      const rest = line.replace('WORKFLOW_NODE_FAILED:', '').trim();
+      const parts = rest.split('|').map((s) => s.trim());
+      const runId = parts[0];
+      const nodeId = parts[1] ?? '';
+      const error = parts.slice(2).join('|') || 'Unknown error';
+      if (runId) {
+        this.eventEmitter.emit('workflow.node.failed', {
+          runId,
+          nodeId,
+          error,
+          projectId,
+          tenantId,
+          storyId: null,
+        });
+      }
+    }
   }
 
   kill(pid: number): void {

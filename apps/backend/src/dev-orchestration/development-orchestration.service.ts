@@ -1,17 +1,15 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
-import { EventEmitter2, OnEvent } from '@nestjs/event-emitter';
-import { InjectModel } from '@nestjs/mongoose';
-import { Model, Types } from 'mongoose';
-import {
-  AgentInstance,
-  AgentInstanceDocument,
-} from '../agent-instances/agent-instance.schema';
-import { BacklogService } from '../backlog/backlog.service';
-import { SlackService } from '../project-initializer/slack.service';
-import { AesGateway } from '../websocket/aes.gateway';
-import { ZeroClawProcessManagerService } from '../zeroclaw/zeroclaw-process-manager.service';
-import { AgentAvailabilityService } from './agent-availability.service';
-import { StoryContextSerializerService } from './story-context-serializer.service';
+import {Injectable, Logger} from '@nestjs/common';
+import {EventEmitter2, OnEvent} from '@nestjs/event-emitter';
+import {InjectModel} from '@nestjs/mongoose';
+import {Model, Types} from 'mongoose';
+import {AgentInstance, AgentInstanceDocument,} from '../agent-instances/agent-instance.schema';
+import {Story, StoryDocument} from '../backlog/story.schema';
+import {BacklogService} from '../backlog/backlog.service';
+import {SlackService} from '../project-initializer/slack.service';
+import {AesGateway} from '../websocket/aes.gateway';
+import {ZeroClawProcessManagerService} from '../zeroclaw/zeroclaw-process-manager.service';
+import {AgentAvailabilityService} from './agent-availability.service';
+import {StoryContextSerializerService} from './story-context-serializer.service';
 
 @Injectable()
 export class DevelopmentOrchestrationService {
@@ -20,6 +18,8 @@ export class DevelopmentOrchestrationService {
   constructor(
     @InjectModel(AgentInstance.name)
     private readonly instanceModel: Model<AgentInstanceDocument>,
+    @InjectModel(Story.name)
+    private readonly storyModel: Model<StoryDocument>,
     private readonly backlogService: BacklogService,
     private readonly processManager: ZeroClawProcessManagerService,
     private readonly availability: AgentAvailabilityService,
@@ -163,6 +163,112 @@ export class DevelopmentOrchestrationService {
       );
     } catch (e) {
       this.logger.error(`Failed to handle story.assigned: ${e.message}`);
+    }
+  }
+
+  @OnEvent('github.pr.opened')
+  async onGitHubPROpened(payload: {
+    prNumber: number;
+    branchName: string;
+  }): Promise<void> {
+    if (!payload.branchName) return;
+    try {
+      const story = await this.storyModel
+        .findOne({ branchName: payload.branchName })
+        .lean()
+        .exec();
+      if (!story) return;
+      // Store the PR number on the story for later merge
+      await this.storyModel
+        .updateOne({ _id: story._id }, { $set: { prNumber: payload.prNumber } })
+        .exec();
+      await this.handlePROpened(
+        payload.prNumber,
+        payload.branchName,
+        story.projectId,
+        story.tenantId,
+      );
+    } catch (e) {
+      this.logger.error(`Failed to handle github.pr.opened: ${e.message}`);
+    }
+  }
+
+  @OnEvent('github.pr.comment')
+  async onGitHubPRComment(payload: {
+    prNumber: number;
+    branchName: string;
+    body: string;
+  }): Promise<void> {
+    try {
+      // Try to find the story by prNumber since branchName may be empty for issue_comment events
+      const query: Record<string, any> = {};
+      if (payload.branchName) {
+        query.branchName = payload.branchName;
+      } else if (payload.prNumber) {
+        query.prNumber = payload.prNumber;
+      }
+      if (!Object.keys(query).length) return;
+      const story = await this.storyModel.findOne(query).lean().exec();
+      if (!story) return;
+      await this.handlePRFeedback(
+        payload.prNumber,
+        payload.body,
+        story.branchName,
+        story.projectId,
+        story.tenantId,
+      );
+    } catch (e) {
+      this.logger.error(`Failed to handle github.pr.comment: ${e.message}`);
+    }
+  }
+
+  @OnEvent('github.pr.merged')
+  async onGitHubPRMerged(payload: {
+    prNumber: number;
+    branchName: string;
+  }): Promise<void> {
+    if (!payload.branchName) return;
+    try {
+      const story = await this.storyModel
+        .findOne({ branchName: payload.branchName })
+        .lean()
+        .exec();
+      if (!story) return;
+      await this.handlePRMerged(
+        payload.branchName,
+        story.projectId,
+        story.tenantId,
+      );
+    } catch (e) {
+      this.logger.error(`Failed to handle github.pr.merged: ${e.message}`);
+    }
+  }
+
+  @OnEvent('story.approved')
+  async handleStoryApproved(payload: {
+    storyId: string;
+    projectId: string;
+    tenantId: string;
+  }): Promise<void> {
+    try {
+      const projectId = new Types.ObjectId(payload.projectId);
+      const pmAgent = await this.instanceModel
+        .findOne({
+          projectId,
+          'aieos_identity.identity.role': /pm|product.manager/i,
+          status: { $in: ['idle', 'busy'] },
+        })
+        .lean()
+        .exec();
+      if (pmAgent?.pid) {
+        this.processManager.poke(pmAgent.pid);
+        this.processManager.injectStdin(
+          pmAgent._id.toString(),
+          `STORY_APPROVED: ${payload.storyId}`,
+        );
+      }
+    } catch (e) {
+      this.logger.error(`Failed to handle story.approved: ${e.message}`);
     }
   }
 

@@ -60,6 +60,9 @@ export class Story {
   storySlackThread: string;
 
   @Prop({ default: 0 })
+  prNumber: number;
+
+  @Prop({ default: 0 })
   order: number;
 }
 

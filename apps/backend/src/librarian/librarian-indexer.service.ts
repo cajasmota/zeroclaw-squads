@@ -2,6 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { EventEmitter2, OnEvent } from '@nestjs/event-emitter';
 import { ConfigService } from '@nestjs/config';
 import axios from 'axios';
+import * as fs from 'fs';
 import * as path from 'path';
 
 @Injectable()
@@ -104,9 +105,73 @@ export class LibrarianIndexerService {
     projectId: string,
     librarianPath: string,
   ): Promise<void> {
-    // Standards synthesis — queries parser and graph engines, generates standards.md
     this.logger.log(
       `Synthesizing standards for project ${projectId} at ${librarianPath}`,
     );
+    try {
+      // Query parser engine for type definitions and patterns
+      let typePatterns = '';
+      let graphSummary = '';
+
+      try {
+        const parserRes = await axios.get(`${this.parserUrl}/patterns`, {
+          timeout: 10000,
+        });
+        if (parserRes.data?.patterns) {
+          typePatterns = Object.entries(parserRes.data.patterns)
+            .map(([k, v]) => `- ${k}: ${v}`)
+            .join('\n');
+        }
+      } catch {
+        this.logger.warn('Parser engine unavailable for standards synthesis');
+      }
+
+      try {
+        const graphRes = await axios.get(
+          `${this.graphUrl}/summary?projectId=${projectId}`,
+          { timeout: 10000 },
+        );
+        if (graphRes.data?.summary) {
+          graphSummary = graphRes.data.summary;
+        }
+      } catch {
+        this.logger.warn('Graph engine unavailable for standards synthesis');
+      }
+
+      const aesDir = path.join(librarianPath, '.aes');
+      fs.mkdirSync(aesDir, { recursive: true });
+
+      const standardsContent = `# AES Code Standards
+Generated: ${new Date().toISOString()}
+Project: ${projectId}
+
+## Conventions
+
+### File Organization
+- Backend: NestJS modules in \`apps/backend/src/{feature}/\`
+- Frontend: Next.js App Router pages in \`apps/frontend/app/(authenticated)/\`
+- Shared types: \`packages/types/\`
+
+### Database
+- All Mongoose queries MUST include \`tenantId\` filter
+- Sensitive fields (API keys, tokens) MUST use AES-256 encryption
+- Passwords MUST use bcrypt (min 12 rounds)
+
+### API
+- All routes require \`JwtAuthGuard\` unless explicitly \`@Public()\`
+- Every service method must have a unit test
+
+### Patterns Detected
+${typePatterns || 'No patterns detected yet — run ingestion to populate.'}
+
+### Call Graph Summary
+${graphSummary || 'No graph data yet — run ingestion to populate.'}
+`;
+
+      fs.writeFileSync(path.join(aesDir, 'standards.md'), standardsContent, 'utf8');
+      this.logger.log(`Standards written to ${path.join(aesDir, 'standards.md')}`);
+    } catch (e) {
+      this.logger.error(`Failed to synthesize standards: ${e.message}`);
+    }
   }
 }

@@ -154,6 +154,26 @@ export class BacklogService {
     return doc;
   }
 
+  async getWorkflowStatus(
+    storyId: string,
+    projectId: Types.ObjectId,
+    tenantId: Types.ObjectId,
+  ) {
+    const story = await this.storyModel
+      .findOne({ _id: new Types.ObjectId(storyId), projectId, tenantId })
+      .select('workflowNodeStatus waitingForApproval waitingForAnswer runId')
+      .lean()
+      .exec();
+    if (!story) throw new NotFoundException(`Story ${storyId} not found`);
+    return {
+      workflowNodeStatus: (story as any).workflowNodeStatus ?? null,
+      waitingForApproval: (story as any).waitingForApproval ?? false,
+      waitingForAnswer: (story as any).waitingForAnswer ?? false,
+      currentNodeId: null,
+      runId: (story as any).runId ?? null,
+    };
+  }
+
   async deleteStory(
     projectId: Types.ObjectId,
     tenantId: Types.ObjectId,

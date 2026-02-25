@@ -35,60 +35,64 @@ The **AES** is an autonomous, event-driven software development environment usin
 
 ### **3.1 Project Schema (Suggested)**
 
+```json
 {  
-  "\_id": "ObjectId",  
+  "_id": "ObjectId",  
   "name": "Project Name",  
   "slug": "web-app",  
-  "brandColor": "\#3b82f6",  
+  "brandColor": "#3b82f6",  
   "status": "active | archived",  
   "roles": {  
     "librarian": "AgentInstanceID", // Singleton  
     "architect": "AgentInstanceID", // Singleton  
     "pm": "AgentInstanceID",        // Singleton  
-    "developer": \["AgentInstanceID"\], // Multi-instance  
-    "reviewer": \["AgentInstanceID"\],  // Multi-instance (Mandatory)  
-    "optional": \["AgentInstanceID"\]  
+    "developer": ["AgentInstanceID"], // Multi-instance  
+    "reviewer": ["AgentInstanceID"],  // Multi-instance (Mandatory)  
+    "optional": ["AgentInstanceID"]  
   },  
   "config": {  
     "slackToken": "EncryptedString",  
-    "repoUrl": "\[https://github.com/org/repo\](https://github.com/org/repo)",  
+    "repoUrl": "[https://github.com/org/repo](httpds://github.com/org/repo)",  
     "githubApp": {  
       "appId": "String",  
       "privateKey": "EncryptedString",  
       "installationId": "String",  
       "webhookSecret": "EncryptedString"  
     },  
-    "inviteUsers": \["U123"\],  
+    "inviteUsers": ["U123"],  
     "llmKeys": {   
       "openai": "EncryptedString",   
       "anthropic": "EncryptedString",  
       "google": "EncryptedString",  
-      "ollama\_endpoint": "http://localhost:11434"  
+      "ollama_endpoint": "http://localhost:11434"  
     }  
   }  
 }
+```
 
 ### **3.2 Agent Instance (Suggested Snapshot)**
 
+```json
 {  
-  "\_id": "ObjectId",  
+  "_id": "ObjectId",  
   "projectId": "ObjectId",  
   "templateId": "ObjectId",  
   "displayName": "web-ro-gr-1", // Overridden in Wizard or default from template  
   "identifier": "web-app-dev-1",  
-  "tags": \["starwars", "droids", "rust-expert"\], // Filtering metadata  
+  "tags": ["starwars", "droids", "rust-expert"], // Filtering metadata  
   "pid": "Number",  
   "soul": "soul.md (Markdown String)",  
-  "aieos\_identity": "identity.json (AIEOS v1.1 payload)",  
+  "aieos_identity": "identity.json (AIEOS v1.1 payload)",  
   "config": {  
     "model": "qwen2.5-coder:1.5b",  
     "provider": "ollama",  
     "skills": "skills.yaml (Tool Definitions)",  
     "canWriteCode": "Boolean", // Logic in Section 20  
-    "mcpServers": \[{ "name": "github", "config": {} }\]  
+    "mcpServers": [{ "name": "github", "config": {} }]  
   },  
   "status": "idle | busy | error"  
 }
+```
 
 ## **4\. Project Initialization & Slack Automation**
 

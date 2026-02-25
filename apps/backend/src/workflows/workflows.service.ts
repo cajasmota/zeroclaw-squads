@@ -1,9 +1,10 @@
 import {
   Injectable,
+  Logger,
   NotFoundException,
   OnApplicationBootstrap,
 } from '@nestjs/common';
-import { EventEmitter2 } from '@nestjs/event-emitter';
+import { EventEmitter2, OnEvent } from '@nestjs/event-emitter';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { AesGateway } from '../websocket/aes.gateway';
@@ -196,4 +197,15 @@ export class WorkflowsService implements OnApplicationBootstrap {
     if (!run) throw new NotFoundException(`WorkflowRun ${runId} not found`);
     return run;
   }
+
+  @OnEvent('workflow.advance')
+  async handleAdvanceWorkflow(payload: { runId: string }): Promise<void> {
+    try {
+      await this.advanceWorkflow(payload.runId);
+    } catch (e) {
+      this.logger.error(`Failed to advance workflow ${payload.runId}: ${e.message}`);
+    }
+  }
+
+  private readonly logger = new Logger(WorkflowsService.name);
 }

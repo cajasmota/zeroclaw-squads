@@ -3,6 +3,7 @@ import { getModelToken } from '@nestjs/mongoose';
 import { Test, TestingModule } from '@nestjs/testing';
 import { Types } from 'mongoose';
 import { AgentInstance } from '../agent-instances/agent-instance.schema';
+import { Story } from '../backlog/story.schema';
 import { BacklogService } from '../backlog/backlog.service';
 import { SlackService } from '../project-initializer/slack.service';
 import { AesGateway } from '../websocket/aes.gateway';
@@ -51,6 +52,13 @@ describe('DevelopmentOrchestrationService', () => {
           provide: getModelToken(AgentInstance.name),
           useValue: mockInstanceModel,
         },
+        {
+          provide: getModelToken(Story.name),
+          useValue: {
+            findOne: jest.fn().mockReturnValue({ lean: () => ({ exec: () => Promise.resolve(null) }) }),
+            updateOne: jest.fn().mockReturnValue({ exec: () => Promise.resolve({}) }),
+          },
+        },
         { provide: BacklogService, useValue: mockBacklog },
         {
           provide: ZeroClawProcessManagerService,
@@ -75,7 +83,7 @@ describe('DevelopmentOrchestrationService', () => {
 
   describe('assignStory()', () => {
     it('should update story status to in_progress and emit story.assigned', async () => {
-      const result = await service.assignStory(
+       await service.assignStory(
         storyId.toString(),
         agentId.toString(),
         projectId,

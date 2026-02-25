@@ -4,10 +4,10 @@ import {
   Headers,
   HttpCode,
   Post,
-  RawBodyRequest,
   Req,
   UnauthorizedException,
 } from '@nestjs/common';
+import type {RawBodyRequest} from "@nestjs/common";
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import * as crypto from 'crypto';
 import { ZeroClawProcessManagerService } from '../zeroclaw/zeroclaw-process-manager.service';
@@ -58,15 +58,34 @@ export class GitHubWebhookController {
 
   private async routeEvent(event: string, payload: any): Promise<void> {
     if (event === 'pull_request' && payload.action === 'opened') {
-      // Signal reviewer agent via SIGUSR1
       this.eventEmitter.emit('github.pr.opened', {
         prNumber: payload.pull_request?.number,
+        branchName: payload.pull_request?.head?.ref ?? '',
+        repoUrl: payload.repository?.clone_url,
+      });
+    } else if (
+      event === 'pull_request' &&
+      payload.action === 'closed' &&
+      payload.pull_request?.merged === true
+    ) {
+      this.eventEmitter.emit('github.pr.merged', {
+        prNumber: payload.pull_request?.number,
+        branchName: payload.pull_request?.head?.ref ?? '',
         repoUrl: payload.repository?.clone_url,
       });
     } else if (event === 'issue_comment' && payload.action === 'created') {
-      // Inject PR comment feedback into developer agent
       this.eventEmitter.emit('github.pr.comment', {
         prNumber: payload.issue?.number,
+        branchName: payload.issue?.pull_request ? '' : '',
+        body: payload.comment?.body,
+      });
+    } else if (
+      event === 'pull_request_review_comment' &&
+      payload.action === 'created'
+    ) {
+      this.eventEmitter.emit('github.pr.comment', {
+        prNumber: payload.pull_request?.number,
+        branchName: payload.pull_request?.head?.ref ?? '',
         body: payload.comment?.body,
       });
     } else if (event === 'push' && payload.ref === 'refs/heads/main') {

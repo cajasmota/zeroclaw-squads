@@ -4,6 +4,7 @@ import {
   AgentInstance,
   AgentInstanceSchema,
 } from '../agent-instances/agent-instance.schema';
+import { Story, StorySchema } from '../backlog/story.schema';
 import { BacklogModule } from '../backlog/backlog.module';
 import { ProjectInitializerModule } from '../project-initializer/project-initializer.module';
 import { WebsocketModule } from '../websocket/websocket.module';
@@ -17,6 +18,7 @@ import { StoryContextSerializerService } from './story-context-serializer.servic
   imports: [
     MongooseModule.forFeature([
       { name: AgentInstance.name, schema: AgentInstanceSchema },
+      { name: Story.name, schema: StorySchema },
     ]),
     BacklogModule,
     ZeroClawModule,

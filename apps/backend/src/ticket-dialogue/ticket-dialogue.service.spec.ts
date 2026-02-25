@@ -11,8 +11,10 @@ import { getModelToken } from '@nestjs/mongoose';
 import { Test, TestingModule } from '@nestjs/testing';
 import { Types } from 'mongoose';
 import { BacklogService } from '../backlog/backlog.service';
+import { Aes256EncryptionService } from '../common/services/aes256-encryption.service';
 import { GitHubPRService } from '../github/github-pr.service';
 import { SlackService } from '../project-initializer/slack.service';
+import { Project } from '../projects/project.schema';
 import { AesGateway } from '../websocket/aes.gateway';
 import { ZeroClawProcessManagerService } from '../zeroclaw/zeroclaw-process-manager.service';
 import { TicketComment } from './ticket-comment.schema';
@@ -55,6 +57,10 @@ describe('TicketDialogueService', () => {
           provide: getModelToken(TicketComment.name),
           useValue: mockCommentModel,
         },
+        {
+          provide: getModelToken(Project.name),
+          useValue: { findOne: jest.fn().mockReturnValue({ lean: () => ({ exec: () => Promise.resolve(null) }) }) },
+        },
         { provide: BacklogService, useValue: mockBacklog },
         {
           provide: ZeroClawProcessManagerService,
@@ -64,9 +70,13 @@ describe('TicketDialogueService', () => {
           provide: SlackService,
           useValue: { postThreadReplyAsAgent: jest.fn() },
         },
+        {
+          provide: Aes256EncryptionService,
+          useValue: { encrypt: jest.fn(), decrypt: jest.fn(v => v) },
+        },
         { provide: AesGateway, useValue: { server: null } },
         { provide: EventEmitter2, useValue: { emit: jest.fn() } },
-        { provide: GitHubPRService, useValue: {} },
+        { provide: GitHubPRService, useValue: { mergePullRequest: jest.fn() } },
       ],
     }).compile();
 

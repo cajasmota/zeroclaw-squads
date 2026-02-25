@@ -1,7 +1,7 @@
 # Ralph Loop Verification Journal
 
 ## Status
-COMPLETE — All 28 stories verified, 7 gaps found and fixed, all 182 tests passing.
+COMPLETE — All 28 stories verified and re-verified. 13 total gaps found across two passes, all fixed. 146 backend + 40 frontend = 186 tests passing.
 
 ## Overall Status
 All 28 stories show [x] Completed in INDEX.md. Verification in progress.
@@ -94,9 +94,62 @@ Stories reviewed with no gaps:
 - Fixed pre-existing TypeScript error in `blueprints/page.tsx` (Lucide icon `title` → `aria-label`)
 - Fixed `saveTimerRef` type to use `ReturnType<typeof setTimeout>`
 
-## Final Test Results
+## Final Test Results (Pre-verification pass)
 - Backend: 142 tests passing (29 suites)
 - Frontend: 40 tests passing (3 suites)
 - TypeScript: 0 errors
+
+---
+
+## Verification Pass — 2026-02-25
+
+A deep audit of the codebase against all 28 story acceptance criteria was run. 7 new gaps were found and fixed.
+
+### GAP-A: Story 0000027 — Sync from Template UI missing
+- **Problem**: Backend `POST /projects/:id/agents/:agentId/sync` existed, but the Agent Profile Modal in `projects/[id]/page.tsx` had no "Sync from Template" button, dialog, or checkboxes.
+- **Fix**: Added `templateId` to `AgentInstance` interface; added `syncOpen/syncFields/syncing/syncToast` state; added `syncFromTemplate()` function; added "Sync from Template" button in edit mode (visible only when `instance.templateId` exists); added `Dialog` with three checkboxes (soul, AIEOS, config) and Sync button with success toast.
+
+### GAP-B: Story 0000028 — Missing `GET .../workflow-status` endpoint
+- **Problem**: No `GET /projects/:id/stories/:storyId/workflow-status` endpoint existed anywhere.
+- **Fix**: Added `getWorkflowStatus()` to `BacklogService`; added endpoint to `BacklogController`. Returns `{ workflowNodeStatus, waitingForApproval, waitingForAnswer, runId, currentNodeId }`.
+
+### GAP-C: Story 0000014 — GitHub PR events not wired to orchestration service
+- **Problem**: `handlePROpened/Feedback/Merged` in `DevelopmentOrchestrationService` were plain methods, never called. Webhook emitted `github.pr.opened` but nobody had `@OnEvent` handlers. `pull_request.closed` was not handled.
+- **Fix**:
+  - Updated `GitHubWebhookController.routeEvent()` to include `branchName` in `github.pr.opened` and handle `pull_request.closed + merged:true` → emit `github.pr.merged`.
+  - Added `prNumber: number` field to `Story` schema.
+  - Added `@InjectModel(Story.name)` to `DevelopmentOrchestrationService` for cross-project branchName lookup.
+  - Added `@OnEvent` handlers: `onGitHubPROpened`, `onGitHubPRComment`, `onGitHubPRMerged`, `handleStoryApproved`.
+  - Updated `dev-orchestration.module.ts` to register Story schema.
+
+### GAP-D: Story 0000025 — Slack mirroring not implemented, PR merge missing, stdout prefix parsing absent
+- **Problem**: `postHumanComment/postAgentComment` never mirrored to Slack; `approveStory` never called `GitHubPRService.mergePullRequest()`; stdout prefix parsing (`WAITING_FOR_ANSWER:`, `WAITING_FOR_APPROVAL:`, `TICKET_MESSAGE:`) didn't exist; `story.approved` event had no listener.
+- **Fix**:
+  - Added `Project` model injection + `Aes256EncryptionService` to `TicketDialogueService`.
+  - Added `postSlackThread()` helper using `tryDecrypt()` + `slack.postThreadReplyAsAgent()`.
+  - Added Slack mirroring calls in `postHumanComment` and `postAgentComment`.
+  - Added PR merge in `approveStory()` using story's new `prNumber` field.
+  - Added `@OnEvent` handlers: `handleWaitingForAnswer`, `handleWaitingForApproval`, `handleTicketMessage`.
+  - Added stdout prefix parsing in `ZeroClawProcessManagerService.parseAgentStdout()` for `WAITING_FOR_ANSWER:`, `WAITING_FOR_APPROVAL:`, `TICKET_MESSAGE:`, `WORKFLOW_NODE_COMPLETE:`, `WORKFLOW_NODE_FAILED:` prefixes → emits appropriate events.
+  - Updated `ticket-dialogue.module.ts` to include Project schema + Aes256EncryptionService.
+
+### GAP-E: Story 0000017 — WorkflowNodeExecutorService not implemented
+- **Problem**: No `workflow-node-executor.service.ts` existed. Workflow ran `triggerWorkflow()` but never signaled any agent. `workflow.node.completed/failed` events were never emitted so workflows never advanced.
+- **Fix**:
+  - Created `workflow-node-executor.service.ts` with `executeNode(run, node)` that: finds agent by `agentRole`, injects node context via stdin, handles `requiresHumanApproval` (pauses run + emits `workflow.node.approval_needed`), signals agent via SIGUSR1 + stdin.
+  - Added `@OnEvent('workflow.node.completed')` to advance workflow and release agent.
+  - Added `@OnEvent('workflow.node.failed')` to mark run as failed.
+  - Added `@OnEvent('workflow.advance')` to `WorkflowsService` to auto-call `advanceWorkflow()`.
+  - Added unit tests in `workflow-node-executor.service.spec.ts`.
+  - Updated `WorkflowsModule` to include AgentInstance model, ZeroClawModule, and `WorkflowNodeExecutorService`.
+
+### GAP-F: Story 0000013 — `synthesizeStandards()` was an empty stub
+- **Problem**: `LibrarianIndexerService.synthesizeStandards()` only logged a message and did nothing.
+- **Fix**: Implemented `synthesizeStandards()` to: query parser/graph engines for patterns, write a proper `.aes/standards.md` file with conventions + detected patterns + call graph summary. Uses `fs.mkdirSync` + `fs.writeFileSync`.
+
+### Final Test Results (Post-verification pass)
+- Backend: 146 tests passing (30 suites) — +4 tests for WorkflowNodeExecutorService
+- Frontend: 40 tests passing (3 suites)
+- All gaps fixed and verified
 
 ## Status: COMPLETE — All 28 stories verified and implemented. All tests and TypeScript checks pass.

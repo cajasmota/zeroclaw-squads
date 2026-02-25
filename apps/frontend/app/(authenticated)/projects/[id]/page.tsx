@@ -1,29 +1,49 @@
 "use client";
-import { use, useEffect, useState, useCallback, useRef } from "react";
-import { useRouter } from "next/navigation";
-import { useEditor, EditorContent } from "@tiptap/react";
+import {use, useCallback, useEffect, useRef, useState} from "react";
+import {useRouter} from "next/navigation";
+import {EditorContent, useEditor} from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import TiptapImage from "@tiptap/extension-image";
-import { Table, TableRow, TableCell, TableHeader } from "@tiptap/extension-table";
+import {Table, TableCell, TableHeader, TableRow} from "@tiptap/extension-table";
 import CodeBlockLowlight from "@tiptap/extension-code-block-lowlight";
-import { createLowlight } from "lowlight";
-import { useProjectSocket } from "@/hooks/useProjectSocket";
+import {createLowlight} from "lowlight";
+import {useProjectSocket} from "@/hooks/useProjectSocket";
 import {
-  Loader2, RefreshCw, Plus, MessageSquare, CheckCircle, AlertCircle, Clock, Edit2, Save, X,
-  GitBranch, Zap, ChevronDown, ChevronRight, ListTodo, Terminal,
+    CheckCircle,
+    ChevronDown,
+    ChevronRight,
+    Edit2,
+    GitBranch,
+    ListTodo,
+    Loader2,
+    MessageSquare,
+    Plus,
+    RefreshCw,
+    Save,
+    X,
+    Zap,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Separator } from "@/components/ui/separator";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Switch } from "@/components/ui/switch";
+import {Button} from "@/components/ui/button";
+import {Input} from "@/components/ui/input";
+import {Label} from "@/components/ui/label";
+import {Badge} from "@/components/ui/badge";
+import {Tabs, TabsContent, TabsList, TabsTrigger} from "@/components/ui/tabs";
+import {Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle} from "@/components/ui/dialog";
+import {Alert, AlertDescription} from "@/components/ui/alert";
+import {Separator} from "@/components/ui/separator";
+import {Avatar, AvatarFallback} from "@/components/ui/avatar";
 import {
-  AreaChart, Area, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend,
+    Area,
+    AreaChart,
+    CartesianGrid,
+    Cell,
+    Legend,
+    Pie,
+    PieChart,
+    ResponsiveContainer,
+    Tooltip,
+    XAxis,
+    YAxis,
 } from "recharts";
 
 // ─── Types ──────────────────────────────────────────────────────────────────
@@ -45,6 +65,7 @@ interface AgentInstance {
   tags: string[];
   soul?: string;
   pid?: number;
+  templateId?: string;
   config?: { model: string; provider: string };
   aieos_identity?: Record<string, unknown>;
 }
@@ -339,6 +360,10 @@ export function AgentsTab({ projectId, liveStatuses }: { projectId: string; live
   const [editForm, setEditForm] = useState({ displayName: "", soul: "", aieosJson: "" });
   const [aieosJsonError, setAieosJsonError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [syncOpen, setSyncOpen] = useState(false);
+  const [syncFields, setSyncFields] = useState({ soul: true, aieos: true, config: false });
+  const [syncing, setSyncing] = useState(false);
+  const [syncToast, setSyncToast] = useState<string | null>(null);
 
   const fetchAgents = () => {
     fetch(`/api/projects/${projectId}/agents`).then(r => r.json()).then(setAgents).catch(console.error).finally(() => setLoading(false));
@@ -377,6 +402,34 @@ export function AgentsTab({ projectId, liveStatuses }: { projectId: string; live
     setSaving(false);
     setEditMode(false);
     fetchAgents();
+  };
+
+  const syncFromTemplate = async () => {
+    if (!selected) return;
+    setSyncing(true);
+    try {
+      const res = await fetch(`/api/projects/${projectId}/agents/${selected._id}/sync`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ fields: syncFields }),
+      });
+      if (res.ok) {
+        setSyncToast("Agent synced from template successfully.");
+        setSyncOpen(false);
+        fetchAgents();
+        // Refresh the selected agent data
+        const updated = await fetch(`/api/projects/${projectId}/agents`).then(r => r.json()) as AgentInstance[];
+        const refreshed = updated.find(a => a._id === selected._id);
+        if (refreshed) setSelected(refreshed);
+      } else {
+        setSyncToast("Sync failed. Please try again.");
+      }
+    } catch {
+      setSyncToast("Sync failed. Please try again.");
+    } finally {
+      setSyncing(false);
+      setTimeout(() => setSyncToast(null), 4000);
+    }
   };
 
   const statusColor = (s: string) => ({ idle: "text-green-500", busy: "text-yellow-500", error: "text-red-500" }[s] ?? "text-gray-500");
@@ -472,7 +525,12 @@ export function AgentsTab({ projectId, liveStatuses }: { projectId: string; live
                   />
                   {aieosJsonError && <p className="text-xs text-red-500">{aieosJsonError}</p>}
                 </div>
-                <div className="flex gap-2 justify-end">
+                <div className="flex gap-2 justify-end flex-wrap">
+                  {selected.templateId && (
+                    <Button variant="outline" size="sm" onClick={() => setSyncOpen(true)}>
+                      <RefreshCw className="h-4 w-4 mr-2" />Sync from Template
+                    </Button>
+                  )}
                   <Button variant="outline" onClick={() => setEditMode(false)}>Cancel</Button>
                   <Button onClick={saveAgent} disabled={saving}>
                     {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <><Save className="h-4 w-4 mr-2" />Save</>}
@@ -482,6 +540,44 @@ export function AgentsTab({ projectId, liveStatuses }: { projectId: string; live
             )}
           </DialogContent>
         </Dialog>
+      )}
+
+      {/* Sync from Template dialog */}
+      {syncOpen && selected && (
+        <Dialog open onOpenChange={() => setSyncOpen(false)}>
+          <DialogContent className="max-w-sm">
+            <DialogHeader>
+              <DialogTitle>Sync from Template</DialogTitle>
+              <DialogDescription>
+                Choose which fields to pull from the source template. Instance-specific overrides (display name, tags) are never changed.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-3 py-2">
+              <label className="flex items-center gap-3 cursor-pointer">
+                <input type="checkbox" checked={syncFields.soul} onChange={e => setSyncFields(f => ({ ...f, soul: e.target.checked }))} className="h-4 w-4" />
+                <span className="text-sm">Sync Soul (personality prompt)</span>
+              </label>
+              <label className="flex items-center gap-3 cursor-pointer">
+                <input type="checkbox" checked={syncFields.aieos} onChange={e => setSyncFields(f => ({ ...f, aieos: e.target.checked }))} className="h-4 w-4" />
+                <span className="text-sm">Sync AIEOS Identity (personality JSON)</span>
+              </label>
+              <label className="flex items-center gap-3 cursor-pointer">
+                <input type="checkbox" checked={syncFields.config} onChange={e => setSyncFields(f => ({ ...f, config: e.target.checked }))} className="h-4 w-4" />
+                <span className="text-sm">Sync Config (model, provider, MCP servers)</span>
+              </label>
+            </div>
+            <div className="flex gap-2 justify-end pt-2">
+              <Button variant="outline" onClick={() => setSyncOpen(false)}>Cancel</Button>
+              <Button onClick={syncFromTemplate} disabled={syncing || (!syncFields.soul && !syncFields.aieos && !syncFields.config)}>
+                {syncing ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <RefreshCw className="h-4 w-4 mr-2" />}Sync
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
+
+      {syncToast && (
+        <div className="fixed bottom-4 right-4 z-50 rounded-lg bg-green-600 text-white px-4 py-2 shadow-lg text-sm">{syncToast}</div>
       )}
     </>
   );
