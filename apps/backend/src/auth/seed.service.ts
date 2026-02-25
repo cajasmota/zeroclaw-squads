@@ -33,12 +33,12 @@ export class SeedService implements OnApplicationBootstrap {
         slug: 'default',
         status: 'active',
       });
-      tenant = created.toObject();
+      tenant = created.toObject() as any;
       this.logger.log(`Created default tenant: ${appName}`);
     }
 
     const adminExists = await this.userModel
-      .findOne({ tenantId: tenant._id, role: 'admin' })
+      .findOne({ tenantId: tenant!._id, role: 'admin' })
       .lean()
       .exec();
 
@@ -58,7 +58,7 @@ export class SeedService implements OnApplicationBootstrap {
 
       const passwordHash = await bcrypt.hash(password, 12);
       await this.userModel.create({
-        tenantId: tenant._id,
+        tenantId: tenant!._id,
         email,
         passwordHash,
         name,

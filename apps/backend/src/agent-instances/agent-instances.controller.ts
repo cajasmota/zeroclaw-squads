@@ -8,7 +8,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { Types } from 'mongoose';
-import { RequestUser } from '@aes/types';
+import type { RequestUser } from '@aes/types';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { AgentInstancesService } from './agent-instances.service';

@@ -6,13 +6,13 @@ export type UserDocument = User & Document;
 @Schema({
   timestamps: true,
   toJSON: {
-    transform: (_doc, ret) => {
+    transform: (_doc, ret: Record<string, any>) => {
       delete ret.passwordHash;
       return ret;
     },
   },
   toObject: {
-    transform: (_doc, ret) => {
+    transform: (_doc, ret: Record<string, any>) => {
       delete ret.passwordHash;
       return ret;
     },

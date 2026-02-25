@@ -9,7 +9,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { Types } from 'mongoose';
-import { RequestUser } from '@aes/types';
+import type { RequestUser } from '@aes/types';
 import { AdminOnly } from '../common/decorators/admin-only.decorator';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { Public } from '../common/decorators/public.decorator';
