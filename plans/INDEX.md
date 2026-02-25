@@ -123,7 +123,7 @@
 | # | Story | Status | Agent |
 |---|-------|--------|-------|
 | [0000017](0000017%20-%20Workflow%20Engine%20-%20Templates%20and%20Runs.md) | Workflow Template Data Model, WorkflowRun Tracking, Approval Gates | `[x]` | Backend |
-| [0000018](0000018%20-%20Blueprint%20Workflow%20Designer%20UI.md) | Blueprint Workflow Designer UI (React Flow) | `[~]` | Frontend |
+| [0000018](0000018%20-%20Blueprint%20Workflow%20Designer%20UI.md) | Blueprint Workflow Designer UI (React Flow) | `[x]` | Frontend |
 | [0000028](0000028%20-%20Workflow%20to%20Story%20Status%20Sync.md) | Workflow Node → Story.workflowNodeStatus Dual-Status Sync | `[x]` | Backend |
 
 ---
@@ -173,11 +173,11 @@ Stories should be implemented in numbered order (0000001 → 0000026). Dependenc
 | EPIC-07: Backlog | 1 | 1 | 0 | 0 |
 | EPIC-08: Librarian | 1 | 1 | 0 | 0 |
 | EPIC-09: Dev Loop | 2 | 2 | 0 | 0 |
-| EPIC-10: UI Control | 3 | 1 | 2 | 0 |
-| EPIC-11: Workflows | 3 | 2 | 1 | 0 |
+| EPIC-10: UI Control | 3 | 3 | 0 | 0 |
+| EPIC-11: Workflows | 3 | 3 | 0 | 0 |
 | EPIC-12: Analytics | 1 | 1 | 0 | 0 |
 | EPIC-13: Deployment | 3 | 3 | 0 | 0 |
-| **TOTAL** | **28** | **25** | **3** | **0** |
+| **TOTAL** | **28** | **28** | **0** | **0** |
 
 ---
 
