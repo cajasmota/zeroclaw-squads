@@ -7,6 +7,18 @@ import { AuthModule } from './auth/auth.module';
 import { TemplatesModule } from './templates/templates.module';
 import { ProjectsModule } from './projects/projects.module';
 import { AgentInstancesModule } from './agent-instances/agent-instances.module';
+import { WebsocketModule } from './websocket/websocket.module';
+import { ProjectInitializerModule } from './project-initializer/project-initializer.module';
+import { ZeroClawModule } from './zeroclaw/zeroclaw.module';
+import { BacklogModule } from './backlog/backlog.module';
+import { GitHubModule } from './github/github.module';
+import { LibrarianModule } from './librarian/librarian.module';
+import { DevOrchestrationModule } from './dev-orchestration/dev-orchestration.module';
+import { WorkflowsModule } from './workflows/workflows.module';
+import { TicketDialogueModule } from './ticket-dialogue/ticket-dialogue.module';
+import { SettingsModule } from './settings/settings.module';
+import { AnalyticsModule } from './analytics/analytics.module';
+import { RequirementsModule } from './requirements/requirements.module';
 import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
 import { TenantMiddleware } from './common/middleware/tenant.middleware';
 
@@ -28,6 +40,18 @@ import { TenantMiddleware } from './common/middleware/tenant.middleware';
     TemplatesModule,
     ProjectsModule,
     AgentInstancesModule,
+    WebsocketModule,
+    ProjectInitializerModule,
+    ZeroClawModule,
+    BacklogModule,
+    GitHubModule,
+    LibrarianModule,
+    DevOrchestrationModule,
+    WorkflowsModule,
+    TicketDialogueModule,
+    SettingsModule,
+    AnalyticsModule,
+    RequirementsModule,
   ],
   providers: [
     {

@@ -1,6 +1,12 @@
 "use client";
 import { use, useEffect, useState, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
+import { useEditor, EditorContent } from "@tiptap/react";
+import StarterKit from "@tiptap/starter-kit";
+import TiptapImage from "@tiptap/extension-image";
+import { Table, TableRow, TableCell, TableHeader } from "@tiptap/extension-table";
+import CodeBlockLowlight from "@tiptap/extension-code-block-lowlight";
+import { createLowlight } from "lowlight";
 import { useProjectSocket } from "@/hooks/useProjectSocket";
 import {
   Loader2, RefreshCw, Plus, MessageSquare, CheckCircle, AlertCircle, Clock, Edit2, Save, X,
@@ -1098,35 +1104,68 @@ function BlueprintsTab({ projectId }: { projectId: string }) {
   );
 }
 
+// ─── Tiptap Lowlight instance ────────────────────────────────────────────────
+const lowlight = createLowlight();
+
 // ─── Requirements Tab ─────────────────────────────────────────────────────────
 
+interface ReqDoc {
+  _id: string;
+  title: string;
+  content: unknown;
+  parentId?: string | null;
+  order: number;
+}
+
+function ReqDocTree({
+  docs,
+  parentId,
+  depth,
+  selected,
+  onSelect,
+}: {
+  docs: ReqDoc[];
+  parentId: string | null;
+  depth: number;
+  selected: ReqDoc | null;
+  onSelect: (doc: ReqDoc) => void;
+}) {
+  const children = docs.filter(d => (d.parentId ?? null) === parentId);
+  if (children.length === 0) return null;
+  return (
+    <>
+      {children.map(d => (
+        <div key={d._id}>
+          <button
+            onClick={() => onSelect(d)}
+            style={{ paddingLeft: `${depth * 12 + 12}px` }}
+            className={`w-full text-left rounded-md py-2 pr-3 text-sm transition-colors ${selected?._id === d._id ? "bg-[#004176] text-white" : "hover:bg-accent"}`}
+          >
+            {d.title}
+          </button>
+          <ReqDocTree
+            docs={docs}
+            parentId={d._id}
+            depth={depth + 1}
+            selected={selected}
+            onSelect={onSelect}
+          />
+        </div>
+      ))}
+    </>
+  );
+}
+
 function RequirementsTab({ projectId }: { projectId: string }) {
-  const [docs, setDocs] = useState<Array<{ _id: string; title: string; content: string; updatedAt: string }>>([]);
-  const [selected, setSelected] = useState<{ _id: string; title: string; content: string } | null>(null);
+  const [docs, setDocs] = useState<ReqDoc[]>([]);
+  const [selected, setSelected] = useState<ReqDoc | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [content, setContent] = useState("");
   const saveTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const selectedRef = useRef<ReqDoc | null>(null);
+  selectedRef.current = selected;
 
-  useEffect(() => {
-    fetch(`/api/projects/${projectId}/requirements`).then(r => r.json()).then(d => {
-      setDocs(Array.isArray(d) ? d : []);
-    }).catch(console.error).finally(() => setLoading(false));
-  }, [projectId]);
-
-  const createDoc = async () => {
-    const res = await fetch(`/api/projects/${projectId}/requirements`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ title: "New Document", content: "" }),
-    });
-    const doc = await res.json();
-    setDocs(d => [...d, doc]);
-    setSelected(doc);
-    setContent("");
-  };
-
-  const saveDoc = async (docId: string, newContent: string) => {
+  const saveDoc = useCallback(async (docId: string, newContent: unknown) => {
     setSaving(true);
     await fetch(`/api/projects/${projectId}/requirements/${docId}`, {
       method: "PATCH",
@@ -1134,53 +1173,113 @@ function RequirementsTab({ projectId }: { projectId: string }) {
       body: JSON.stringify({ content: newContent }),
     });
     setSaving(false);
+  }, [projectId]);
+
+  const editor = useEditor({
+    extensions: [
+      StarterKit,
+      TiptapImage,
+      Table.configure({ resizable: true }),
+      TableRow,
+      TableCell,
+      TableHeader,
+      CodeBlockLowlight.configure({ lowlight }),
+    ],
+    content: "",
+    onUpdate: ({ editor }) => {
+      const doc = selectedRef.current;
+      if (!doc) return;
+      const json = editor.getJSON();
+      if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+      saveTimerRef.current = setTimeout(() => saveDoc(doc._id, json), 2000);
+    },
+  });
+
+  useEffect(() => {
+    fetch(`/api/projects/${projectId}/requirements`).then(r => r.json()).then(d => {
+      setDocs(Array.isArray(d) ? d : []);
+    }).catch(console.error).finally(() => setLoading(false));
+  }, [projectId]);
+
+  const selectDoc = (doc: ReqDoc) => {
+    setSelected(doc);
+    if (editor) {
+      try {
+        editor.commands.setContent(doc.content as any ?? "");
+      } catch {
+        editor.commands.setContent("");
+      }
+    }
   };
 
-  const handleContentChange = (val: string) => {
-    setContent(val);
-    if (!selected) return;
-    // Auto-save debounced 2s
+  const createDoc = async (parentId?: string) => {
+    const res = await fetch(`/api/projects/${projectId}/requirements`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ title: "New Document", content: "", parentId: parentId ?? null }),
+    });
+    const doc = await res.json();
+    setDocs(d => [...d, doc]);
+    selectDoc(doc);
+  };
+
+  const manualSave = () => {
+    if (!selected || !editor) return;
     if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
-    saveTimerRef.current = setTimeout(() => saveDoc(selected._id, val), 2000);
+    saveDoc(selected._id, editor.getJSON());
   };
 
   if (loading) return <div className="flex justify-center py-16"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>;
 
   return (
-    <div className="flex gap-4 h-full">
+    <div className="flex gap-4 h-full min-h-[600px]">
       {/* Document tree */}
-      <div className="w-56 shrink-0 space-y-2">
-        <Button size="sm" className="w-full" onClick={createDoc}><Plus className="h-4 w-4 mr-2" />New Doc</Button>
-        {docs.map(d => (
-          <button
-            key={d._id}
-            onClick={() => { setSelected(d); setContent(d.content); }}
-            className={`w-full text-left rounded-md px-3 py-2 text-sm transition-colors ${selected?._id === d._id ? "bg-[#004176] text-white" : "hover:bg-accent"}`}
-          >
-            {d.title}
-          </button>
-        ))}
+      <div className="w-56 shrink-0 space-y-1 border-r pr-2">
+        <Button size="sm" className="w-full mb-2" onClick={() => createDoc()}><Plus className="h-4 w-4 mr-2" />New Doc</Button>
+        <ReqDocTree docs={docs} parentId={null} depth={0} selected={selected} onSelect={selectDoc} />
       </div>
 
       {/* Editor */}
-      <div className="flex-1 flex flex-col gap-3">
+      <div className="flex-1 flex flex-col gap-3 min-w-0">
         {selected ? (
           <>
             <div className="flex items-center justify-between">
-              <p className="font-medium">{selected.title}</p>
-              <div className="flex items-center gap-2">
+              <p className="font-medium truncate">{selected.title}</p>
+              <div className="flex items-center gap-2 flex-shrink-0">
                 {saving && <span className="text-xs text-muted-foreground">Saving...</span>}
-                <Button size="sm" onClick={() => saveDoc(selected._id, content)} disabled={saving}>
+                <Button size="sm" onClick={manualSave} disabled={saving}>
                   <Save className="h-4 w-4 mr-2" />Save
                 </Button>
               </div>
             </div>
-            <textarea
-              className="flex-1 w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm font-mono resize-none focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring min-h-[400px]"
-              value={content}
-              onChange={e => handleContentChange(e.target.value)}
-              placeholder="Write your requirements here (Markdown supported)..."
-            />
+
+            {/* Tiptap toolbar */}
+            {editor && (
+              <div className="flex flex-wrap gap-1 border rounded-md p-1.5 bg-muted/30">
+                <button onClick={() => editor.chain().focus().toggleBold().run()} className={`px-2 py-1 text-xs rounded ${editor.isActive("bold") ? "bg-[#004176] text-white" : "hover:bg-accent"}`}><strong>B</strong></button>
+                <button onClick={() => editor.chain().focus().toggleItalic().run()} className={`px-2 py-1 text-xs rounded ${editor.isActive("italic") ? "bg-[#004176] text-white" : "hover:bg-accent"}`}><em>I</em></button>
+                <button onClick={() => editor.chain().focus().toggleCode().run()} className={`px-2 py-1 text-xs rounded font-mono ${editor.isActive("code") ? "bg-[#004176] text-white" : "hover:bg-accent"}`}>`_`</button>
+                <span className="w-px bg-border mx-1" />
+                {[1, 2, 3].map(level => (
+                  <button key={level} onClick={() => editor.chain().focus().toggleHeading({ level: level as 1|2|3 }).run()} className={`px-2 py-1 text-xs rounded ${editor.isActive("heading", { level }) ? "bg-[#004176] text-white" : "hover:bg-accent"}`}>H{level}</button>
+                ))}
+                <span className="w-px bg-border mx-1" />
+                <button onClick={() => editor.chain().focus().toggleBulletList().run()} className={`px-2 py-1 text-xs rounded ${editor.isActive("bulletList") ? "bg-[#004176] text-white" : "hover:bg-accent"}`}>• List</button>
+                <button onClick={() => editor.chain().focus().toggleOrderedList().run()} className={`px-2 py-1 text-xs rounded ${editor.isActive("orderedList") ? "bg-[#004176] text-white" : "hover:bg-accent"}`}>1. List</button>
+                <span className="w-px bg-border mx-1" />
+                <button onClick={() => editor.chain().focus().toggleCodeBlock().run()} className={`px-2 py-1 text-xs rounded font-mono ${editor.isActive("codeBlock") ? "bg-[#004176] text-white" : "hover:bg-accent"}`}>{"</>"}</button>
+                <button onClick={() => editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()} className="px-2 py-1 text-xs rounded hover:bg-accent">⊞ Table</button>
+                <button onClick={() => {
+                  const url = window.prompt("Image URL:");
+                  if (url) editor.chain().focus().setImage({ src: url }).run();
+                }} className="px-2 py-1 text-xs rounded hover:bg-accent">🖼 Image</button>
+              </div>
+            )}
+
+            {/* Editor content */}
+            <div className="flex-1 border rounded-md p-3 overflow-y-auto prose prose-sm dark:prose-invert max-w-none">
+              <EditorContent editor={editor} className="min-h-[300px] outline-none" />
+            </div>
           </>
         ) : (
           <div className="flex items-center justify-center flex-1 text-muted-foreground">
