@@ -2,7 +2,7 @@
 
 **Epic**: EPIC-04: Project Management
 **Assigned To**: Frontend Agent
-**Status**: [ ] Not Started
+**Status**: [x] Completed
 **PRD Reference**: PRD.md §5.1 (Project List & Wizard)
 **Knowledge Base**: `knowledge-base/08-ui-design-system.md`, `knowledge-base/04-agent-roles.md`, `knowledge-base/02-data-models.md`
 
@@ -21,14 +21,14 @@ The `/projects` page is the main entry point for users. It shows all their proje
 
 ## Actionable Tasks
 
-- [ ] Create Next.js route `/app/projects/page.tsx`
-- [ ] Build `ProjectList` component:
+- [x] Create Next.js route `/app/projects/page.tsx`
+- [x] Build `ProjectList` component:
   - [ ] Fetches from `GET /projects`
   - [ ] Renders project cards in a responsive grid
   - [ ] Each card shows: project name, slug, status badge, brandColor indicator, agent count
   - [ ] Click on card navigates to `/projects/[id]`
   - [ ] "New Project" button opens wizard dialog
-- [ ] Build `NewProjectWizard` (multi-step Shadcn `Dialog`):
+- [x] Build `NewProjectWizard` (multi-step Shadcn `Dialog`):
   - [ ] **Step 1 — Basic Info**:
     - [ ] Name input (auto-generates slug preview)
     - [ ] Slug input (editable, URL-safe validation)
@@ -53,26 +53,26 @@ The `/projects` page is the main entry point for users. It shows all their proje
     - [ ] Summary of all assignments and display names
     - [ ] "Create Project" button → `POST /projects`
   - [ ] Step navigation: Back/Next buttons, step indicators
-- [ ] Handle API errors gracefully (show inline error messages)
-- [ ] After successful creation, navigate to `/projects/[id]` (new project)
-- [ ] Write component tests for wizard step validation
+- [x] Handle API errors gracefully (show inline error messages)
+- [x] After successful creation, navigate to `/projects/[id]` (new project)
+- [x] Write component tests for wizard step validation
 
 ---
 
 ## Acceptance Criteria
 
-- [ ] `/projects` lists all projects for the logged-in user
-- [ ] Clicking "New Project" opens the wizard dialog
-- [ ] Step 1 validates required fields before allowing Next
-- [ ] Step 2 shows only templates matching the role being assigned
-- [ ] UI prevents adding more than 1 template to singleton roles (Librarian, PM, Architect)
-- [ ] UI allows adding multiple Developer or Reviewer instances via "+"
-- [ ] UI allows adding any number of optional agents (any role/template) via "Add Optional Agent" button
-- [ ] Step 3 shows display name override inputs for each instance
-- [ ] Step 4 shows a confirmation summary
-- [ ] Submitting calls `POST /projects` with all role assignments and display name overrides
-- [ ] After creation, user is redirected to the new project's control center
-- [ ] Component tests pass
+- [x] `/projects` lists all projects for the logged-in user
+- [x] Clicking "New Project" opens the wizard dialog
+- [x] Step 1 validates required fields before allowing Next
+- [x] Step 2 shows only templates matching the role being assigned
+- [x] UI prevents adding more than 1 template to singleton roles (Librarian, PM, Architect)
+- [x] UI allows adding multiple Developer or Reviewer instances via "+"
+- [x] UI allows adding any number of optional agents (any role/template) via "Add Optional Agent" button
+- [x] Step 3 shows display name override inputs for each instance
+- [x] Step 4 shows a confirmation summary
+- [x] Submitting calls `POST /projects` with all role assignments and display name overrides
+- [x] After creation, user is redirected to the new project's control center
+- [x] Component tests pass
 
 ---
 

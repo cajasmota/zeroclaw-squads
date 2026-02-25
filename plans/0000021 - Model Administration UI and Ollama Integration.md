@@ -2,7 +2,7 @@
 
 **Epic**: EPIC-13: Deployment & Operations
 **Assigned To**: Backend Agent, Frontend Agent
-**Status**: [ ] Not Started
+**Status**: [x] Completed
 **PRD Reference**: PRD.md §5.4 (Model & Ollama Administration)
 **Knowledge Base**: `knowledge-base/03-technology-stack.md`, `knowledge-base/08-ui-design-system.md`
 
@@ -26,31 +26,31 @@ AES is designed to work on a VPS with limited RAM (8GB target). Controlling whic
 
 ### Backend
 
-- [ ] Create `ModelsModule` in NestJS
-- [ ] Create `OllamaService`:
+- [x] Create `ModelsModule` in NestJS
+- [x] Create `OllamaService`:
   - [ ] Install: `axios` or `node-fetch` for HTTP calls to Ollama API
   - [ ] `getStatus()` — `GET http://localhost:11434/api/tags` — lists loaded models
   - [ ] `pullModel(modelName)` — `POST http://localhost:11434/api/pull` — streams progress
   - [ ] `deleteModel(modelName)` — `DELETE http://localhost:11434/api/delete`
   - [ ] `isHealthy()` — check if Ollama process is running
-- [ ] Create REST endpoints:
+- [x] Create REST endpoints:
   - [ ] `GET /settings/models/ollama/status` — Ollama health + active models list
   - [ ] `POST /settings/models/ollama/pull` — pull model (body: `{ model: "qwen2.5-coder:1.5b" }`)
   - [ ] `DELETE /settings/models/ollama/:modelName` — delete model
   - [ ] `GET /settings/models/providers` — list provider enable/disable states (from global settings)
   - [ ] `PATCH /settings/models/providers/:provider` — toggle provider on/off
-- [ ] Create `GlobalSettingsModule`:
+- [x] Create `GlobalSettingsModule`:
   - [ ] MongoDB `global_settings` document per tenant
   - [ ] Provider enable states: `{ openai: true, anthropic: false, google: false, ollama: true }`
   - [ ] Global LLM API keys (used if project doesn't override)
   - [ ] Global `inviteUsers` list for Slack
-- [ ] SSE (Server-Sent Events) endpoint for streaming Ollama pull progress:
+- [x] SSE (Server-Sent Events) endpoint for streaming Ollama pull progress:
   - [ ] `GET /settings/models/ollama/pull-progress` — streams JSON progress events
 
 ### Frontend
 
-- [ ] Create Next.js route `/app/settings/models/page.tsx`
-- [ ] Build `ModelAdminPage` component:
+- [x] Create Next.js route `/app/settings/models/page.tsx`
+- [x] Build `ModelAdminPage` component:
   - [ ] **Provider Control** section:
     - [ ] Toggles (Shadcn `Switch`) for: OpenAI, Anthropic, Google, Ollama
     - [ ] Each toggle shows provider name, logo/icon, and enabled state
@@ -75,13 +75,13 @@ AES is designed to work on a VPS with limited RAM (8GB target). Controlling whic
 
 ## Acceptance Criteria
 
-- [ ] `/settings/models` renders with provider toggles and Ollama section
-- [ ] Toggling a provider calls the PATCH API and updates immediately
-- [ ] Ollama status shows "Running" when Ollama is accessible, "Stopped" otherwise
-- [ ] Active models list shows all currently loaded Ollama models
-- [ ] "Pull New Model" form initiates a pull and shows real-time progress via SSE
-- [ ] Delete model button removes the model from Ollama
-- [ ] Global provider settings persist across page refresh
+- [x] `/settings/models` renders with provider toggles and Ollama section
+- [x] Toggling a provider calls the PATCH API and updates immediately
+- [x] Ollama status shows "Running" when Ollama is accessible, "Stopped" otherwise
+- [x] Active models list shows all currently loaded Ollama models
+- [x] "Pull New Model" form initiates a pull and shows real-time progress via SSE
+- [x] Delete model button removes the model from Ollama
+- [x] Global provider settings persist across page refresh
 
 ---
 

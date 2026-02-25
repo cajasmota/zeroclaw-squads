@@ -2,7 +2,7 @@
 
 **Epic**: EPIC-11: Workflow Engine
 **Assigned To**: Backend Agent
-**Status**: [ ] Not Started
+**Status**: [x] Completed
 **PRD Reference**: PRD.md §16.3 (Node Configuration & Task Tracking), §17.1 (Dual-Status Tracking)
 **Knowledge Base**: `knowledge-base/02-data-models.md`, `knowledge-base/05-communication-protocols.md`
 
@@ -25,12 +25,12 @@ A story can be "In Progress" on the Kanban (global status) while the workflow no
 
 ## Actionable Tasks
 
-- [ ] Update `WorkflowNodeExecutorService` (story 0000017) to emit story status events:
+- [x] Update `WorkflowNodeExecutorService` (story 0000017) to emit story status events:
   - [ ] When a node starts: emit `workflow.node.started` with `{ storyId, nodeId, nodeDescription }`
   - [ ] When a node completes: emit `workflow.node.completed` with `{ storyId, nodeId }`
   - [ ] When a node fails: emit `workflow.node.failed` with `{ storyId, nodeId, error }`
   - [ ] When a node requires approval: emit `workflow.node.approval_needed` with `{ storyId, nodeId }`
-- [ ] Create `WorkflowStoryBridgeService`:
+- [x] Create `WorkflowStoryBridgeService`:
   - [ ] Listens to `workflow.node.started` (payload: `{ storyId, projectId, tenantId, nodeId, nodeDescription, node }`):
     - [ ] Updates `Story.workflowNodeStatus = nodeDescription` (e.g., "Developer: Implementing feature")
     - [ ] **Kanban auto-move**: if `node.kanbanStatus` is set AND `node.kanbanStatusTrigger === 'on_start'`, call `StoriesService.updateStatus(storyId, projectId, tenantId, node.kanbanStatus)` → emits `story:status` WebSocket event → Kanban card moves to target column
@@ -44,24 +44,24 @@ A story can be "In Progress" on the Kanban (global status) while the workflow no
   - [ ] Listens to `workflow.node.approval_needed`:
     - [ ] Updates `Story.workflowNodeStatus = "Waiting for Approval"`
     - [ ] Sets `Story.waitingForApproval = true`
-- [ ] Add `GET /projects/:id/stories/:storyId/workflow-status` endpoint:
+- [x] Add `GET /projects/:id/stories/:storyId/workflow-status` endpoint:
   - [ ] Returns `{ workflowNodeStatus, waitingForApproval, waitingForAnswer, currentNodeId, runId }`
   - [ ] Used by frontend Ticket Modal to show current workflow position
-- [ ] Write unit tests for `WorkflowStoryBridgeService` event handlers
+- [x] Write unit tests for `WorkflowStoryBridgeService` event handlers
 
 ---
 
 ## Acceptance Criteria
 
-- [ ] When a workflow node starts, `Story.workflowNodeStatus` is updated within 1 second
-- [ ] When a node requires approval, `Story.waitingForApproval` is set to `true` and visible in Kanban
-- [ ] When a node fails, the story returns to backlog with `workflowNodeStatus` showing the error
-- [ ] WebSocket broadcasts `story:workflow_status` events to connected frontend clients
-- [ ] `GET .../workflow-status` returns current dual-status data
-- [ ] Kanban card indicators reflect `waitingForApproval` and `waitingForAnswer` flags correctly
-- [ ] **Kanban auto-move via `kanbanStatus` node config**: when a node with `kanbanStatus = "review"` and `kanbanStatusTrigger = "on_start"` fires, the standard Kanban card moves to the Review column automatically
-- [ ] Nodes without `kanbanStatus` set do NOT affect the standard Kanban column (only `workflowNodeStatus` is updated)
-- [ ] Unit tests pass
+- [x] When a workflow node starts, `Story.workflowNodeStatus` is updated within 1 second
+- [x] When a node requires approval, `Story.waitingForApproval` is set to `true` and visible in Kanban
+- [x] When a node fails, the story returns to backlog with `workflowNodeStatus` showing the error
+- [x] WebSocket broadcasts `story:workflow_status` events to connected frontend clients
+- [x] `GET .../workflow-status` returns current dual-status data
+- [x] Kanban card indicators reflect `waitingForApproval` and `waitingForAnswer` flags correctly
+- [x] **Kanban auto-move via `kanbanStatus` node config**: when a node with `kanbanStatus = "review"` and `kanbanStatusTrigger = "on_start"` fires, the standard Kanban card moves to the Review column automatically
+- [x] Nodes without `kanbanStatus` set do NOT affect the standard Kanban column (only `workflowNodeStatus` is updated)
+- [x] Unit tests pass
 
 ---
 

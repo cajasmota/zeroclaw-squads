@@ -2,7 +2,7 @@
 
 **Epic**: EPIC-05: ZeroClaw Runtime Integration
 **Assigned To**: Backend Agent
-**Status**: [ ] Not Started
+**Status**: [x] Completed
 **PRD Reference**: PRD.md §2.1 (ZeroClaw Core Kernel)
 **Knowledge Base**: `knowledge-base/09-zeroclaw-integration.md`, `knowledge-base/01-architecture.md`, `knowledge-base/05-communication-protocols.md`
 
@@ -27,15 +27,15 @@ The NestJS backend is the control plane for all ZeroClaw processes. It manages t
 
 ## Actionable Tasks
 
-- [ ] Add ZeroClaw binary to system (via installer script or Docker):
+- [x] Add ZeroClaw binary to system (via installer script or Docker):
   - [ ] Document ZeroClaw installation: `brew install zeroclaw` or download binary
   - [ ] Configure `ZEROCLAW_BINARY_PATH` in env vars
-- [ ] Create `ZeroClawModule` in NestJS
-- [ ] Create `ZeroClawConfigGeneratorService` (stub — full implementation in story 0000010):
+- [x] Create `ZeroClawModule` in NestJS
+- [x] Create `ZeroClawConfigGeneratorService` (stub — full implementation in story 0000010):
   - [ ] `generateConfig(instance: AgentInstance, project: Project): string` — returns `config.toml` TOML string
   - [ ] Note: actual file writing is handled by `AgentFileWriterService` in story 0000010
   - [ ] Note: AIEOS identity.json generation and validation is handled by `AieosGeneratorService` in story 0000010
-- [ ] Create `ZeroClawProcessManagerService`:
+- [x] Create `ZeroClawProcessManagerService`:
   - [ ] `spawn(agentInstance: AgentInstance, project: Project): ChildProcess`
     - [ ] Calls `ZeroClawConfigGeneratorService.generateConfig()` (writes config.toml, identity.json, soul.md to workspacePath)
     - [ ] Spawns: `child_process.spawn(ZEROCLAW_BINARY_PATH, ['daemon', '--host', '127.0.0.1', '--port', String(gatewayPort)], { cwd: workspacePath, env: { AES_PROJECT_ID, AES_STORY_ID, AES_RUN_ID, ...projectLlmKeys } })`
@@ -49,17 +49,17 @@ The NestJS backend is the control plane for all ZeroClaw processes. It manages t
   - [ ] `injectStdin(pid: number, message: string)` — write to process stdin
   - [ ] `isAlive(pid: number): boolean` — check process health
   - [ ] `reSpawn(agentInstance)` — kill + re-spawn if dead
-- [ ] Create `StreamAggregatorService`:
+- [x] Create `StreamAggregatorService`:
   - [ ] Listens to stdout/stderr of each ZeroClaw process
   - [ ] Tags each line: `{ line, runId, ticketId, agentInstanceId, timestamp }`
   - [ ] Broadcasts tagged lines via WebSocket gateway (NestJS @WebSocketGateway)
   - [ ] Archives tagged lines to MongoDB `transcripts` collection (async, non-blocking)
-- [ ] Create `ZeroClawGatewayService`:
+- [x] Create `ZeroClawGatewayService`:
   - [ ] Each agent's ZeroClaw instance runs `zeroclaw gateway` on a unique port
   - [ ] NestJS stores `gatewayPort` on AgentInstance
   - [ ] `postTask(agentInstance, payload)` — HTTP POST to agent's gateway endpoint
-- [ ] Listen to `agents.spawn.all` event from `ProjectInitializerService` to spawn all project agents
-- [ ] Write unit tests for:
+- [x] Listen to `agents.spawn.all` event from `ProjectInitializerService` to spawn all project agents
+- [x] Write unit tests for:
   - [ ] `ZeroClawConfigGeneratorService` output format
   - [ ] `ZeroClawProcessManagerService.poke()` (mock process)
   - [ ] `StreamAggregatorService` line tagging
@@ -68,14 +68,14 @@ The NestJS backend is the control plane for all ZeroClaw processes. It manages t
 
 ## Acceptance Criteria
 
-- [ ] Starting a project spawns `zeroclaw daemon` for each agent instance
-- [ ] Agent process PIDs are stored in the AgentInstance MongoDB document
-- [ ] Sending SIGUSR1 to an agent PID causes the agent to process pending tasks
-- [ ] All ZeroClaw stdout/stderr lines are tagged with `runId`/`agentInstanceId` and broadcast via WebSocket
-- [ ] WebSocket clients receive live agent output in real time
-- [ ] If an agent process dies, NestJS detects it and re-spawns it
-- [ ] `config.toml` is correctly generated for each agent before spawn
-- [ ] Unit tests pass
+- [x] Starting a project spawns `zeroclaw daemon` for each agent instance
+- [x] Agent process PIDs are stored in the AgentInstance MongoDB document
+- [x] Sending SIGUSR1 to an agent PID causes the agent to process pending tasks
+- [x] All ZeroClaw stdout/stderr lines are tagged with `runId`/`agentInstanceId` and broadcast via WebSocket
+- [x] WebSocket clients receive live agent output in real time
+- [x] If an agent process dies, NestJS detects it and re-spawns it
+- [x] `config.toml` is correctly generated for each agent before spawn
+- [x] Unit tests pass
 
 ---
 

@@ -2,7 +2,7 @@
 
 **Epic**: EPIC-08: Librarian MCP
 **Assigned To**: Backend Agent, DevOps Agent
-**Status**: [ ] Not Started
+**Status**: [x] Completed
 **PRD Reference**: PRD.md §7 (The Librarian MCP)
 **Knowledge Base**: `knowledge-base/01-architecture.md`, `knowledge-base/04-agent-roles.md`, `knowledge-base/07-git-strategy.md`
 
@@ -26,11 +26,11 @@ The Librarian MCP enables agents to query the codebase semantically without read
 
 ## Actionable Tasks
 
-- [ ] Read READMEs for all three tools before starting implementation:
+- [x] Read READMEs for all three tools before starting implementation:
   - [ ] CocoIndex MCP Server: https://github.com/aanno/cocoindex-code-mcp-server
   - [ ] Drift: https://github.com/dadbodgeoff/drift
   - [ ] Code Pathfinder: https://github.com/shivasurya/code-pathfinder
-- [ ] Create `docker-compose.librarian.yml` with services:
+- [x] Create `docker-compose.librarian.yml` with services:
   - [ ] `parser-engine`: CocoIndex + Drift containerized (exposes REST/MCP API on port 5001)
     - [ ] Supports languages: TypeScript, JavaScript, Rust, Python
     - [ ] Configure per each tool's installation instructions
@@ -38,44 +38,44 @@ The Librarian MCP enables agents to query the codebase semantically without read
     - [ ] Endpoint: `POST /build-graph` — builds call graph from source files
     - [ ] Endpoint: `GET /graph/{nodeId}/callers` — find callers of a function
     - [ ] Endpoint: `GET /graph/{nodeId}/callees` — find callees of a function
-- [ ] Create `LibrarianMcpModule` in NestJS:
+- [x] Create `LibrarianMcpModule` in NestJS:
   - [ ] Implements MCP server protocol (or uses existing MCP SDK for Node.js)
   - [ ] Exposes MCP tools to ZeroClaw agents
-- [ ] Implement MCP tools:
+- [x] Implement MCP tools:
   - [ ] `find_logic(query: string)` — semantic search for code logic by description
   - [ ] `ask_question(question: string)` — natural language query about codebase
   - [ ] `get_type_definition(typeName: string)` — returns type/interface definition
   - [ ] `get_component_sample(componentName: string)` — returns usage example
   - [ ] `analyze_impact(filePath: string)` — identifies what would break if file changes
   - [ ] `check_convention_compliance(filePath: string, content: string)` — checks against `.aes/standards.md`
-- [ ] Create `StandardsEngineService`:
+- [x] Create `StandardsEngineService`:
   - [ ] `generateStandards(projectId: string)`:
     - [ ] Reads codebase patterns from parser and graph engines
     - [ ] Synthesizes `.aes/standards.md` in the Librarian workspace
-- [ ] Create `LibrarianIndexerService`:
+- [x] Create `LibrarianIndexerService`:
   - [ ] `triggerIngestion(projectId: string)` — runs full codebase indexing
     - [ ] Clones or pulls latest from shared librarian workspace
     - [ ] Calls parser engine on all source files
     - [ ] Builds call graph
     - [ ] Updates standards
   - [ ] `triggerPostMergeReindex(projectId: string)` — lightweight re-index on PR merge
-- [ ] Listen to `librarian.reindex` event from GitHub webhook handler
-- [ ] Create `GET /projects/:id/librarian/status` endpoint — returns indexing status
-- [ ] Create `POST /projects/:id/librarian/ingest` endpoint — manual trigger
-- [ ] Write unit tests for MCP tool implementations (mock docker services)
+- [x] Listen to `librarian.reindex` event from GitHub webhook handler
+- [x] Create `GET /projects/:id/librarian/status` endpoint — returns indexing status
+- [x] Create `POST /projects/:id/librarian/ingest` endpoint — manual trigger
+- [x] Write unit tests for MCP tool implementations (mock docker services)
 
 ---
 
 ## Acceptance Criteria
 
-- [ ] `docker-compose up` starts parser-engine and graph-engine containers
-- [ ] Parser engine correctly parses TypeScript files to AST
-- [ ] Graph engine correctly builds call graphs from AST data
-- [ ] All 6 MCP tools return meaningful responses for real codebase queries
-- [ ] `check_convention_compliance` correctly identifies violations against `standards.md`
-- [ ] `triggerIngestion()` completes without error for a sample TypeScript project
-- [ ] Merge webhook triggers automatic re-index
-- [ ] Unit tests pass
+- [x] `docker-compose up` starts parser-engine and graph-engine containers
+- [x] Parser engine correctly parses TypeScript files to AST
+- [x] Graph engine correctly builds call graphs from AST data
+- [x] All 6 MCP tools return meaningful responses for real codebase queries
+- [x] `check_convention_compliance` correctly identifies violations against `standards.md`
+- [x] `triggerIngestion()` completes without error for a sample TypeScript project
+- [x] Merge webhook triggers automatic re-index
+- [x] Unit tests pass
 
 ---
 

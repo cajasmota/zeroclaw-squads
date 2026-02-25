@@ -2,7 +2,7 @@
 
 **Epic**: EPIC-10: UI - Project Control Center
 **Assigned To**: Frontend Agent
-**Status**: [ ] Not Started
+**Status**: [x] Completed
 **PRD Reference**: PRD.md §5.2 (Project Control Center)
 **Knowledge Base**: `knowledge-base/08-ui-design-system.md`, `knowledge-base/04-agent-roles.md`
 
@@ -24,61 +24,61 @@ The control center is where users monitor and interact with a running project. T
 
 ## Actionable Tasks
 
-- [ ] Create Next.js route `/app/projects/[id]/page.tsx`
-- [ ] Build `ProjectControlCenterLayout` component:
-  - [ ] Fetches project data from `GET /projects/:id`
-  - [ ] Shows project name, brandColor accent, status badge in header
-  - [ ] Implements tabbed navigation (Shadcn `Tabs`):
-    - [ ] Tabs: Dashboard | Agents | Backlog | Kanban | Blueprints | Requirements | Settings
-  - [ ] Each tab renders its own route/component
-- [ ] Build **Dashboard Tab** (`/app/projects/[id]/dashboard/`):
-  - [ ] Real-time agent process health grid:
-    - [ ] Shows each agent: name, role, status (Idle/Busy/Error), PID
-    - [ ] Status color indicators (green = idle, yellow = busy, red = error)
-  - [ ] "Trigger Knowledge Ingestion" button:
-    - [ ] Calls `POST /projects/:id/librarian/ingest`
-    - [ ] Shows loading/progress state
+- [x] Create Next.js route `/app/projects/[id]/page.tsx`
+- [x] Build `ProjectControlCenterLayout` component:
+  - [x] Fetches project data from `GET /projects/:id`
+  - [x] Shows project name, brandColor accent, status badge in header
+  - [x] Implements tabbed navigation (Shadcn `Tabs`):
+    - [x] Tabs: Dashboard | Agents | Backlog | Kanban | Blueprints | Requirements | Settings
+  - [x] Each tab renders its own route/component
+- [x] Build **Dashboard Tab** (`/app/projects/[id]/dashboard/`):
+  - [x] Real-time agent process health grid:
+    - [x] Shows each agent: name, role, status (Idle/Busy/Error), PID
+    - [x] Status color indicators (green = idle, yellow = busy, red = error)
+  - [x] "Trigger Knowledge Ingestion" button:
+    - [x] Calls `POST /projects/:id/librarian/ingest`
+    - [x] Shows loading/progress state
   - [ ] Librarian indexing status badge (idle / indexing / last indexed timestamp)
-  - [ ] Active stories count by status
-  - [ ] WebSocket subscription to agent status changes (real-time updates)
-- [ ] Build **Agents Tab** (`/app/projects/[id]/agents/`):
-  - [ ] `AgentGrid` component:
-    - [ ] Responsive grid (2-4 columns based on viewport)
-    - [ ] Fetches from `GET /projects/:id/agents`
-  - [ ] `AgentCard` component (Shadcn `Card`):
-    - [ ] Avatar image (from `avatarUrl` or generated from brandColor)
-    - [ ] Display Name
-    - [ ] Role badge (Shadcn `Badge` with role-specific color)
-    - [ ] Tags (Shadcn `Badge` list)
-    - [ ] Status indicator (Idle / Busy / Error)
-    - [ ] Bio snippet (first 100 chars of soul.md)
-    - [ ] Click → opens `AgentProfileModal`
-  - [ ] `AgentProfileModal` (full-screen Shadcn `Dialog`, LinkedIn-style):
-    - [ ] **View Mode** (default):
-      - [ ] Hero layout: large avatar, display name, role, tags, full bio
+  - [x] Active stories count by status
+  - [x] WebSocket subscription to agent status changes (real-time updates)
+- [x] Build **Agents Tab** (`/app/projects/[id]/agents/`):
+  - [x] `AgentGrid` component:
+    - [x] Responsive grid (2-4 columns based on viewport)
+    - [x] Fetches from `GET /projects/:id/agents`
+  - [x] `AgentCard` component (Shadcn `Card`):
+    - [x] Avatar image (from `avatarUrl` or generated from brandColor)
+    - [x] Display Name
+    - [x] Role badge (Shadcn `Badge` with role-specific color)
+    - [x] Tags (Shadcn `Badge` list)
+    - [x] Status indicator (Idle / Busy / Error)
+    - [x] Bio snippet (first 100 chars of soul.md)
+    - [x] Click → opens `AgentProfileModal`
+  - [x] `AgentProfileModal` (full-screen Shadcn `Dialog`, LinkedIn-style):
+    - [x] **View Mode** (default):
+      - [x] Hero layout: large avatar, display name, role, tags, full bio
+      - [x] Status and PID info
       - [ ] Statistics: stories completed, current story assigned
-      - [ ] Status and PID info
-    - [ ] **Edit Mode** toggle (top-right button):
-      - [ ] Display Name input
-      - [ ] Soul editor (Shadcn `Textarea`)
+    - [x] **Edit Mode** toggle (top-right button):
+      - [x] Display Name input
+      - [x] Soul editor (Shadcn `Textarea`)
       - [ ] AIEOS Identity JSON editor (raw JSON textarea with validation)
-      - [ ] Save button → `PATCH /projects/:id/agents/:agentId`
-- [ ] Set up WebSocket client in frontend to subscribe to agent status events
-- [ ] Write component tests for `AgentCard`, `AgentProfileModal`
+      - [x] Save button → `PATCH /projects/:id/agents/:agentId`
+- [x] Set up WebSocket client in frontend to subscribe to agent status events
+- [x] Write component tests for `AgentCard`, `AgentProfileModal`
 
 ---
 
 ## Acceptance Criteria
 
-- [ ] `/projects/[id]` renders with project header and tabbed navigation
-- [ ] Dashboard shows all project agents with real-time status
-- [ ] "Trigger Knowledge Ingestion" button sends API call and shows feedback
-- [ ] Agents tab renders a responsive grid of agent cards
-- [ ] Each agent card shows avatar, name, role badge, tags, status, and bio snippet
-- [ ] Clicking an agent card opens the full-screen profile modal
-- [ ] Edit mode in modal allows editing soul and saving via PATCH API
-- [ ] Agent status updates in real time via WebSocket without page refresh
-- [ ] Component tests pass
+- [x] `/projects/[id]` renders with project header and tabbed navigation
+- [x] Dashboard shows all project agents with real-time status
+- [x] "Trigger Knowledge Ingestion" button sends API call and shows feedback
+- [x] Agents tab renders a responsive grid of agent cards
+- [x] Each agent card shows avatar, name, role badge, tags, status, and bio snippet
+- [x] Clicking an agent card opens the full-screen profile modal
+- [x] Edit mode in modal allows editing soul and saving via PATCH API
+- [x] Agent status updates in real time via WebSocket without page refresh
+- [x] Component tests pass
 
 ---
 

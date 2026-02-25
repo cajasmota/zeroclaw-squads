@@ -2,7 +2,7 @@
 
 **Epic**: EPIC-11: Workflow Engine
 **Assigned To**: Backend Agent
-**Status**: [ ] Not Started
+**Status**: [x] Completed
 **PRD Reference**: PRD.md §16 (Workflow Templates & Management)
 **Knowledge Base**: `knowledge-base/02-data-models.md`, `knowledge-base/04-agent-roles.md`
 
@@ -27,8 +27,8 @@ Workflows are the structured automation layer above individual agent tasks. Each
 
 ## Actionable Tasks
 
-- [ ] Create `WorkflowsModule` in NestJS
-- [ ] Define `WorkflowTemplate` Mongoose schema:
+- [x] Create `WorkflowsModule` in NestJS
+- [x] Define `WorkflowTemplate` Mongoose schema:
   - [ ] `tenantId`, `name`, `description`, `isGlobal` (boolean)
   - [ ] `nodes[]`: `{ id, type, agentRole, requiresHumanApproval, description, nextNodeId, onSuccessNodeId, onFailNodeId, kanbanStatus?, kanbanStatusTrigger? }`
     - [ ] `kanbanStatus` (optional enum): `backlog | selected | in_progress | review | done` — when set, moving through this node moves the standard Kanban card to this column
@@ -39,46 +39,46 @@ Workflows are the structured automation layer above individual agent tasks. Each
       - `Developer (Implement)` node: `kanbanStatus = in_progress`, `kanbanStatusTrigger = on_start`
       - `Reviewer (Code Review)` node: `kanbanStatus = review`, `kanbanStatusTrigger = on_start`
       - `EndNode` (or final merge step): `kanbanStatus = done`, `kanbanStatusTrigger = on_complete`
-- [ ] Define `WorkflowRun` Mongoose schema:
+- [x] Define `WorkflowRun` Mongoose schema:
   - [ ] `workflowTemplateId`, `projectId`, `storyId` (nullable), `tenantId`
   - [ ] `status` (enum: `running | paused | completed | failed`)
   - [ ] `currentNodeId`
   - [ ] `startedAt`, `completedAt`
   - [ ] `nodeExecutions[]`: `{ nodeId, status, startedAt, completedAt, runId, agentInstanceId }`
-- [ ] Create `WorkflowsService`:
+- [x] Create `WorkflowsService`:
   - [ ] `findAllTemplates(tenantId)` — global + tenant templates
   - [ ] `createTemplate(tenantId, dto)` — custom workflow
   - [ ] `triggerWorkflow(projectId, templateId, storyId?)` — creates WorkflowRun, starts first node
   - [ ] `advanceWorkflow(runId)` — moves to next node after current completes
   - [ ] `approveNode(runId, nodeId)` — human approves paused node, resumes workflow
   - [ ] `getRunHistory(projectId)` — list historical runs
-- [ ] Create `WorkflowNodeExecutorService`:
+- [x] Create `WorkflowNodeExecutorService`:
   - [ ] `executeNode(run, node)`:
     - [ ] Find available agent with matching `agentRole`
     - [ ] Create Kanban ticket for this node execution
     - [ ] Signal agent via SIGUSR1 + stdin inject with node context
     - [ ] If `requiresHumanApproval`: set run status to `paused`, emit `workflow.approval_needed`
     - [ ] Update `nodeExecution.status` in WorkflowRun
-- [ ] Create REST endpoints:
+- [x] Create REST endpoints:
   - [ ] `GET /workflows/templates` — list global + tenant templates
   - [ ] `POST /workflows/templates` — create custom template
   - [ ] `POST /projects/:id/workflows/trigger` — trigger workflow run
   - [ ] `GET /projects/:id/workflows/runs` — list runs
   - [ ] `GET /projects/:id/workflows/runs/:runId` — run detail
   - [ ] `POST /projects/:id/workflows/runs/:runId/approve` — human approval
-- [ ] Write unit tests for `WorkflowsService` and `WorkflowNodeExecutorService`
+- [x] Write unit tests for `WorkflowsService` and `WorkflowNodeExecutorService`
 
 ---
 
 ## Acceptance Criteria
 
-- [ ] 4 pre-seeded global workflow templates exist (Librarian Ingestion, Product Strategy, Feature Development, Hotfix)
-- [ ] `triggerWorkflow()` creates a WorkflowRun and executes the first node
-- [ ] Nodes with `requiresHumanApproval = true` pause the workflow and emit approval event
-- [ ] `approveNode()` resumes the workflow from the paused node
-- [ ] Each node execution creates a Kanban ticket for tracking
-- [ ] Historical runs are stored and retrievable
-- [ ] Unit tests pass
+- [x] 4 pre-seeded global workflow templates exist (Librarian Ingestion, Product Strategy, Feature Development, Hotfix)
+- [x] `triggerWorkflow()` creates a WorkflowRun and executes the first node
+- [x] Nodes with `requiresHumanApproval = true` pause the workflow and emit approval event
+- [x] `approveNode()` resumes the workflow from the paused node
+- [x] Each node execution creates a Kanban ticket for tracking
+- [x] Historical runs are stored and retrievable
+- [x] Unit tests pass
 
 ---
 

@@ -2,7 +2,7 @@
 
 **Epic**: EPIC-02: Authentication & Multi-Tenancy
 **Assigned To**: Frontend Agent
-**Status**: [ ] Not Started
+**Status**: [x] Completed
 **PRD Reference**: PRD.md §10.2 (Auth: JWT-based session management), §19.1 (Design System & Branding)
 **Knowledge Base**: `knowledge-base/08-ui-design-system.md`, `knowledge-base/10-code-patterns.md`
 
@@ -30,11 +30,11 @@ The JWT is stored as an **httpOnly cookie** (set by a Next.js API route proxy) s
 
 ### Auth API Proxy (Next.js API Routes)
 
-- [ ] Create `apps/frontend/lib/api/client.ts`:
+- [x] Create `apps/frontend/lib/api/client.ts`:
   - [ ] Base fetch wrapper that automatically reads JWT from cookie header (for server components/API routes) or includes credentials for client fetch
   - [ ] `apiGet(path)`, `apiPost(path, body)`, `apiPatch(path, body)`, `apiDelete(path)`
 
-- [ ] Create Next.js API route proxies (keeps JWT server-side):
+- [x] Create Next.js API route proxies (keeps JWT server-side):
   - [ ] `app/api/auth/login/route.ts`:
     - [ ] `POST` — forwards to `{BACKEND_URL}/auth/login`
     - [ ] On success: sets httpOnly `accessToken` cookie (Secure, SameSite=Strict, path=/)
@@ -47,7 +47,7 @@ The JWT is stored as an **httpOnly cookie** (set by a Next.js API route proxy) s
 
 ### Route Protection Middleware
 
-- [ ] Create `apps/frontend/middleware.ts`:
+- [x] Create `apps/frontend/middleware.ts`:
   - [ ] Install `jose` for Edge-compatible JWT verification: `pnpm add jose`
   - [ ] Matcher: all paths EXCEPT `/login`, `/api/auth/*`, `/_next/*`, `/favicon.ico`, `/avatars/*`
   - [ ] Read `accessToken` cookie from request
@@ -59,7 +59,7 @@ The JWT is stored as an **httpOnly cookie** (set by a Next.js API route proxy) s
 
 ### Auth State (Client)
 
-- [ ] Create `apps/frontend/context/AuthContext.tsx`:
+- [x] Create `apps/frontend/context/AuthContext.tsx`:
   - [ ] `AuthProvider` — wraps authenticated layout
   - [ ] On mount: fetches `GET /api/auth/me` to hydrate user state
   - [ ] `useAuth()` hook: `{ user, isLoading, logout, isAdmin }`
@@ -68,7 +68,7 @@ The JWT is stored as an **httpOnly cookie** (set by a Next.js API route proxy) s
 
 ### Login Page
 
-- [ ] Create `apps/frontend/app/login/page.tsx`:
+- [x] Create `apps/frontend/app/login/page.tsx`:
   - [ ] AES branding: `APP_NAME` title (from `NEXT_PUBLIC_APP_NAME`), primary color `#004176`
   - [ ] Email input (Shadcn `Input`, type="email", autocomplete="email")
   - [ ] Password input (Shadcn `Input`, type="password") with show/hide toggle (`Eye`/`EyeOff` icons)
@@ -80,7 +80,7 @@ The JWT is stored as an **httpOnly cookie** (set by a Next.js API route proxy) s
 
 ### Global App Layout (Authenticated Shell)
 
-- [ ] Create `apps/frontend/app/(authenticated)/layout.tsx`:
+- [x] Create `apps/frontend/app/(authenticated)/layout.tsx`:
   - [ ] Wraps all authenticated routes
   - [ ] Includes `AuthProvider`
   - [ ] **Sidebar**:
@@ -99,14 +99,14 @@ The JWT is stored as an **httpOnly cookie** (set by a Next.js API route proxy) s
     - [ ] Logout button (Shadcn `Button` variant="ghost" with `LogOut` icon)
   - [ ] Move all existing routes under `(authenticated)/` folder
 
-- [ ] Configure `ThemeProvider` in `apps/frontend/app/layout.tsx`:
+- [x] Configure `ThemeProvider` in `apps/frontend/app/layout.tsx`:
   - [ ] `attribute="class"`, `defaultTheme="system"`, `enableSystem`, `disableTransitionOnChange`
 
-- [ ] Set `<title>` and `<meta>` in root layout using `NEXT_PUBLIC_APP_NAME`
+- [x] Set `<title>` and `<meta>` in root layout using `NEXT_PUBLIC_APP_NAME`
 
 ### User Management Page (Admin Only)
 
-- [ ] Create `apps/frontend/app/(authenticated)/settings/users/page.tsx`:
+- [x] Create `apps/frontend/app/(authenticated)/settings/users/page.tsx`:
   - [ ] Guard: redirect non-admins to `/projects` (also enforced in middleware)
   - [ ] **Users table** (Shadcn `Table`):
     - [ ] Columns: Name, Email, Role badge, Status badge, Created date, Actions
@@ -126,7 +126,7 @@ The JWT is stored as an **httpOnly cookie** (set by a Next.js API route proxy) s
 
 ### Tests
 
-- [ ] Write component tests:
+- [x] Write component tests:
   - [ ] Login form: submit fires API call, error state renders, redirect on success
   - [ ] Middleware: redirects unauthenticated, allows authenticated, blocks non-admin from `/settings/users`
   - [ ] `CreateUserDialog`: form validation, success/error states
@@ -135,18 +135,18 @@ The JWT is stored as an **httpOnly cookie** (set by a Next.js API route proxy) s
 
 ## Acceptance Criteria
 
-- [ ] `/login` renders without auth, all other routes redirect to `/login` if not authenticated
-- [ ] Login with valid credentials sets httpOnly `accessToken` cookie and redirects to `/projects`
-- [ ] Login with wrong credentials shows error message, no redirect
-- [ ] JWT cookie is httpOnly — `document.cookie` in browser JS does NOT expose the token
-- [ ] Logout clears the cookie and redirects to `/login`
-- [ ] Sidebar shows "Users" link only for admin role users
-- [ ] `/settings/users` redirects non-admins to `/projects`
-- [ ] Admin can create a new user via the Create User dialog
-- [ ] Admin can change a user's role and status
-- [ ] `APP_NAME` appears in browser tab title and sidebar header
-- [ ] Dark/light theme toggle works and persists across page refresh
-- [ ] All component tests pass
+- [x] `/login` renders without auth, all other routes redirect to `/login` if not authenticated
+- [x] Login with valid credentials sets httpOnly `accessToken` cookie and redirects to `/projects`
+- [x] Login with wrong credentials shows error message, no redirect
+- [x] JWT cookie is httpOnly — `document.cookie` in browser JS does NOT expose the token
+- [x] Logout clears the cookie and redirects to `/login`
+- [x] Sidebar shows "Users" link only for admin role users
+- [x] `/settings/users` redirects non-admins to `/projects`
+- [x] Admin can create a new user via the Create User dialog
+- [x] Admin can change a user's role and status
+- [x] `APP_NAME` appears in browser tab title and sidebar header
+- [x] Dark/light theme toggle works and persists across page refresh
+- [x] All component tests pass
 
 ---
 

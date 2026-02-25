@@ -2,7 +2,7 @@
 
 **Epic**: EPIC-12: Analytics & Archiving
 **Assigned To**: Backend Agent, Frontend Agent
-**Status**: [ ] Not Started
+**Status**: [x] Completed
 **PRD Reference**: PRD.md §9 (Analytics & Execution Archiving)
 **Knowledge Base**: `knowledge-base/02-data-models.md`, `knowledge-base/03-technology-stack.md`, `knowledge-base/09-zeroclaw-integration.md`
 
@@ -65,8 +65,8 @@ Analytics enable users to monitor LLM spending and agent activity patterns. Zero
 
 ### Backend
 
-- [ ] Create `AnalyticsModule` in NestJS
-- [ ] Create `UsageMonitorService`:
+- [x] Create `AnalyticsModule` in NestJS
+- [x] Create `UsageMonitorService`:
   - [ ] Uses `chokidar` to watch `/artifacts/**/state/costs.jsonl` (glob pattern)
   - [ ] On file change: reads all new lines since last read position (use file offset tracking)
   - [ ] Parses each JSONL line and extracts: `session_id`, `usage.model`, `usage.cost_usd`, `usage.total_tokens`, `usage.timestamp`
@@ -74,14 +74,14 @@ Analytics enable users to monitor LLM spending and agent activity patterns. Zero
   - [ ] Ingests usage data into MongoDB `usage_events` collection:
     - [ ] `{ agentInstanceId, projectId, tenantId, model, totalTokens, costUsd, timestamp }`
   - [ ] Calculates running cost totals per project
-- [ ] Create `RuntimeTraceArchiveService`:
+- [x] Create `RuntimeTraceArchiveService`:
   - [ ] `archiveTrace(agentInstanceId, runId)`:
     - [ ] Reads `{workspacePath}/state/runtime-trace.jsonl`
     - [ ] Parses all entries and stores in MongoDB `transcripts` collection:
       - [ ] `{ agentInstanceId, projectId, runId, tenantId, entries: [...], archivedAt }`
     - [ ] Clears (truncates) the local `runtime-trace.jsonl` after successful archiving
   - [ ] Triggered at end of each agent task run (listen to `story.done` or `workflow.node.completed`)
-- [ ] Create REST endpoints for analytics:
+- [x] Create REST endpoints for analytics:
   - [ ] `GET /projects/:id/analytics/burn-rate` — daily cost aggregation from `usage_events`
   - [ ] `GET /projects/:id/analytics/distribution` — cost/usage grouped by agent role
   - [ ] `GET /projects/:id/analytics/transcripts` — paginated list of archived runs
@@ -89,8 +89,8 @@ Analytics enable users to monitor LLM spending and agent activity patterns. Zero
 
 ### Frontend
 
-- [ ] Install `recharts`
-- [ ] Create `AnalyticsSection` component (in Dashboard tab, story 0000015):
+- [x] Install `recharts`
+- [x] Create `AnalyticsSection` component (in Dashboard tab, story 0000015):
   - [ ] **Burn Rate Chart** (Recharts `LineChart` or `AreaChart`):
     - [ ] X-axis: dates, Y-axis: USD cost
     - [ ] One line per project or aggregated total
@@ -98,7 +98,7 @@ Analytics enable users to monitor LLM spending and agent activity patterns. Zero
     - [ ] Segments by agent role (Librarian, Architect, PM, Developer, Reviewer, Tester)
     - [ ] Tooltip shows role name + total cost
   - [ ] Total cost badge and token count summary
-- [ ] Create `TranscriptViewer` component:
+- [x] Create `TranscriptViewer` component:
   - [ ] Accessible from Ticket Modal (Live Activity Logs tab, story 0000016)
   - [ ] Shows historical runtime-trace entries for a given runId
   - [ ] Entry types styled: `llm_response` (blue), `tool_call` (yellow), `system` (gray)
@@ -107,14 +107,14 @@ Analytics enable users to monitor LLM spending and agent activity patterns. Zero
 
 ## Acceptance Criteria
 
-- [ ] When ZeroClaw appends to `state/costs.jsonl`, Chokidar detects it within 1 second
-- [ ] Usage data is persisted to MongoDB with correct fields mapped from `costs.jsonl` format
-- [ ] After a run completes, `state/runtime-trace.jsonl` is archived to MongoDB and truncated on disk
-- [ ] `GET /projects/:id/analytics/burn-rate` returns daily cost aggregation
-- [ ] `GET /projects/:id/analytics/distribution` returns cost per agent role
-- [ ] Burn rate line chart renders correctly in UI
-- [ ] Distribution pie chart shows segments per role with correct labels
-- [ ] Historical runtime-traces are viewable in the TranscriptViewer with color-coded event types
+- [x] When ZeroClaw appends to `state/costs.jsonl`, Chokidar detects it within 1 second
+- [x] Usage data is persisted to MongoDB with correct fields mapped from `costs.jsonl` format
+- [x] After a run completes, `state/runtime-trace.jsonl` is archived to MongoDB and truncated on disk
+- [x] `GET /projects/:id/analytics/burn-rate` returns daily cost aggregation
+- [x] `GET /projects/:id/analytics/distribution` returns cost per agent role
+- [x] Burn rate line chart renders correctly in UI
+- [x] Distribution pie chart shows segments per role with correct labels
+- [x] Historical runtime-traces are viewable in the TranscriptViewer with color-coded event types
 
 ---
 

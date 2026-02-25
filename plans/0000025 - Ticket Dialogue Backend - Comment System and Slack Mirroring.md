@@ -2,7 +2,7 @@
 
 **Epic**: EPIC-09: Development & Review Loop
 **Assigned To**: Backend Agent
-**Status**: [ ] Not Started
+**Status**: [x] Completed
 **PRD Reference**: PRD.md §18 (Agent-User Interaction & Task Dialogue), §18.1 (Dialogue & Visibility), §18.2 (Clarification Logic)
 **Knowledge Base**: `knowledge-base/05-communication-protocols.md`, `knowledge-base/02-data-models.md`, `knowledge-base/04-agent-roles.md`
 
@@ -28,7 +28,7 @@ The ticket Discussion tab (UI in story 0000016) needs this backend to function. 
 
 ## Actionable Tasks
 
-- [ ] Define `TicketComment` Mongoose schema:
+- [x] Define `TicketComment` Mongoose schema:
   - [ ] `storyId` (ObjectId, indexed)
   - [ ] `projectId`, `tenantId`
   - [ ] `author` (enum: `human | agent`)
@@ -38,7 +38,7 @@ The ticket Discussion tab (UI in story 0000016) needs this backend to function. 
   - [ ] `slackThreadTs` (string — Slack thread timestamp for mirroring)
   - [ ] `type` (enum: `message | approval | answer`)
   - [ ] Timestamps
-- [ ] Create `TicketDialogueService`:
+- [x] Create `TicketDialogueService`:
   - [ ] `getComments(storyId, tenantId)` — list all comments for a story (chronological)
   - [ ] `postHumanComment(storyId, tenantId, userId, content)`:
     - [ ] Creates `TicketComment` with `author: human`
@@ -67,33 +67,33 @@ The ticket Discussion tab (UI in story 0000016) needs this backend to function. 
     - [ ] Called when agent signals it needs clarification (detected from stdout parsing)
   - [ ] `setWaitingForApproval(storyId, agentInstanceId)`:
     - [ ] Sets `story.waitingForApproval = true`
-- [ ] Update `StreamAggregatorService` (from 0000009) to parse agent stdout for special signals:
+- [x] Update `StreamAggregatorService` (from 0000009) to parse agent stdout for special signals:
   - [ ] Detect `WAITING_FOR_ANSWER:` prefix → calls `setWaitingForAnswer()`
   - [ ] Detect `WAITING_FOR_APPROVAL:` prefix → calls `setWaitingForApproval()`
   - [ ] Detect `TICKET_MESSAGE:` prefix → calls `postAgentComment()`
-- [ ] Create REST endpoints:
+- [x] Create REST endpoints:
   - [ ] `GET /projects/:id/stories/:storyId/comments` — list comments
   - [ ] `POST /projects/:id/stories/:storyId/comments` — human posts comment
   - [ ] `POST /projects/:id/stories/:storyId/approve` — human approves (triggers merge)
   - [ ] `POST /projects/:id/stories/:storyId/answer` — human answers agent question
-- [ ] Ensure `SlackService` (from 0000008) stores Slack `thread_ts` on first message per story:
+- [x] Ensure `SlackService` (from 0000008) stores Slack `thread_ts` on first message per story:
   - [ ] `storySlackThread` field on Story schema: `{ channelId, threadTs }`
   - [ ] First message to a story creates the thread; subsequent ones reply in it
-- [ ] Write unit tests for `TicketDialogueService` (mock ZeroClaw signals and Slack)
+- [x] Write unit tests for `TicketDialogueService` (mock ZeroClaw signals and Slack)
 
 ---
 
 ## Acceptance Criteria
 
-- [ ] `POST /projects/:id/stories/:storyId/comments` stores comment and injects into agent stdin
-- [ ] Human comment appears in the Slack thread for the story within 2 seconds
-- [ ] Agent message (via `TICKET_MESSAGE:` stdout prefix) creates a comment record and posts to Slack
-- [ ] `waitingForAnswer = true` is set when agent emits `WAITING_FOR_ANSWER:` on stdout
-- [ ] `POST .../answer` clears `waitingForAnswer`, injects answer to agent stdin
-- [ ] `POST .../approve` calls PR merge and clears `waitingForApproval`
-- [ ] WebSocket broadcasts `ticket:comment` events to connected frontends
-- [ ] `GET .../comments` returns chronological list of human + agent messages
-- [ ] Unit tests pass
+- [x] `POST /projects/:id/stories/:storyId/comments` stores comment and injects into agent stdin
+- [x] Human comment appears in the Slack thread for the story within 2 seconds
+- [x] Agent message (via `TICKET_MESSAGE:` stdout prefix) creates a comment record and posts to Slack
+- [x] `waitingForAnswer = true` is set when agent emits `WAITING_FOR_ANSWER:` on stdout
+- [x] `POST .../answer` clears `waitingForAnswer`, injects answer to agent stdin
+- [x] `POST .../approve` calls PR merge and clears `waitingForApproval`
+- [x] WebSocket broadcasts `ticket:comment` events to connected frontends
+- [x] `GET .../comments` returns chronological list of human + agent messages
+- [x] Unit tests pass
 
 ---
 

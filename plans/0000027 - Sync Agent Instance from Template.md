@@ -2,7 +2,7 @@
 
 **Epic**: EPIC-03: Agent Template System
 **Assigned To**: Backend Agent, Frontend Agent
-**Status**: [ ] Not Started
+**Status**: [x] Completed
 **PRD Reference**: PRD.md §2.2 (Agent Instancing & Snapshots)
 **Knowledge Base**: `knowledge-base/02-data-models.md`, `knowledge-base/04-agent-roles.md`, `knowledge-base/06-aieos-schema.md`
 
@@ -29,26 +29,26 @@ PRD §2.2: "Changes to global templates do not propagate to instances unless man
 
 ### Backend
 
-- [ ] Add `syncFromTemplate` method to `AgentInstancesService`:
+- [x] Add `syncFromTemplate` method to `AgentInstancesService`:
   - [ ] `syncFromTemplate(tenantId, projectId, agentInstanceId, fields: SyncFields)`:
     - [ ] `SyncFields`: `{ soul?: boolean, aieos?: boolean, config?: boolean }`
     - [ ] Fetches the source `AgentTemplate` using `instance.templateId`
     - [ ] Conditionally updates: `instance.soul`, `instance.aieos_identity`, `instance.config`
     - [ ] Never updates: `displayName`, `identifier`, `pid`, `status`, `workspacePath`
     - [ ] Returns the updated `AgentInstance`
-- [ ] Add `POST /projects/:projectId/agents/:agentInstanceId/sync` endpoint:
+- [x] Add `POST /projects/:projectId/agents/:agentInstanceId/sync` endpoint:
   - [ ] Body: `{ fields: { soul: true, aieos: true, config: false } }`
   - [ ] Calls `syncFromTemplate()`
   - [ ] Returns updated `AgentInstance`
   - [ ] Requires `JwtAuthGuard`; scoped to `tenantId` from JWT
-- [ ] Write unit tests for `syncFromTemplate()`:
+- [x] Write unit tests for `syncFromTemplate()`:
   - [ ] Only syncs requested fields
   - [ ] Does not modify `displayName` or `pid`
   - [ ] Throws `NotFoundException` if template not found
 
 ### Frontend
 
-- [ ] Add "Sync from Template" button to Agent Profile Modal (in Edit Mode, story 0000015):
+- [x] Add "Sync from Template" button to Agent Profile Modal (in Edit Mode, story 0000015):
   - [ ] Shows only if `instance.templateId` exists
   - [ ] Opens a confirmation `Dialog` with checkboxes:
     - [ ] "Sync Soul (personality prompt)"
@@ -61,13 +61,13 @@ PRD §2.2: "Changes to global templates do not propagate to instances unless man
 
 ## Acceptance Criteria
 
-- [ ] `POST .../sync` with `{ fields: { soul: true } }` updates only the soul, leaving AIEOS and config unchanged
-- [ ] `POST .../sync` with `{ fields: { soul: true, aieos: true, config: true } }` updates all three fields
-- [ ] `displayName` and `pid` are never modified by sync
-- [ ] Syncing a non-existent agent instance returns 404
-- [ ] UI sync dialog shows three checkboxes and a confirmation step
-- [ ] Successful sync shows a toast and refreshes the agent card
-- [ ] Unit tests pass
+- [x] `POST .../sync` with `{ fields: { soul: true } }` updates only the soul, leaving AIEOS and config unchanged
+- [x] `POST .../sync` with `{ fields: { soul: true, aieos: true, config: true } }` updates all three fields
+- [x] `displayName` and `pid` are never modified by sync
+- [x] Syncing a non-existent agent instance returns 404
+- [x] UI sync dialog shows three checkboxes and a confirmation step
+- [x] Successful sync shows a toast and refreshes the agent card
+- [x] Unit tests pass
 
 ---
 

@@ -2,7 +2,7 @@
 
 **Epic**: EPIC-05: ZeroClaw Runtime Integration
 **Assigned To**: Backend Agent
-**Status**: [ ] Not Started
+**Status**: [x] Completed
 **PRD Reference**: PRD.md §2.1 (ZeroClaw), §11 (AIEOS Identity Normalization)
 **Knowledge Base**: `knowledge-base/09-zeroclaw-integration.md`, `knowledge-base/06-aieos-schema.md`
 
@@ -24,9 +24,9 @@ ZeroClaw natively supports AIEOS v1.1 as its identity format. The schema URL is 
 
 ## Actionable Tasks
 
-- [ ] Fetch and cache AIEOS v1.1 JSON schema (`https://aieos.org/schema/v1.1/aieos.schema.json`)
+- [x] Fetch and cache AIEOS v1.1 JSON schema (`https://aieos.org/schema/v1.1/aieos.schema.json`)
   - [ ] Save as `packages/types/aieos-v1.1.schema.json` for offline validation
-- [ ] Create `AieosGeneratorService`:
+- [x] Create `AieosGeneratorService`:
   - [ ] `validate(payload: object): boolean` — validates against AIEOS v1.1 schema using `ajv`
   - [ ] `generate(agentInstance: AgentInstance): AieosPayload` — maps AES fields to full AIEOS v1.1 structure
   - [ ] `serialize(payload: AieosPayload): string` — converts to JSON string for file write
@@ -36,7 +36,7 @@ ZeroClaw natively supports AIEOS v1.1 as its identity format. The schema URL is 
     - [ ] **Linguistics**: vocal style, syntax patterns from `aieos_identity.linguistics`
     - [ ] **History**: origin story, motivations from `aieos_identity.history`
     - [ ] **Capabilities**: tool skills with priority 1-10 from `role_meta` and `config.skills`
-- [ ] Create `ZeroClawConfigTomlGenerator`:
+- [x] Create `ZeroClawConfigTomlGenerator`:
   - [ ] `generate(instance: AgentInstance, project: Project, gatewayPort: number): string`
   - [ ] Outputs valid TOML for ZeroClaw config
   - [ ] Sections: `[runtime]`, `[providers]`, `[channels]` (Slack), `[memory]`, `[observability]`, `[cost]`, `[security]`, `[identity]`
@@ -47,17 +47,17 @@ ZeroClaw natively supports AIEOS v1.1 as its identity format. The schema URL is 
   - [ ] Sets `cost.enabled = true` (costs written to `{workspacePath}/state/costs.jsonl`)
   - [ ] Resolves correct LLM provider from `instance.config.provider`
   - [ ] For Reviewer role agents: adds `[[mcp_servers]]` entry pointing to Librarian MCP endpoint so `check_convention_compliance` is available
-- [ ] Update `AgentInstancesService`:
+- [x] Update `AgentInstancesService`:
   - [ ] Store `gatewayPort` on AgentInstance (assigned at spawn time)
   - [ ] Auto-assign unique ports (starting from configurable base port)
-- [ ] Create `AgentFileWriterService`:
+- [x] Create `AgentFileWriterService`:
   - [ ] `writeAgentFiles(instance, project)`:
     - [ ] Writes `{workspacePath}/zeroclaw.config.toml`
     - [ ] Writes `{workspacePath}/identity.json` (validated AIEOS v1.1)
     - [ ] Writes `{workspacePath}/soul.md`
     - [ ] Creates `{workspacePath}/.aes/` directory
-- [ ] Update AIEOS Builder UI data model to include all 5 AIEOS v1.1 sections (coordinate with frontend story 0000004)
-- [ ] Write unit tests for:
+- [x] Update AIEOS Builder UI data model to include all 5 AIEOS v1.1 sections (coordinate with frontend story 0000004)
+- [x] Write unit tests for:
   - [ ] `AieosGeneratorService.validate()` with valid and invalid payloads
   - [ ] `ZeroClawConfigTomlGenerator.generate()` output structure
   - [ ] `AgentFileWriterService.writeAgentFiles()` (mock filesystem)
@@ -66,13 +66,13 @@ ZeroClaw natively supports AIEOS v1.1 as its identity format. The schema URL is 
 
 ## Acceptance Criteria
 
-- [ ] `AieosGeneratorService.validate()` correctly accepts valid AIEOS v1.1 payloads and rejects invalid ones
-- [ ] Generated `identity.json` passes validation against `https://aieos.org/schema/v1.1/aieos.schema.json`
-- [ ] Generated `zeroclaw.config.toml` is valid TOML parseable by ZeroClaw
-- [ ] Each agent instance gets a unique `gatewayPort` stored in MongoDB
-- [ ] `security.workspace` in config.toml correctly restricts agent to its own workspace directory
-- [ ] All 5 AIEOS sections are present in the generated identity.json
-- [ ] Unit tests pass
+- [x] `AieosGeneratorService.validate()` correctly accepts valid AIEOS v1.1 payloads and rejects invalid ones
+- [x] Generated `identity.json` passes validation against `https://aieos.org/schema/v1.1/aieos.schema.json`
+- [x] Generated `zeroclaw.config.toml` is valid TOML parseable by ZeroClaw
+- [x] Each agent instance gets a unique `gatewayPort` stored in MongoDB
+- [x] `security.workspace` in config.toml correctly restricts agent to its own workspace directory
+- [x] All 5 AIEOS sections are present in the generated identity.json
+- [x] Unit tests pass
 
 ---
 

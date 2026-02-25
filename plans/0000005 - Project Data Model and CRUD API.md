@@ -21,8 +21,8 @@ A project is the central entity in AES. It contains role assignments (LibrarianI
 
 ## Actionable Tasks
 
-- [ ] Create `ProjectsModule` in NestJS
-- [ ] Define `Project` Mongoose schema with fields:
+- [x] Create `ProjectsModule` in NestJS
+- [x] Define `Project` Mongoose schema with fields:
   - [ ] `tenantId` (ObjectId, indexed)
   - [ ] `name` (string)
   - [ ] `slug` (string, unique per tenant, URL-safe)
@@ -47,38 +47,38 @@ A project is the central entity in AES. It contains role assignments (LibrarianI
   - [ ] `config.llmKeys.google` (string, encrypted)
   - [ ] `config.llmKeys.ollama_endpoint` (string)
   - [ ] Timestamps
-- [ ] Create `AES256EncryptionService` utility:
+- [x] Create `AES256EncryptionService` utility:
   - [ ] `encrypt(value: string): string`
   - [ ] `decrypt(value: string): string`
   - [ ] Uses `AES_ENCRYPTION_KEY` from env
-- [ ] Create `ProjectsService` with methods:
+- [x] Create `ProjectsService` with methods:
   - [ ] `findAll(tenantId)` — list projects
   - [ ] `findById(tenantId, id)` — single project (with roles populated)
   - [ ] `create(tenantId, dto)` — create project + trigger initialization
   - [ ] `update(tenantId, id, dto)` — update project metadata/config
   - [ ] `archive(tenantId, id)` — set status to archived
-- [ ] Create `ProjectsController` with routes:
+- [x] Create `ProjectsController` with routes:
   - [ ] `GET /projects` — list
   - [ ] `GET /projects/:id` — single (populated roles)
   - [ ] `POST /projects` — create
   - [ ] `PATCH /projects/:id` — update
   - [ ] `DELETE /projects/:id` — archive
-- [ ] Create `CreateProjectDto` and `UpdateProjectDto` with validation
-- [ ] Implement slug generation from project name (auto-generated, unique)
-- [ ] Emit `project.created` event after project creation (for initialization pipeline)
-- [ ] Write unit tests for `ProjectsService` and `AES256EncryptionService`
+- [x] Create `CreateProjectDto` and `UpdateProjectDto` with validation
+- [x] Implement slug generation from project name (auto-generated, unique)
+- [x] Emit `project.created` event after project creation (for initialization pipeline)
+- [x] Write unit tests for `ProjectsService` and `AES256EncryptionService`
 
 ---
 
 ## Acceptance Criteria
 
-- [ ] `POST /projects` creates a project with all mandatory fields
-- [ ] Slug is auto-generated from name (e.g., "My Project" → `my-project`) and unique
-- [ ] Sensitive fields (Slack token, GitHub keys, LLM keys) are AES-256 encrypted in MongoDB
-- [ ] Decrypted values are never returned in API responses (use transform/exclude)
-- [ ] `GET /projects/:id` returns role fields populated with AgentInstance data
-- [ ] `project.created` event is emitted after successful creation
-- [ ] All unit tests pass
+- [x] `POST /projects` creates a project with all mandatory fields
+- [x] Slug is auto-generated from name (e.g., "My Project" → `my-project`) and unique
+- [x] Sensitive fields (Slack token, GitHub keys, LLM keys) are AES-256 encrypted in MongoDB
+- [x] Decrypted values are never returned in API responses (use transform/exclude)
+- [x] `GET /projects/:id` returns role fields populated with AgentInstance data
+- [x] `project.created` event is emitted after successful creation
+- [x] All unit tests pass
 
 ---
 

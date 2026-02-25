@@ -2,7 +2,7 @@
 
 **Epic**: EPIC-05: ZeroClaw Runtime Integration
 **Assigned To**: Backend Agent
-**Status**: [ ] Not Started
+**Status**: [x] Completed
 **PRD Reference**: PRD.md §4.2 (Slack Identity & A2A), §2.1 (Stdout/Stderr), §18 (Agent-User Interaction)
 **Knowledge Base**: `knowledge-base/05-communication-protocols.md`, `knowledge-base/01-architecture.md`
 
@@ -25,7 +25,7 @@ Real-time feedback is central to AES. The UI must reflect agent activity as it h
 
 ### WebSocket Gateway
 
-- [ ] Create NestJS `@WebSocketGateway()` class `AesGateway`:
+- [x] Create NestJS `@WebSocketGateway()` class `AesGateway`:
   - [ ] Namespace: `/ws` (or global)
   - [ ] JWT authentication for WebSocket connections (verify token on `handleConnection`)
   - [ ] Client join rooms: `client.join(\`project:${projectId}\`)`
@@ -35,13 +35,13 @@ Real-time feedback is central to AES. The UI must reflect agent activity as it h
     - [ ] `story:status` — story kanban status change `{ storyId, status }`
     - [ ] `workflow:node` — workflow node execution update `{ runId, nodeId, status }`
     - [ ] `approval:needed` — workflow approval required `{ runId, nodeId, description }`
-- [ ] `StreamAggregatorService` (from 0000009) emits `agent:log` events via AesGateway
-- [ ] `DevelopmentOrchestrationService` (from 0000014) emits `story:status` events
-- [ ] `WorkflowNodeExecutorService` (from 0000017) emits `workflow:node` events
+- [x] `StreamAggregatorService` (from 0000009) emits `agent:log` events via AesGateway
+- [x] `DevelopmentOrchestrationService` (from 0000014) emits `story:status` events
+- [x] `WorkflowNodeExecutorService` (from 0000017) emits `workflow:node` events
 
 ### Slack Event Router
 
-- [ ] Create `SlackEventsController`:
+- [x] Create `SlackEventsController`:
   - [ ] `POST /webhooks/slack` — receives Slack Events API payloads
   - [ ] Verify Slack signature (`X-Slack-Signature` header using `SLACK_SIGNING_SECRET`)
   - [ ] Handle challenge verification (Slack URL verification)
@@ -54,30 +54,30 @@ Real-time feedback is central to AES. The UI must reflect agent activity as it h
     - [ ] Inject message via stdin: `USER_MESSAGE: {text}`
   - [ ] Handle `app_mention` events:
     - [ ] Route to the mentioned agent
-- [ ] Create `SlackChannelMappingService`:
+- [x] Create `SlackChannelMappingService`:
   - [ ] MongoDB collection: `{ channelId, projectId, tenantId }`
   - [ ] `getProjectByChannel(channelId)` — lookup
   - [ ] Updated when Slack channel is created during project initialization
-- [ ] When routing human Slack messages to agents, use `SlackService.postThreadReplyAsAgent()` for all agent responses:
+- [x] When routing human Slack messages to agents, use `SlackService.postThreadReplyAsAgent()` for all agent responses:
   - [ ] Always pass agent `displayName` as `username` and generated `icon_url` — impersonation applies to ALL responses including human-reply threads
   - [ ] The Slack conversation must look like the actual agent is speaking, not "AES Bot"
-- [ ] When parsing agent stdout for Slack output (lines starting with `SLACK_MESSAGE:`):
+- [x] When parsing agent stdout for Slack output (lines starting with `SLACK_MESSAGE:`):
   - [ ] Extract message body and post via `postAsAgent()` with the spawned agent's identity
   - [ ] Identify the correct `thread_ts` from the story's `storySlackThread` field
-- [ ] Write unit tests for `SlackEventsController` signature verification
+- [x] Write unit tests for `SlackEventsController` signature verification
 
 ---
 
 ## Acceptance Criteria
 
-- [ ] Frontend WebSocket clients receive `agent:log` events in real time when an agent emits stdout
-- [ ] Frontend receives `story:status` events when a story changes kanban status
-- [ ] `POST /webhooks/slack` verifies Slack signature and rejects invalid requests
-- [ ] Human message in Slack `#project-{slug}` channel wakes the appropriate agent
-- [ ] A2A messages (`[A2A] ...`) are not re-processed as user messages
-- [ ] Bot messages from the AES Slack App are ignored (no loops)
-- [ ] Agent replies to human messages appear in Slack threads
-- [ ] Unit tests pass
+- [x] Frontend WebSocket clients receive `agent:log` events in real time when an agent emits stdout
+- [x] Frontend receives `story:status` events when a story changes kanban status
+- [x] `POST /webhooks/slack` verifies Slack signature and rejects invalid requests
+- [x] Human message in Slack `#project-{slug}` channel wakes the appropriate agent
+- [x] A2A messages (`[A2A] ...`) are not re-processed as user messages
+- [x] Bot messages from the AES Slack App are ignored (no loops)
+- [x] Agent replies to human messages appear in Slack threads
+- [x] Unit tests pass
 
 ---
 

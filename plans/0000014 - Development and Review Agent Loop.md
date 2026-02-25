@@ -2,7 +2,7 @@
 
 **Epic**: EPIC-09: Development & Review Loop
 **Assigned To**: Backend Agent
-**Status**: [ ] Not Started
+**Status**: [x] Completed
 **PRD Reference**: PRD.md §8 (Development & Review Loop)
 **Knowledge Base**: `knowledge-base/05-communication-protocols.md`, `knowledge-base/07-git-strategy.md`, `knowledge-base/04-agent-roles.md`, `knowledge-base/09-zeroclaw-integration.md`
 
@@ -29,7 +29,7 @@ This is the core operational loop that makes AES self-sustaining. The NestJS bac
 
 ## Actionable Tasks
 
-- [ ] Create `DevelopmentOrchestrationService`:
+- [x] Create `DevelopmentOrchestrationService`:
   - [ ] Listen to `sprint.ready` event (PM agent-mediated — do NOT assign directly):
     - [ ] Fetch all "selected" stories in the sprint
     - [ ] Fetch all available Developer agents for the project
@@ -48,7 +48,7 @@ This is the core operational loop that makes AES self-sustaining. The NestJS bac
     - [ ] Send SIGUSR1 to Developer agent PID
     - [ ] Inject via stdin: story context (title, description, tasks, acceptance criteria)
     - [ ] Post assignment notification to Slack via `SlackService`
-- [ ] Update `GitHubWebhookController` (from story 0000011):
+- [x] Update `GitHubWebhookController` (from story 0000011):
   - [ ] `pull_request.opened`:
     - [ ] Match PR branch to `storyId` via `branchName`
     - [ ] Find available Reviewer agents for the project
@@ -63,38 +63,38 @@ This is the core operational loop that makes AES self-sustaining. The NestJS bac
   - [ ] `pull_request.closed` (merged):
     - [ ] Call `StoriesService.updateStatus(storyId, projectId, tenantId, 'done')` — emits `story:status` WebSocket event so Kanban card auto-moves to Done
     - [ ] Emit `librarian.reindex`
-- [ ] Create `StoryContextSerializer`:
+- [x] Create `StoryContextSerializer`:
   - [ ] `serialize(story: Story): string` — converts story data to LLM-friendly context string
   - [ ] Includes: title, description, type, tasks list, acceptance criteria
   - [ ] Injected via stdin when signaling an agent
-- [ ] Create `AgentAvailabilityService`:
+- [x] Create `AgentAvailabilityService`:
   - [ ] `getAvailableAgent(projectId, role): AgentInstance | null`
   - [ ] Returns first agent with `status = idle` for the given role
   - [ ] Sets agent `status = busy` atomically (to prevent double-assignment)
-- [ ] Add `canWriteCode` guard in `AgentAvailabilityService`:
+- [x] Add `canWriteCode` guard in `AgentAvailabilityService`:
   - [ ] `getAvailableAgent()` must only return agents where `config.canWriteCode === true` for Developer role
   - [ ] Log a warning and skip `canWriteCode: false` agents when assigning code work
-- [ ] Add Reviewer → Librarian MCP configuration note:
+- [x] Add Reviewer → Librarian MCP configuration note:
   - [ ] The Reviewer agent's `zeroclaw.config.toml` must include the Librarian MCP endpoint in `[mcp_servers]`
   - [ ] This is configured by `ZeroClawConfigTomlGenerator` in story 0000010 — ensure Reviewer role agents get Librarian MCP registered
   - [ ] The `check_convention_compliance` tool from the Librarian MCP must be available in the Reviewer's tool set
-- [ ] Note: `POST /projects/:id/stories/:storyId/approve` is implemented in story 0000025 (Ticket Dialogue Backend)
-- [ ] Write integration tests for orchestration flow (mock ZeroClaw signals)
+- [x] Note: `POST /projects/:id/stories/:storyId/approve` is implemented in story 0000025 (Ticket Dialogue Backend)
+- [x] Write integration tests for orchestration flow (mock ZeroClaw signals)
 
 ---
 
 ## Acceptance Criteria
 
-- [ ] Marking sprint as "Ready" triggers story assignment to idle Developer agents
-- [ ] Developer agent receives story context via stdin injection
-- [ ] Opening a PR triggers Reviewer agent with SIGUSR1 + PR context
-- [ ] PR comment triggers Developer agent with PR_FEEDBACK stdin injection
-- [ ] Story status transitions correctly through: backlog → selected → in_progress → review → done
-- [ ] Each status transition emits a `story:status` WebSocket event (via `StoriesService.updateStatus()`) so Kanban cards auto-move without page refresh
-- [ ] **IMPORTANT**: All status updates in this service MUST use `StoriesService.updateStatus()` — never update `story.status` directly in MongoDB from this service
-- [ ] Agent status transitions correctly: idle ↔ busy
-- [ ] Merge trigger updates story to done and emits librarian reindex
-- [ ] Integration tests pass
+- [x] Marking sprint as "Ready" triggers story assignment to idle Developer agents
+- [x] Developer agent receives story context via stdin injection
+- [x] Opening a PR triggers Reviewer agent with SIGUSR1 + PR context
+- [x] PR comment triggers Developer agent with PR_FEEDBACK stdin injection
+- [x] Story status transitions correctly through: backlog → selected → in_progress → review → done
+- [x] Each status transition emits a `story:status` WebSocket event (via `StoriesService.updateStatus()`) so Kanban cards auto-move without page refresh
+- [x] **IMPORTANT**: All status updates in this service MUST use `StoriesService.updateStatus()` — never update `story.status` directly in MongoDB from this service
+- [x] Agent status transitions correctly: idle ↔ busy
+- [x] Merge trigger updates story to done and emits librarian reindex
+- [x] Integration tests pass
 
 ---
 

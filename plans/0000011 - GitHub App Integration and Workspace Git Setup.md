@@ -2,7 +2,7 @@
 
 **Epic**: EPIC-06: Workspace & Git Integration
 **Assigned To**: Backend Agent
-**Status**: [ ] Not Started
+**Status**: [x] Completed
 **PRD Reference**: PRD.md §6 (Workspace & Git Strategy), §15 (Git Repository Integration)
 **Knowledge Base**: `knowledge-base/07-git-strategy.md`, `knowledge-base/04-agent-roles.md`
 
@@ -25,12 +25,12 @@ AES uses a hybrid git approach: GitHub MCP for remote API actions (PRs, comments
 
 ## Actionable Tasks
 
-- [ ] Create `GitHubAppService`:
+- [x] Create `GitHubAppService`:
   - [ ] Install: `@octokit/auth-app`, `@octokit/rest`
   - [ ] `getInstallationToken(project: Project): string` — authenticates via GitHub App and gets installation token
   - [ ] `getAuthenticatedOctokit(project: Project): Octokit` — returns authenticated Octokit instance
   - [ ] Decrypts `config.githubApp.privateKey` using `AES256EncryptionService`
-- [ ] Create `GitWorkspaceService`:
+- [x] Create `GitWorkspaceService`:
   - [ ] `clone(agentInstance: AgentInstance, project: Project)`:
     - [ ] Runs: `git clone {repoUrl} {workspacePath}` using installation token for auth
     - [ ] Sets git user name/email to agent's display name / system email
@@ -44,21 +44,21 @@ AES uses a hybrid git approach: GitHub MCP for remote API actions (PRs, comments
     - [ ] Pulls latest changes from remote
   - [ ] `acquireLock(workspacePath)`: — creates `.git/aes.lock`
   - [ ] `releaseLock(workspacePath)`: — removes `.git/aes.lock`
-- [ ] Create `GitHubPRService`:
+- [x] Create `GitHubPRService`:
   - [ ] `createPullRequest(project, { title, body, branch, base })` — creates PR via GitHub REST API
   - [ ] `postComment(project, prNumber, body)` — posts comment on PR
   - [ ] `getPRComments(project, prNumber)` — fetches PR comments for agent feedback injection
   - [ ] `mergePullRequest(project, prNumber)` — merges PR (triggered by PM or user)
-- [ ] Integrate `GitWorkspaceService.clone()` into `ProjectInitializerService`:
+- [x] Integrate `GitWorkspaceService.clone()` into `ProjectInitializerService`:
   - [ ] Each agent workspace is cloned after directory creation
-- [ ] Create `GitHubWebhookController`:
+- [x] Create `GitHubWebhookController`:
   - [ ] `POST /webhooks/github` — receives GitHub webhook events
   - [ ] Verifies webhook signature using `webhookSecret`
   - [ ] Routes events:
     - [ ] `pull_request.opened` → signal Reviewer agent
     - [ ] `issue_comment.created` (on PR) → signal Developer agent + inject feedback via stdin
     - [ ] `push` (to main) → emit `librarian.reindex` event
-- [ ] Write unit tests for:
+- [x] Write unit tests for:
   - [ ] `GitHubAppService.getInstallationToken()` (mock Octokit)
   - [ ] `GitHubWebhookController` signature verification
   - [ ] `GitWorkspaceService` operations (mock child_process)
@@ -67,15 +67,15 @@ AES uses a hybrid git approach: GitHub MCP for remote API actions (PRs, comments
 
 ## Acceptance Criteria
 
-- [ ] `getInstallationToken()` successfully authenticates using GitHub App private key
-- [ ] Each agent workspace has a working git clone of the project repository
-- [ ] `createFeatureBranch('feature/story-123')` creates the branch in the workspace
-- [ ] GitHub webhook receives `pull_request.opened` and signals the Reviewer agent via SIGUSR1
-- [ ] GitHub webhook receives PR comment and injects feedback via agent stdin
-- [ ] Push to main branch triggers `librarian.reindex` event
-- [ ] Webhook signature verification rejects invalid signatures
-- [ ] Lock management prevents concurrent git operations in one workspace
-- [ ] Unit tests pass
+- [x] `getInstallationToken()` successfully authenticates using GitHub App private key
+- [x] Each agent workspace has a working git clone of the project repository
+- [x] `createFeatureBranch('feature/story-123')` creates the branch in the workspace
+- [x] GitHub webhook receives `pull_request.opened` and signals the Reviewer agent via SIGUSR1
+- [x] GitHub webhook receives PR comment and injects feedback via agent stdin
+- [x] Push to main branch triggers `librarian.reindex` event
+- [x] Webhook signature verification rejects invalid signatures
+- [x] Lock management prevents concurrent git operations in one workspace
+- [x] Unit tests pass
 
 ---
 

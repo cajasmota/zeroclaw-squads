@@ -21,8 +21,8 @@ Agent Templates are the global blueprints for agents. When a user creates a proj
 
 ## Actionable Tasks
 
-- [ ] Create `TemplatesModule` in NestJS
-- [ ] Define `AgentTemplate` Mongoose schema with fields:
+- [x] Create `TemplatesModule` in NestJS
+- [x] Define `AgentTemplate` Mongoose schema with fields:
   - [ ] `tenantId` (ObjectId, indexed)
   - [ ] `displayName` (string)
   - [ ] `role` (enum: `librarian | architect | pm | developer | reviewer | tester`)
@@ -36,7 +36,7 @@ Agent Templates are the global blueprints for agents. When a user creates a proj
   - [ ] `config.mcpServers` (array of objects)
   - [ ] `avatarUrl` (string, optional)
   - [ ] Timestamps (`createdAt`, `updatedAt`)
-- [ ] Create `TemplatesService` with methods:
+- [x] Create `TemplatesService` with methods:
   - [ ] `findAll(tenantId, filters?: { role?, tags? })` — paginated list
   - [ ] `findById(tenantId, id)` — single template
   - [ ] `create(tenantId, dto)` — create template
@@ -44,7 +44,7 @@ Agent Templates are the global blueprints for agents. When a user creates a proj
   - [ ] `delete(tenantId, id)` — soft or hard delete
   - [ ] `exportJson(tenantId, id)` — export as AIEOS-compatible JSON
   - [ ] `importJson(tenantId, payload)` — import from AIEOS-compatible JSON
-- [ ] Create `TemplatesController` with routes:
+- [x] Create `TemplatesController` with routes:
   - [ ] `GET /templates` — list with optional `?role=&tags=` filters
   - [ ] `GET /templates/:id` — single template
   - [ ] `POST /templates` — create
@@ -52,23 +52,23 @@ Agent Templates are the global blueprints for agents. When a user creates a proj
   - [ ] `DELETE /templates/:id` — delete
   - [ ] `GET /templates/:id/export` — export JSON
   - [ ] `POST /templates/import` — import JSON
-- [ ] Create `CreateTemplateDto` and `UpdateTemplateDto` with validation
-- [ ] Add AIEOS v1.1 validation (required sections: `identity`, `psychology`, `role_meta`)
-- [ ] Write unit tests for `TemplatesService` (mock Mongoose)
-- [ ] Write integration tests for `TemplatesController` endpoints
+- [x] Create `CreateTemplateDto` and `UpdateTemplateDto` with validation
+- [x] Add AIEOS v1.1 validation (required sections: `identity`, `psychology`, `role_meta`)
+- [x] Write unit tests for `TemplatesService` (mock Mongoose)
+- [x] Write integration tests for `TemplatesController` endpoints
 
 ---
 
 ## Acceptance Criteria
 
-- [ ] `GET /templates` returns paginated list filtered by tenantId
-- [ ] `?role=developer` filter works correctly
-- [ ] `?tags=starwars` filter matches templates with that tag
-- [ ] Creating a template with invalid AIEOS payload returns `400 Bad Request`
-- [ ] All CRUD operations are scoped to the requesting tenant (tenantId)
-- [ ] Export returns valid AIEOS-compatible JSON
-- [ ] Import creates a new template from AIEOS JSON
-- [ ] All unit and integration tests pass
+- [x] `GET /templates` returns paginated list filtered by tenantId
+- [x] `?role=developer` filter works correctly
+- [x] `?tags=starwars` filter matches templates with that tag
+- [x] Creating a template with invalid AIEOS payload returns `400 Bad Request`
+- [x] All CRUD operations are scoped to the requesting tenant (tenantId)
+- [x] Export returns valid AIEOS-compatible JSON
+- [x] Import creates a new template from AIEOS JSON
+- [x] All unit and integration tests pass
 
 ---
 

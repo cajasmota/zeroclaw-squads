@@ -2,7 +2,7 @@
 
 **Epic**: EPIC-03: Agent Template System
 **Assigned To**: Frontend Agent
-**Status**: [ ] Not Started
+**Status**: [x] Completed
 **PRD Reference**: PRD.md §5.3 (Template Designer)
 **Knowledge Base**: `knowledge-base/08-ui-design-system.md`, `knowledge-base/04-agent-roles.md`, `knowledge-base/06-aieos-schema.md`
 
@@ -25,17 +25,17 @@ The Template Designer is the management hub for all agent personalities. Users s
 
 ## Actionable Tasks
 
-- [ ] Create Next.js route `/app/templates/page.tsx`
-- [ ] Build `TemplateGrid` component:
+- [x] Create Next.js route `/app/templates/page.tsx`
+- [x] Build `TemplateGrid` component:
   - [ ] Fetches templates from `GET /templates` with pagination
   - [ ] Renders responsive grid of `TemplateCard` components
   - [ ] Filter bar with role dropdown and tags multi-select
   - [ ] Search input (filters by displayName and tags)
   - [ ] "New Template" button opens creation modal
-- [ ] Build `TemplateCard` (Shadcn `Card` component):
+- [x] Build `TemplateCard` (Shadcn `Card` component):
   - [ ] Shows: Avatar image, Display Name, Role badge, Tags (Shadcn `Badge`), template stats
   - [ ] Click → opens `TemplateDetailModal`
-- [ ] Build `TemplateDetailModal` (full-screen Shadcn `Dialog`):
+- [x] Build `TemplateDetailModal` (full-screen Shadcn `Dialog`):
   - [ ] **Profile View** (default): Hero-style layout with avatar, role, tags, statistics, bio
   - [ ] **Edit Mode** toggle (switch button in top-right):
     - Soul editor (Shadcn `Textarea` for Markdown input)
@@ -44,15 +44,15 @@ The Template Designer is the management hub for all agent personalities. Users s
     - MCP Servers list (add/remove)
     - `canWriteCode` toggle
     - AIEOS Identity Builder (below)
-- [ ] Build `AIEOSBuilder` component (visible in Edit Mode only):
+- [x] Build `AIEOSBuilder` component (visible in Edit Mode only):
   - [ ] Section: **Identity** — name fields (full, short, codename), bio textarea, origin input
   - [ ] Section: **Psychology** — sliders for `logic`, `creativity`, `empathy`, `assertiveness` (0.0–1.0); MBTI dropdown; communication style input
   - [ ] Section: **Role Meta** — role dropdown, `isSingleton` toggle, `canWriteCode` toggle, preferred languages multi-select
   - [ ] Validates all required sections before save
-- [ ] Build `ImportExportButtons` component:
+- [x] Build `ImportExportButtons` component:
   - [ ] "Export JSON" button — downloads AIEOS JSON file
   - [ ] "Import JSON" button — file picker, uploads to `POST /templates/import`
-- [ ] Build "AI-Assisted Creation" section (below the AIEOS Builder):
+- [x] Build "AI-Assisted Creation" section (below the AIEOS Builder):
   - [ ] Displays a copyable "Persona Interviewer" prompt block (static text, read-only `Textarea` with copy button)
   - [ ] **The Persona Interviewer prompt** instructs an external LLM (ChatGPT, Gemini, Claude, etc.) to:
     - Interview the user with questions about the agent's name, personality, role, background story, skills, and communication style
@@ -74,24 +74,24 @@ The Template Designer is the management hub for all agent personalities. Users s
     the AIEOS v1.1 schema (https://github.com/entitai/aieos). Do not include any text before or
     after the JSON.
     ```
-- [ ] Connect all components to backend API with React Query or SWR
-- [ ] Handle loading and error states
-- [ ] Write component tests for `TemplateCard`, `AIEOSBuilder`
+- [x] Connect all components to backend API with React Query or SWR
+- [x] Handle loading and error states
+- [x] Write component tests for `TemplateCard`, `AIEOSBuilder`
 
 ---
 
 ## Acceptance Criteria
 
-- [ ] `/templates` renders a filterable grid of agent templates
-- [ ] Filtering by role or tags updates the displayed cards
-- [ ] Clicking a card opens the detail modal in Profile View
-- [ ] Clicking "Edit" in the modal reveals the AIEOS Identity Builder and soul editor
-- [ ] Saving changes updates the template via PATCH API
-- [ ] AIEOS Builder sliders produce correct `neural_matrix` values (0.0–1.0)
-- [ ] Export downloads a valid AIEOS JSON file
-- [ ] Import successfully creates a new template from a JSON file
-- [ ] Creating a new template from the "New Template" button works
-- [ ] Component tests pass
+- [x] `/templates` renders a filterable grid of agent templates
+- [x] Filtering by role or tags updates the displayed cards
+- [x] Clicking a card opens the detail modal in Profile View
+- [x] Clicking "Edit" in the modal reveals the AIEOS Identity Builder and soul editor
+- [x] Saving changes updates the template via PATCH API
+- [x] AIEOS Builder sliders produce correct `neural_matrix` values (0.0–1.0)
+- [x] Export downloads a valid AIEOS JSON file
+- [x] Import successfully creates a new template from a JSON file
+- [x] Creating a new template from the "New Template" button works
+- [x] Component tests pass
 
 ---
 

@@ -21,8 +21,8 @@ The snapshot pattern ensures that each project has stable, isolated agent config
 
 ## Actionable Tasks
 
-- [ ] Create `AgentInstancesModule` in NestJS
-- [ ] Define `AgentInstance` Mongoose schema with fields:
+- [x] Create `AgentInstancesModule` in NestJS
+- [x] Define `AgentInstance` Mongoose schema with fields:
   - [ ] `projectId` (ObjectId, indexed)
   - [ ] `tenantId` (ObjectId, indexed)
   - [ ] `templateId` (ObjectId, ref AgentTemplate)
@@ -40,31 +40,31 @@ The snapshot pattern ensures that each project has stable, isolated agent config
   - [ ] `status` (enum: `idle | busy | error`)
   - [ ] `workspacePath` (string — computed: `/artifacts/{projectId}/workspaces/{instanceId}/`)
   - [ ] Timestamps
-- [ ] Create `AgentInstancesService` with methods:
+- [x] Create `AgentInstancesService` with methods:
   - [ ] `createSnapshot(projectId, tenantId, templateId, displayName?)` — creates instance from template
   - [ ] `findByProject(projectId, tenantId)` — list all instances for a project
   - [ ] `findById(id, tenantId)` — single instance
   - [ ] `updateStatus(id, status)` — update process status
   - [ ] `updatePid(id, pid)` — update PID after spawn
   - [ ] `updateSoulOrIdentity(id, tenantId, { soul?, aieos_identity? })` — direct instance edit without affecting template
-- [ ] Create `AgentInstancesController` with routes:
+- [x] Create `AgentInstancesController` with routes:
   - [ ] `GET /projects/:projectId/agents` — list instances
   - [ ] `GET /projects/:projectId/agents/:id` — single instance
   - [ ] `PATCH /projects/:projectId/agents/:id` — edit soul/identity/displayName
-- [ ] Listen to `project.created` event to auto-create instances for assigned templates
-- [ ] Write unit tests for `AgentInstancesService`
+- [x] Listen to `project.created` event to auto-create instances for assigned templates
+- [x] Write unit tests for `AgentInstancesService`
 
 ---
 
 ## Acceptance Criteria
 
-- [ ] When a project is created with 5 role assignments, 5 AgentInstance documents are created
-- [ ] Each AgentInstance has a full copy of the template's soul and aieos_identity at snapshot time
-- [ ] Updating the original AgentTemplate does NOT affect existing AgentInstances
-- [ ] Updating an AgentInstance's soul/identity does NOT affect the AgentTemplate
-- [ ] `workspacePath` is correctly computed as `/artifacts/{projectId}/workspaces/{instanceId}/`
-- [ ] `identifier` is unique within a project
-- [ ] All unit tests pass
+- [x] When a project is created with 5 role assignments, 5 AgentInstance documents are created
+- [x] Each AgentInstance has a full copy of the template's soul and aieos_identity at snapshot time
+- [x] Updating the original AgentTemplate does NOT affect existing AgentInstances
+- [x] Updating an AgentInstance's soul/identity does NOT affect the AgentTemplate
+- [x] `workspacePath` is correctly computed as `/artifacts/{projectId}/workspaces/{instanceId}/`
+- [x] `identifier` is unique within a project
+- [x] All unit tests pass
 
 ---
 

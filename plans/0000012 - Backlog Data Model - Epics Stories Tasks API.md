@@ -2,7 +2,7 @@
 
 **Epic**: EPIC-07: Backlog & Sprint Management
 **Assigned To**: Backend Agent
-**Status**: [ ] Not Started
+**Status**: [x] Completed
 **PRD Reference**: PRD.md §17 (Global Backlog & Intelligent PM Strategy), §18 (Agent-User Interaction)
 **Knowledge Base**: `knowledge-base/02-data-models.md`, `knowledge-base/04-agent-roles.md`
 
@@ -26,10 +26,10 @@ The backlog is the central coordination layer of AES. PM agents create and manag
 
 ## Actionable Tasks
 
-- [ ] Create `BacklogModule` in NestJS
-- [ ] Define `Epic` Mongoose schema:
+- [x] Create `BacklogModule` in NestJS
+- [x] Define `Epic` Mongoose schema:
   - [ ] `projectId`, `tenantId`, `title`, `description`, `color`, `status`, `order`, timestamps
-- [ ] Define `Story` Mongoose schema:
+- [x] Define `Story` Mongoose schema:
   - [ ] `projectId`, `epicId` (nullable), `sprintId` (nullable), `tenantId`
   - [ ] `title`, `description`
   - [ ] `type` (enum: `feature | bugfix | refactor | task`)
@@ -43,49 +43,49 @@ The backlog is the central coordination layer of AES. PM agents create and manag
   - [ ] `runId` (string)
   - [ ] `order` (number)
   - [ ] Timestamps
-- [ ] Define `Task` Mongoose schema:
+- [x] Define `Task` Mongoose schema:
   - [ ] `storyId`, `projectId`, `tenantId`
   - [ ] `title`, `description`
   - [ ] `status` (enum: `todo | in_progress | done`)
   - [ ] `assignedTo` (ObjectId, ref AgentInstance)
   - [ ] `order` (number)
   - [ ] Timestamps
-- [ ] Define `Sprint` Mongoose schema:
+- [x] Define `Sprint` Mongoose schema:
   - [ ] `projectId`, `tenantId`, `name`, `startDate`, `endDate`
   - [ ] `status` (enum: `planning | active | completed`)
   - [ ] `isReady` (boolean — triggers PM agent assignment when true)
-- [ ] Create `EpicsService`, `StoriesService`, `TasksService`, `SprintsService`
-- [ ] Create REST controllers:
+- [x] Create `EpicsService`, `StoriesService`, `TasksService`, `SprintsService`
+- [x] Create REST controllers:
   - [ ] **Epics**: `GET|POST /projects/:id/epics`, `PATCH|DELETE /projects/:id/epics/:epicId`
   - [ ] **Stories**: `GET|POST /projects/:id/stories`, `PATCH|DELETE /projects/:id/stories/:storyId`
     - [ ] `GET /projects/:id/stories?epicId=&sprintId=&status=` — filterable
   - [ ] **Tasks**: `GET|POST /projects/:id/stories/:storyId/tasks`, `PATCH|DELETE .../:taskId`
   - [ ] **Sprints**: `GET|POST /projects/:id/sprints`, `PATCH /projects/:id/sprints/:sprintId`
     - [ ] `POST /projects/:id/sprints/:sprintId/ready` — mark sprint ready → emit `sprint.ready` event
-- [ ] Emit `sprint.ready` event when sprint is marked ready (triggers PM agent assignment)
-- [ ] Emit `story.assigned` event when `assignedTo` is set on a story
-- [ ] Inject `AesGateway` into `BacklogModule` (import `WebSocketModule` or use a shared gateway provider)
-- [ ] In `StoriesService`, create `updateStatus(storyId, projectId, tenantId, status, workflowNodeStatus?)`:
+- [x] Emit `sprint.ready` event when sprint is marked ready (triggers PM agent assignment)
+- [x] Emit `story.assigned` event when `assignedTo` is set on a story
+- [x] Inject `AesGateway` into `BacklogModule` (import `WebSocketModule` or use a shared gateway provider)
+- [x] In `StoriesService`, create `updateStatus(storyId, projectId, tenantId, status, workflowNodeStatus?)`:
   - [ ] Updates `Story.status` (and optionally `Story.workflowNodeStatus`) in MongoDB
   - [ ] Immediately after saving, calls `aesGateway.emitToProject(projectId, 'story:status', { storyId, status, workflowNodeStatus })`
   - [ ] All other services (0000014, 0000028) MUST call this method instead of updating `status` directly — this ensures the WebSocket event fires on every transition
-- [ ] Write unit tests for services
+- [x] Write unit tests for services
 
 ---
 
 ## Acceptance Criteria
 
-- [ ] `POST /projects/:id/epics` creates an epic with color and order
-- [ ] `POST /projects/:id/stories` creates a story optionally linked to an epic and sprint
-- [ ] `GET /projects/:id/stories?epicId=X` returns only stories in that epic
-- [ ] `POST /projects/:id/stories/:storyId/tasks` creates tasks under a story
-- [ ] Marking sprint as ready emits `sprint.ready` event
-- [ ] Stories support all 5 kanban statuses (backlog, selected, in_progress, review, done)
-- [ ] `waitingForApproval` and `waitingForAnswer` flags are settable via PATCH
-- [ ] Every call to `StoriesService.updateStatus()` emits a `story:status` WebSocket event to the project room
-- [ ] WebSocket event payload includes `{ storyId, status, workflowNodeStatus }` so the frontend can move the card to the correct Kanban column without a page refresh
-- [ ] All data scoped to tenantId
-- [ ] Unit tests pass
+- [x] `POST /projects/:id/epics` creates an epic with color and order
+- [x] `POST /projects/:id/stories` creates a story optionally linked to an epic and sprint
+- [x] `GET /projects/:id/stories?epicId=X` returns only stories in that epic
+- [x] `POST /projects/:id/stories/:storyId/tasks` creates tasks under a story
+- [x] Marking sprint as ready emits `sprint.ready` event
+- [x] Stories support all 5 kanban statuses (backlog, selected, in_progress, review, done)
+- [x] `waitingForApproval` and `waitingForAnswer` flags are settable via PATCH
+- [x] Every call to `StoriesService.updateStatus()` emits a `story:status` WebSocket event to the project room
+- [x] WebSocket event payload includes `{ storyId, status, workflowNodeStatus }` so the frontend can move the card to the correct Kanban column without a page refresh
+- [x] All data scoped to tenantId
+- [x] Unit tests pass
 
 ---
 
