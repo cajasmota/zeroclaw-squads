@@ -290,7 +290,8 @@ EOF
   cd "${AES_DIR}"
   pm2 start ecosystem.config.js
   pm2 save
-  pm2 startup | tail -1 | $SUDO bash || true
+  local pm2_startup_cmd; pm2_startup_cmd=$(pm2 startup | tail -1)
+  eval "$SUDO $pm2_startup_cmd" 2>/dev/null || true
   success "pm2 configured and started."
 }
 
@@ -306,15 +307,20 @@ configure_proxy() {
       curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/debian.deb.txt' | $SUDO tee /etc/apt/sources.list.d/caddy-stable.list > /dev/null
       $SUDO apt-get update -qq && $SUDO apt-get install -y -qq caddy
     fi
+    local caddy_host="${DOMAIN}"
+    if [[ "$DOMAIN" == "localhost" || "$DOMAIN" =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+      caddy_host=":80"
+    fi
     $SUDO tee /etc/caddy/Caddyfile > /dev/null <<EOF
-${DOMAIN} {
+${caddy_host} {
   handle /api/* { reverse_proxy localhost:3001 }
   handle /webhooks/* { reverse_proxy localhost:3001 }
   handle /socket.io/* { reverse_proxy localhost:3001 }
   handle { reverse_proxy localhost:3000 }
 }
 EOF
-    $SUDO systemctl reload caddy
+    $SUDO systemctl enable caddy 2>/dev/null || true
+    $SUDO systemctl restart caddy
   else
     # Nginx
     if ! command -v nginx &>/dev/null; then
