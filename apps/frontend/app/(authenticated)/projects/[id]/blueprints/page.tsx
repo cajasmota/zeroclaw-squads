@@ -25,7 +25,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
-import { apiGet, apiPost } from "@/lib/api/client";
+import { apiPost } from "@/lib/api/client";
+import { useQuery } from "@tanstack/react-query";
+import { axiosGet } from "@/lib/api/axios";
+import { KEYS } from "@/lib/api/query-keys";
 import {
   Plus,
   Save,
@@ -366,26 +369,19 @@ function ExecutionHistoryPanel({
 }: {
   open: boolean; nodeId: string | null; projectId: string; onClose: () => void;
 }) {
-  const [runs, setRuns] = useState<WorkflowRun[]>([]);
-  const [loading, setLoading] = useState(false);
   const [selectedRun, setSelectedRun] = useState<{ run: WorkflowRun; exec: NodeExecution } | null>(null);
 
-  useEffect(() => {
-    if (!open || !nodeId) return;
-    setLoading(true);
-    setSelectedRun(null);
-    fetch(`/api/projects/${projectId}/workflows`)
-      .then(r => r.json())
-      .then((data: WorkflowRun[]) => {
-        // Filter runs that have an execution for this nodeId
-        const relevant = (Array.isArray(data) ? data : []).filter(run =>
-          run.nodeExecutions?.some(e => e.nodeId === nodeId)
-        );
-        setRuns(relevant);
-      })
-      .catch(console.error)
-      .finally(() => setLoading(false));
-  }, [open, nodeId, projectId]);
+  const { data: allRuns = [], isFetching: loading } = useQuery({
+    queryKey: [...KEYS.workflows(projectId), nodeId],
+    queryFn: () => axiosGet<WorkflowRun[]>(`/api/projects/${projectId}/workflows`),
+    enabled: open && !!nodeId,
+    select: (data) =>
+      (Array.isArray(data) ? data : []).filter((run) =>
+        run.nodeExecutions?.some((e) => e.nodeId === nodeId)
+      ),
+  });
+
+  const runs = allRuns;
 
   if (!open) return null;
 
@@ -507,7 +503,6 @@ export default function BlueprintsPage() {
   const params = useParams();
   const projectId = params.id as string;
 
-  const [templates, setTemplates] = useState<WorkflowTemplate[]>([]);
   const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(null);
   const [templateName, setTemplateName] = useState("Untitled Workflow");
   const [nodes, setNodes, onNodesChange] = useNodesState<Node>([]);
@@ -537,16 +532,11 @@ export default function BlueprintsPage() {
     }, [setNodes]),
   });
 
-  async function loadTemplates() {
-    try {
-      const data = await apiGet<WorkflowTemplate[]>("/api/workflows/templates");
-      setTemplates(data);
-    } catch {
-      // no-op
-    }
-  }
-
-  useEffect(() => { loadTemplates(); }, []);
+  const { data: templates = [], refetch: refetchTemplates } = useQuery({
+    queryKey: KEYS.workflowTemplates(),
+    queryFn: () => axiosGet<WorkflowTemplate[]>("/api/workflows/templates"),
+    select: (data) => (Array.isArray(data) ? data : []),
+  });
 
   function loadTemplate(t: WorkflowTemplate) {
     setSelectedTemplateId(t._id);
@@ -619,7 +609,7 @@ export default function BlueprintsPage() {
         const created = await apiPost<WorkflowTemplate>("/api/workflows/templates", body);
         setSelectedTemplateId(created._id);
       }
-      await loadTemplates();
+      await refetchTemplates();
     } catch {
       setError("Failed to save workflow");
     } finally {

@@ -1,6 +1,9 @@
 "use client";
 import {use, useCallback, useEffect, useRef, useState} from "react";
 import {useRouter} from "next/navigation";
+import {useQuery, useMutation, useQueryClient} from "@tanstack/react-query";
+import {axiosGet, axiosPost, axiosPatch} from "@/lib/api/axios";
+import {KEYS} from "@/lib/api/query-keys";
 import {EditorContent, useEditor} from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import TiptapImage from "@tiptap/extension-image";
@@ -142,25 +145,21 @@ interface DistributionEntry { role: string; cost: number; }
 interface TranscriptEntry { id: string; timestamp: string; event_type: string; message?: string; }
 
 function AnalyticsSection({ projectId }: { projectId: string }) {
-  const [burnRate, setBurnRate] = useState<BurnRateEntry[]>([]);
-  const [distribution, setDistribution] = useState<DistributionEntry[]>([]);
-  const [totalCost, setTotalCost] = useState(0);
-  const [totalTokens, setTotalTokens] = useState(0);
+  const { data: burnRateData } = useQuery({
+    queryKey: KEYS.analytics(projectId, "burn-rate"),
+    queryFn: () => axiosGet<{ data?: BurnRateEntry[]; totalCost?: number; totalTokens?: number }>(`/api/projects/${projectId}/analytics?metric=burn-rate`),
+    enabled: !!projectId,
+  });
+  const { data: distributionData } = useQuery({
+    queryKey: KEYS.analytics(projectId, "distribution"),
+    queryFn: () => axiosGet<{ data?: DistributionEntry[] }>(`/api/projects/${projectId}/analytics?metric=distribution`),
+    enabled: !!projectId,
+  });
 
-  useEffect(() => {
-    fetch(`/api/projects/${projectId}/analytics?metric=burn-rate`)
-      .then(r => r.json())
-      .then((d: { data?: BurnRateEntry[]; totalCost?: number; totalTokens?: number }) => {
-        setBurnRate(d.data ?? []);
-        setTotalCost(d.totalCost ?? 0);
-        setTotalTokens(d.totalTokens ?? 0);
-      })
-      .catch(console.error);
-    fetch(`/api/projects/${projectId}/analytics?metric=distribution`)
-      .then(r => r.json())
-      .then((d: { data?: DistributionEntry[] }) => setDistribution(d.data ?? []))
-      .catch(console.error);
-  }, [projectId]);
+  const burnRate = burnRateData?.data ?? [];
+  const distribution = distributionData?.data ?? [];
+  const totalCost = burnRateData?.totalCost ?? 0;
+  const totalTokens = burnRateData?.totalTokens ?? 0;
 
   return (
     <div className="space-y-4">
@@ -214,16 +213,12 @@ function AnalyticsSection({ projectId }: { projectId: string }) {
 // ─── Transcript Viewer ────────────────────────────────────────────────────────
 
 function TranscriptViewer({ projectId, runId }: { projectId: string; runId: string }) {
-  const [entries, setEntries] = useState<TranscriptEntry[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    fetch(`/api/projects/${projectId}/analytics?metric=transcripts/${runId}`)
-      .then(r => r.json())
-      .then((d: { entries?: TranscriptEntry[] }) => setEntries(d.entries ?? []))
-      .catch(console.error)
-      .finally(() => setLoading(false));
-  }, [projectId, runId]);
+  const { data, isLoading: loading } = useQuery({
+    queryKey: KEYS.analytics(projectId, `transcripts/${runId}`),
+    queryFn: () => axiosGet<{ entries?: TranscriptEntry[] }>(`/api/projects/${projectId}/analytics?metric=transcripts/${runId}`),
+    enabled: !!projectId && !!runId,
+  });
+  const entries = data?.entries ?? [];
 
   const typeColor = (t: string) =>
     ({ llm_response: "text-blue-400", tool_call: "text-yellow-400", system: "text-gray-400" }[t] ?? "text-gray-300");
@@ -247,30 +242,39 @@ function TranscriptViewer({ projectId, runId }: { projectId: string; runId: stri
 // ─── Dashboard Tab ───────────────────────────────────────────────────────────
 
 function DashboardTab({ projectId, liveStatuses }: { projectId: string; liveStatuses?: Record<string, string> }) {
-  const [agents, setAgents] = useState<AgentInstance[]>([]);
-  const [stories, setStories] = useState<Story[]>([]);
-  const [indexing, setIndexing] = useState(false);
   const [indexMsg, setIndexMsg] = useState<string | null>(null);
-  const [librarianStatus, setLibrarianStatus] = useState<string>("idle");
 
-  useEffect(() => {
-    fetch(`/api/projects/${projectId}/agents`).then(r => r.json()).then(d => setAgents(Array.isArray(d) ? d : [])).catch(console.error);
-    fetch(`/api/projects/${projectId}/stories`).then(r => r.json()).then(d => setStories(Array.isArray(d) ? d : [])).catch(console.error);
-    fetch(`/api/projects/${projectId}/librarian/status`).then(r => r.json()).then((d: { status: string }) => setLibrarianStatus(d.status)).catch(console.error);
-  }, [projectId]);
+  const { data: agents = [] } = useQuery({
+    queryKey: KEYS.agents(projectId),
+    queryFn: () => axiosGet<AgentInstance[]>(`/api/projects/${projectId}/agents`),
+    enabled: !!projectId,
+    select: (d) => (Array.isArray(d) ? d : []),
+  });
+  const { data: stories = [] } = useQuery({
+    queryKey: KEYS.stories(projectId),
+    queryFn: () => axiosGet<Story[]>(`/api/projects/${projectId}/stories`),
+    enabled: !!projectId,
+    select: (d) => (Array.isArray(d) ? d : []),
+  });
+  const { data: librarianData } = useQuery({
+    queryKey: [...KEYS.agents(projectId), "librarian-status"],
+    queryFn: () => axiosGet<{ status: string }>(`/api/projects/${projectId}/librarian/status`),
+    enabled: !!projectId,
+  });
+  const librarianStatus = librarianData?.status ?? "idle";
 
-  const triggerIngest = async () => {
-    setIndexing(true);
+  const ingestMutation = useMutation({
+    mutationFn: () => axiosPost(`/api/projects/${projectId}/librarian/ingest`),
+    onSuccess: () => setIndexMsg("Knowledge ingestion triggered."),
+    onError: () => setIndexMsg("Ingest failed."),
+  });
+
+  const triggerIngest = () => {
     setIndexMsg(null);
-    try {
-      const res = await fetch(`/api/projects/${projectId}/librarian/ingest`, { method: "POST" });
-      setIndexMsg(res.ok ? "Knowledge ingestion triggered." : "Ingest failed.");
-    } catch {
-      setIndexMsg("Network error.");
-    } finally {
-      setIndexing(false);
-    }
+    ingestMutation.mutate();
   };
+
+  const indexing = ingestMutation.isPending;
 
   const statusColor = (s: string) => ({ idle: "bg-green-500", busy: "bg-yellow-500", error: "bg-red-500" }[s] ?? "bg-gray-500");
 
@@ -352,27 +356,51 @@ function DashboardTab({ projectId, liveStatuses }: { projectId: string; liveStat
 // ─── Agents Tab ──────────────────────────────────────────────────────────────
 
 export function AgentsTab({ projectId, liveStatuses }: { projectId: string; liveStatuses?: Record<string, string> }) {
-  const [agents, setAgents] = useState<AgentInstance[]>([]);
-  const [stories, setStories] = useState<Story[]>([]);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
   const [selected, setSelected] = useState<AgentInstance | null>(null);
   const [editMode, setEditMode] = useState(false);
   const [editForm, setEditForm] = useState({ displayName: "", soul: "", aieosJson: "" });
   const [aieosJsonError, setAieosJsonError] = useState<string | null>(null);
-  const [saving, setSaving] = useState(false);
   const [syncOpen, setSyncOpen] = useState(false);
   const [syncFields, setSyncFields] = useState({ soul: true, aieos: true, config: false });
-  const [syncing, setSyncing] = useState(false);
   const [syncToast, setSyncToast] = useState<string | null>(null);
 
-  const fetchAgents = () => {
-    fetch(`/api/projects/${projectId}/agents`).then(r => r.json()).then(d => setAgents(Array.isArray(d) ? d : [])).catch(console.error).finally(() => setLoading(false));
-  };
+  const { data: agents = [], isLoading: loading } = useQuery({
+    queryKey: KEYS.agents(projectId),
+    queryFn: () => axiosGet<AgentInstance[]>(`/api/projects/${projectId}/agents`),
+    enabled: !!projectId,
+    select: (d) => (Array.isArray(d) ? d : []),
+  });
+  const { data: stories = [] } = useQuery({
+    queryKey: KEYS.stories(projectId),
+    queryFn: () => axiosGet<Story[]>(`/api/projects/${projectId}/stories`),
+    enabled: !!projectId,
+    select: (d) => (Array.isArray(d) ? d : []),
+  });
 
-  useEffect(() => {
-    fetchAgents();
-    fetch(`/api/projects/${projectId}/stories`).then(r => r.json()).then((s: Story[]) => setStories(Array.isArray(s) ? s : [])).catch(console.error);
-  }, [projectId]);
+  const saveAgentMutation = useMutation({
+    mutationFn: ({ agentId, payload }: { agentId: string; payload: object }) =>
+      axiosPatch(`/api/projects/${projectId}/agents/${agentId}`, payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: KEYS.agents(projectId) });
+      setEditMode(false);
+    },
+  });
+
+  const syncMutation = useMutation({
+    mutationFn: ({ agentId, fields }: { agentId: string; fields: object }) =>
+      axiosPost(`/api/projects/${projectId}/agents/${agentId}/sync`, { fields }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: KEYS.agents(projectId) });
+      setSyncToast("Agent synced from template successfully.");
+      setSyncOpen(false);
+      setTimeout(() => setSyncToast(null), 4000);
+    },
+    onError: () => {
+      setSyncToast("Sync failed. Please try again.");
+      setTimeout(() => setSyncToast(null), 4000);
+    },
+  });
 
   const openAgent = (a: AgentInstance) => {
     setSelected(a);
@@ -381,7 +409,7 @@ export function AgentsTab({ projectId, liveStatuses }: { projectId: string; live
     setEditMode(false);
   };
 
-  const saveAgent = async () => {
+  const saveAgent = () => {
     if (!selected) return;
     let aieos_identity: Record<string, unknown> | undefined;
     if (editForm.aieosJson.trim()) {
@@ -393,44 +421,19 @@ export function AgentsTab({ projectId, liveStatuses }: { projectId: string; live
         return;
       }
     }
-    setSaving(true);
-    await fetch(`/api/projects/${projectId}/agents/${selected._id}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ displayName: editForm.displayName, soul: editForm.soul, ...(aieos_identity !== undefined ? { aieos_identity } : {}) }),
+    saveAgentMutation.mutate({
+      agentId: selected._id,
+      payload: { displayName: editForm.displayName, soul: editForm.soul, ...(aieos_identity !== undefined ? { aieos_identity } : {}) },
     });
-    setSaving(false);
-    setEditMode(false);
-    fetchAgents();
   };
 
-  const syncFromTemplate = async () => {
+  const syncFromTemplate = () => {
     if (!selected) return;
-    setSyncing(true);
-    try {
-      const res = await fetch(`/api/projects/${projectId}/agents/${selected._id}/sync`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ fields: syncFields }),
-      });
-      if (res.ok) {
-        setSyncToast("Agent synced from template successfully.");
-        setSyncOpen(false);
-        fetchAgents();
-        // Refresh the selected agent data
-        const updated = await fetch(`/api/projects/${projectId}/agents`).then(r => r.json()) as AgentInstance[];
-        const refreshed = updated.find(a => a._id === selected._id);
-        if (refreshed) setSelected(refreshed);
-      } else {
-        setSyncToast("Sync failed. Please try again.");
-      }
-    } catch {
-      setSyncToast("Sync failed. Please try again.");
-    } finally {
-      setSyncing(false);
-      setTimeout(() => setSyncToast(null), 4000);
-    }
+    syncMutation.mutate({ agentId: selected._id, fields: syncFields });
   };
+
+  const saving = saveAgentMutation.isPending;
+  const syncing = syncMutation.isPending;
 
   const statusColor = (s: string) => ({ idle: "text-green-500", busy: "text-yellow-500", error: "text-red-500" }[s] ?? "text-gray-500");
 
@@ -586,10 +589,7 @@ export function AgentsTab({ projectId, liveStatuses }: { projectId: string; live
 // ─── Backlog Tab ─────────────────────────────────────────────────────────────
 
 function BacklogTab({ projectId }: { projectId: string }) {
-  const [stories, setStories] = useState<Story[]>([]);
-  const [epics, setEpics] = useState<Epic[]>([]);
-  const [sprints, setSprints] = useState<Sprint[]>([]);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
   const [expandedEpics, setExpandedEpics] = useState<Set<string>>(new Set());
   const [expandedStories, setExpandedStories] = useState<Set<string>>(new Set());
   const [storyTasks, setStoryTasks] = useState<Record<string, Task[]>>({});
@@ -602,19 +602,24 @@ function BacklogTab({ projectId }: { projectId: string }) {
   const [form, setForm] = useState({ title: "", type: "feature", priority: "medium", description: "", epicId: "", sprintId: "" });
   const [saving, setSaving] = useState(false);
 
-  const fetchAll = useCallback(() => {
-    Promise.all([
-      fetch(`/api/projects/${projectId}/stories`).then(r => r.json()),
-      fetch(`/api/projects/${projectId}/epics`).then(r => r.json()),
-      fetch(`/api/projects/${projectId}/sprints`).then(r => r.json()),
-    ]).then(([s, e, sp]) => {
-      setStories(Array.isArray(s) ? s : []);
-      setEpics(Array.isArray(e) ? e : []);
-      setSprints(Array.isArray(sp) ? sp : []);
-    }).catch(console.error).finally(() => setLoading(false));
-  }, [projectId]);
-
-  useEffect(() => { fetchAll(); }, [fetchAll]);
+  const { data: stories = [], isLoading: loading } = useQuery({
+    queryKey: KEYS.stories(projectId),
+    queryFn: () => axiosGet<Story[]>(`/api/projects/${projectId}/stories`),
+    enabled: !!projectId,
+    select: (d) => (Array.isArray(d) ? d : []),
+  });
+  const { data: epics = [] } = useQuery({
+    queryKey: KEYS.epics(projectId),
+    queryFn: () => axiosGet<Epic[]>(`/api/projects/${projectId}/epics`),
+    enabled: !!projectId,
+    select: (d) => (Array.isArray(d) ? d : []),
+  });
+  const { data: sprints = [] } = useQuery({
+    queryKey: KEYS.sprints(projectId),
+    queryFn: () => axiosGet<Sprint[]>(`/api/projects/${projectId}/sprints`),
+    enabled: !!projectId,
+    select: (d) => (Array.isArray(d) ? d : []),
+  });
 
   const toggleEpic = (id: string) => setExpandedEpics(prev => {
     const n = new Set(prev);
@@ -630,20 +635,13 @@ function BacklogTab({ projectId }: { projectId: string }) {
       return n;
     });
     if (!storyTasks[storyId]) {
-      const res = await fetch(`/api/projects/${projectId}/stories/${storyId}/tasks`);
-      if (res.ok) {
-        const tasks = await res.json();
-        setStoryTasks(prev => ({ ...prev, [storyId]: Array.isArray(tasks) ? tasks : [] }));
-      }
+      const tasks = await axiosGet<Task[]>(`/api/projects/${projectId}/stories/${storyId}/tasks`).catch(() => []);
+      setStoryTasks(prev => ({ ...prev, [storyId]: Array.isArray(tasks) ? tasks : [] }));
     }
   };
 
   const toggleTask = async (storyId: string, task: Task) => {
-    await fetch(`/api/projects/${projectId}/stories/${storyId}/tasks/${task._id}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ completed: !task.completed }),
-    });
+    await axiosPatch(`/api/projects/${projectId}/stories/${storyId}/tasks/${task._id}`, { completed: !task.completed });
     setStoryTasks(prev => ({
       ...prev,
       [storyId]: (prev[storyId] ?? []).map(t => t._id === task._id ? { ...t, completed: !t.completed } : t),
@@ -653,13 +651,8 @@ function BacklogTab({ projectId }: { projectId: string }) {
   const addTask = async (storyId: string) => {
     const title = taskInputs[storyId]?.trim();
     if (!title) return;
-    const res = await fetch(`/api/projects/${projectId}/stories/${storyId}/tasks`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ title }),
-    });
-    if (res.ok) {
-      const task = await res.json();
+    const task = await axiosPost<Task>(`/api/projects/${projectId}/stories/${storyId}/tasks`, { title }).catch(() => null);
+    if (task) {
       setStoryTasks(prev => ({ ...prev, [storyId]: [...(prev[storyId] ?? []), task] }));
       setTaskInputs(prev => ({ ...prev, [storyId]: "" }));
     }
@@ -668,37 +661,26 @@ function BacklogTab({ projectId }: { projectId: string }) {
   const addEpic = async () => {
     if (!newEpicTitle.trim()) return;
     setAddingEpic(true);
-    const res = await fetch(`/api/projects/${projectId}/epics`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ title: newEpicTitle }),
-    });
-    if (res.ok) {
-      const epic = await res.json();
-      setEpics(prev => [...prev, epic]);
-    }
+    await axiosPost(`/api/projects/${projectId}/epics`, { title: newEpicTitle }).catch(console.error);
+    queryClient.invalidateQueries({ queryKey: KEYS.epics(projectId) });
     setNewEpicTitle("");
     setShowAddEpic(false);
     setAddingEpic(false);
   };
 
   const markSprintReady = async (sprintId: string) => {
-    await fetch(`/api/projects/${projectId}/sprints/${sprintId}/ready`, { method: "POST" });
-    setSprints(prev => prev.map(s => s._id === sprintId ? { ...s, status: "ready" } : s));
+    await axiosPost(`/api/projects/${projectId}/sprints/${sprintId}/ready`).catch(console.error);
+    queryClient.invalidateQueries({ queryKey: KEYS.sprints(projectId) });
   };
 
   const createStory = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
-    await fetch(`/api/projects/${projectId}/stories`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(form),
-    });
+    await axiosPost(`/api/projects/${projectId}/stories`, form).catch(console.error);
     setSaving(false);
     setShowCreate(false);
     setForm({ title: "", type: "feature", priority: "medium", description: "", epicId: "", sprintId: "" });
-    fetchAll();
+    queryClient.invalidateQueries({ queryKey: KEYS.stories(projectId) });
   };
 
   const priorityIcon = (p: string) => ({ critical: "🔴", high: "🟠", medium: "🟡", low: "⚪" }[p] ?? "⚪");
@@ -996,8 +978,7 @@ export function KanbanTab({
   liveStoryStatuses?: Record<string, string>;
   liveAgentLogs?: AgentLog[];
 }) {
-  const [stories, setStories] = useState<Story[]>([]);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
   const [selected, setSelected] = useState<Story | null>(null);
   const [comments, setComments] = useState<Comment[]>([]);
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -1010,19 +991,22 @@ export function KanbanTab({
   const [dragOverCol, setDragOverCol] = useState<string | null>(null);
   const [answering, setAnswering] = useState(false);
   const [answerText, setAnswerText] = useState("");
+  // Optimistic story status overrides for drag-and-drop
+  const [optimisticStatuses, setOptimisticStatuses] = useState<Record<string, string>>({});
 
-  const fetchStories = useCallback(() => {
-    fetch(`/api/projects/${projectId}/stories`).then(r => r.json()).then(d => {
-      setStories(Array.isArray(d) ? d : []);
-    }).catch(console.error).finally(() => setLoading(false));
-  }, [projectId]);
+  const { data: storiesData = [], isLoading: loading } = useQuery({
+    queryKey: KEYS.stories(projectId),
+    queryFn: () => axiosGet<Story[]>(`/api/projects/${projectId}/stories`),
+    enabled: !!projectId,
+    select: (d) => (Array.isArray(d) ? d : []),
+  });
 
-  useEffect(() => { fetchStories(); }, [fetchStories]);
-
-  // Live story status from WebSocket → optimistic update
-  const storiesWithLiveStatus = stories.map(s =>
-    liveStoryStatuses?.[s._id] ? { ...s, status: liveStoryStatuses[s._id] } : s
-  );
+  // Apply optimistic overrides then live WebSocket statuses
+  const stories = storiesData.map(s => {
+    const optimistic = optimisticStatuses[s._id];
+    const live = liveStoryStatuses?.[s._id];
+    return { ...s, status: live ?? optimistic ?? s.status };
+  });
 
   // Auto-move selected modal's story when live status changes
   useEffect(() => {
@@ -1031,7 +1015,7 @@ export function KanbanTab({
     }
   }, [liveStoryStatuses, selected?._id]);
 
-  let displayed = storiesWithLiveStatus;
+  let displayed = stories;
   if (filterApproval) displayed = displayed.filter(s => s.waitingForApproval);
   if (filterAnswer) displayed = displayed.filter(s => s.waitingForAnswer);
 
@@ -1039,57 +1023,45 @@ export function KanbanTab({
     setSelected(story);
     setTicketTab("discussion");
     setAnswerText("");
-    const [commentsRes, tasksRes] = await Promise.all([
-      fetch(`/api/projects/${projectId}/stories/${story._id}/comments`),
-      fetch(`/api/projects/${projectId}/stories/${story._id}/tasks`),
+    const [commentsData, tasksData] = await Promise.all([
+      axiosGet<Comment[]>(`/api/projects/${projectId}/stories/${story._id}/comments`).catch(() => []),
+      axiosGet<Task[]>(`/api/projects/${projectId}/stories/${story._id}/tasks`).catch(() => []),
     ]);
-    if (commentsRes.ok) setComments(await commentsRes.json());
-    if (tasksRes.ok) setTasks(await tasksRes.json());
+    setComments(Array.isArray(commentsData) ? commentsData : []);
+    setTasks(Array.isArray(tasksData) ? tasksData : []);
   };
 
   const postComment = async () => {
     if (!selected || !newComment.trim()) return;
     setPosting(true);
-    await fetch(`/api/projects/${projectId}/stories/${selected._id}/comments`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ content: newComment }),
-    });
+    await axiosPost(`/api/projects/${projectId}/stories/${selected._id}/comments`, { content: newComment }).catch(console.error);
     setNewComment("");
-    const res = await fetch(`/api/projects/${projectId}/stories/${selected._id}/comments`);
-    if (res.ok) setComments(await res.json());
+    const updated = await axiosGet<Comment[]>(`/api/projects/${projectId}/stories/${selected._id}/comments`).catch(() => []);
+    setComments(Array.isArray(updated) ? updated : []);
     setPosting(false);
   };
 
   const approve = async () => {
     if (!selected) return;
-    await fetch(`/api/projects/${projectId}/stories/${selected._id}/approve`, { method: "POST" });
-    fetchStories();
+    await axiosPost(`/api/projects/${projectId}/stories/${selected._id}/approve`).catch(console.error);
+    queryClient.invalidateQueries({ queryKey: KEYS.stories(projectId) });
     setSelected(null);
   };
 
   const answer = async () => {
     if (!selected || !answerText.trim()) return;
     setAnswering(true);
-    await fetch(`/api/projects/${projectId}/stories/${selected._id}/answer`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ content: answerText }),
-    });
+    await axiosPost(`/api/projects/${projectId}/stories/${selected._id}/answer`, { content: answerText }).catch(console.error);
     setAnswerText("");
-    fetchStories();
-    const res = await fetch(`/api/projects/${projectId}/stories/${selected._id}/comments`);
-    if (res.ok) setComments(await res.json());
+    queryClient.invalidateQueries({ queryKey: KEYS.stories(projectId) });
+    const updated = await axiosGet<Comment[]>(`/api/projects/${projectId}/stories/${selected._id}/comments`).catch(() => []);
+    setComments(Array.isArray(updated) ? updated : []);
     setAnswering(false);
   };
 
   const toggleTaskCompleted = async (task: Task) => {
     if (!selected) return;
-    await fetch(`/api/projects/${projectId}/stories/${selected._id}/tasks/${task._id}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ completed: !task.completed }),
-    });
+    await axiosPatch(`/api/projects/${projectId}/stories/${selected._id}/tasks/${task._id}`, { completed: !task.completed }).catch(console.error);
     setTasks(prev => prev.map(t => t._id === task._id ? { ...t, completed: !t.completed } : t));
   };
 
@@ -1107,16 +1079,14 @@ export function KanbanTab({
     e.preventDefault();
     setDragOverCol(null);
     if (!draggedId) return;
-    const story = stories.find(s => s._id === draggedId);
+    const story = storiesData.find(s => s._id === draggedId);
     if (!story || story.status === toCol) { setDraggedId(null); return; }
     // Optimistic update
-    setStories(prev => prev.map(s => s._id === draggedId ? { ...s, status: toCol } : s));
+    setOptimisticStatuses(prev => ({ ...prev, [draggedId]: toCol }));
     setDraggedId(null);
-    await fetch(`/api/projects/${projectId}/stories/${draggedId}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ status: toCol }),
-    });
+    await axiosPatch(`/api/projects/${projectId}/stories/${draggedId}`, { status: toCol }).catch(console.error);
+    queryClient.invalidateQueries({ queryKey: KEYS.stories(projectId) });
+    setOptimisticStatuses(prev => { const n = { ...prev }; delete n[draggedId!]; return n; });
   };
   const handleDragLeave = () => setDragOverCol(null);
 
@@ -1311,31 +1281,29 @@ export function KanbanTab({
 // ─── Blueprints Tab (Workflow Designer) ──────────────────────────────────────
 
 function BlueprintsTab({ projectId }: { projectId: string }) {
-  const [templates, setTemplates] = useState<WorkflowTemplate[]>([]);
-  const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState<WorkflowTemplate | null>(null);
-  const [triggering, setTriggering] = useState<string | null>(null);
   const [triggerMsg, setTriggerMsg] = useState<string | null>(null);
 
-  useEffect(() => {
-    fetch(`/api/projects/${projectId}/workflows`)
-      .then(r => r.json())
-      .then(d => setTemplates(Array.isArray(d) ? d : []))
-      .catch(console.error)
-      .finally(() => setLoading(false));
-  }, [projectId]);
+  const { data: templates = [], isLoading: loading } = useQuery({
+    queryKey: KEYS.workflows(projectId),
+    queryFn: () => axiosGet<WorkflowTemplate[]>(`/api/projects/${projectId}/workflows`),
+    enabled: !!projectId,
+    select: (d) => (Array.isArray(d) ? d : []),
+  });
 
-  const triggerWorkflow = async (templateId: string) => {
-    setTriggering(templateId);
+  const triggerMutation = useMutation({
+    mutationFn: (templateId: string) =>
+      axiosPost(`/api/projects/${projectId}/workflows`, { templateId }),
+    onSuccess: () => setTriggerMsg("Workflow triggered successfully."),
+    onError: () => setTriggerMsg("Failed to trigger workflow."),
+  });
+
+  const triggerWorkflow = (templateId: string) => {
     setTriggerMsg(null);
-    const res = await fetch(`/api/projects/${projectId}/workflows`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ templateId }),
-    });
-    setTriggerMsg(res.ok ? "Workflow triggered successfully." : "Failed to trigger workflow.");
-    setTriggering(null);
+    triggerMutation.mutate(templateId);
   };
+
+  const triggering = triggerMutation.isPending ? triggerMutation.variables as string : null;
 
   if (loading) return <div className="flex justify-center py-16"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>;
 
@@ -1439,21 +1407,23 @@ function ReqDocTree({
 }
 
 function RequirementsTab({ projectId }: { projectId: string }) {
-  const [docs, setDocs] = useState<ReqDoc[]>([]);
+  const queryClient = useQueryClient();
   const [selected, setSelected] = useState<ReqDoc | null>(null);
-  const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const selectedRef = useRef<ReqDoc | null>(null);
   selectedRef.current = selected;
 
+  const { data: docs = [], isLoading: loading } = useQuery({
+    queryKey: KEYS.requirements(projectId),
+    queryFn: () => axiosGet<ReqDoc[]>(`/api/projects/${projectId}/requirements`),
+    enabled: !!projectId,
+    select: (d) => (Array.isArray(d) ? d : []),
+  });
+
   const saveDoc = useCallback(async (docId: string, newContent: unknown) => {
     setSaving(true);
-    await fetch(`/api/projects/${projectId}/requirements/${docId}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ content: newContent }),
-    });
+    await axiosPatch(`/api/projects/${projectId}/requirements/${docId}`, { content: newContent }).catch(console.error);
     setSaving(false);
   }, [projectId]);
 
@@ -1477,12 +1447,6 @@ function RequirementsTab({ projectId }: { projectId: string }) {
     },
   });
 
-  useEffect(() => {
-    fetch(`/api/projects/${projectId}/requirements`).then(r => r.json()).then(d => {
-      setDocs(Array.isArray(d) ? d : []);
-    }).catch(console.error).finally(() => setLoading(false));
-  }, [projectId]);
-
   const selectDoc = (doc: ReqDoc) => {
     setSelected(doc);
     if (editor) {
@@ -1495,14 +1459,11 @@ function RequirementsTab({ projectId }: { projectId: string }) {
   };
 
   const createDoc = async (parentId?: string) => {
-    const res = await fetch(`/api/projects/${projectId}/requirements`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ title: "New Document", content: "", parentId: parentId ?? null }),
-    });
-    const doc = await res.json();
-    setDocs(d => [...d, doc]);
-    selectDoc(doc);
+    const doc = await axiosPost<ReqDoc>(`/api/projects/${projectId}/requirements`, { title: "New Document", content: "", parentId: parentId ?? null }).catch(() => null);
+    if (doc) {
+      queryClient.invalidateQueries({ queryKey: KEYS.requirements(projectId) });
+      selectDoc(doc);
+    }
   };
 
   const manualSave = () => {
@@ -1605,40 +1566,34 @@ function ProjectSettingsTab({ project, projectId }: { project: Project; projectI
     if (form.githubInstallationId) githubApp.installationId = form.githubInstallationId;
     if (form.githubWebhookSecret) githubApp.webhookSecret = form.githubWebhookSecret;
 
-    const res = await fetch(`/api/projects/${projectId}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        name: form.name,
-        brandColor: form.brandColor,
-        config: {
-          ...(form.slackToken ? { slackToken: form.slackToken } : {}),
-          ...(form.slackChannelId ? { slackChannelId: form.slackChannelId } : {}),
-          ...(form.githubRepo ? { repoUrl: form.githubRepo } : {}),
-          ...(Object.keys(githubApp).length ? { githubApp } : {}),
-          llmKeys: {
-            ...(form.openaiKey ? { openai: form.openaiKey } : {}),
-            ...(form.anthropicKey ? { anthropic: form.anthropicKey } : {}),
-            ...(form.googleKey ? { google: form.googleKey } : {}),
-          },
-          ...(form.mcpServers ? { mcpServers: form.mcpServers.split("\n").filter(Boolean) } : {}),
-          ...(form.inviteSlackIds ? { inviteUsers: form.inviteSlackIds.split(",").map(s => s.trim()).filter(Boolean) } : {}),
+    await axiosPatch(`/api/projects/${projectId}`, {
+      name: form.name,
+      brandColor: form.brandColor,
+      config: {
+        ...(form.slackToken ? { slackToken: form.slackToken } : {}),
+        ...(form.slackChannelId ? { slackChannelId: form.slackChannelId } : {}),
+        ...(form.githubRepo ? { repoUrl: form.githubRepo } : {}),
+        ...(Object.keys(githubApp).length ? { githubApp } : {}),
+        llmKeys: {
+          ...(form.openaiKey ? { openai: form.openaiKey } : {}),
+          ...(form.anthropicKey ? { anthropic: form.anthropicKey } : {}),
+          ...(form.googleKey ? { google: form.googleKey } : {}),
         },
-      }),
-    });
+        ...(form.mcpServers ? { mcpServers: form.mcpServers.split("\n").filter(Boolean) } : {}),
+        ...(form.inviteSlackIds ? { inviteUsers: form.inviteSlackIds.split(",").map(s => s.trim()).filter(Boolean) } : {}),
+      },
+    }).then(() => { setSaved(true); setTimeout(() => setSaved(false), 3000); }).catch(console.error);
     setSaving(false);
-    if (res.ok) { setSaved(true); setTimeout(() => setSaved(false), 3000); }
   };
 
   const testSlack = async () => {
     setTestingSlack(true);
     setSlackTestMsg(null);
     try {
-      const res = await fetch(`/api/projects/${projectId}`, { method: "GET" });
-      if (res.ok) setSlackTestMsg("Slack connection test requires a configured token.");
-      else setSlackTestMsg("Unable to reach backend.");
+      await axiosGet(`/api/projects/${projectId}`);
+      setSlackTestMsg("Slack connection test requires a configured token.");
     } catch {
-      setSlackTestMsg("Network error during test.");
+      setSlackTestMsg("Unable to reach backend.");
     } finally {
       setTestingSlack(false);
     }
@@ -1769,8 +1724,6 @@ function ProjectSettingsTab({ project, projectId }: { project: Project; projectI
 export default function ProjectPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const router = useRouter();
-  const [project, setProject] = useState<Project | null>(null);
-  const [loading, setLoading] = useState(true);
   const [liveAgentStatuses, setLiveAgentStatuses] = useState<Record<string, string>>({});
   const [liveStoryStatuses, setLiveStoryStatuses] = useState<Record<string, string>>({});
   const [liveAgentLogs, setLiveAgentLogs] = useState<AgentLog[]>([]);
@@ -1787,13 +1740,15 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
     }, []),
   });
 
+  const { data: project, isLoading: loading } = useQuery({
+    queryKey: KEYS.project(id),
+    queryFn: () => axiosGet<Project>(`/api/projects/${id}`),
+    enabled: !!id,
+  });
+
   useEffect(() => {
-    fetch(`/api/projects/${id}`)
-      .then(r => { if (!r.ok) throw new Error("Not found"); return r.json(); })
-      .then(setProject)
-      .catch(() => router.push("/projects"))
-      .finally(() => setLoading(false));
-  }, [id, router]);
+    if (!loading && !project) router.push("/projects");
+  }, [loading, project, router]);
 
   if (loading) return <div className="flex items-center justify-center h-full"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>;
   if (!project) return null;

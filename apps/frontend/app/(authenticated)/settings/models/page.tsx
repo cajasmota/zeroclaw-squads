@@ -1,12 +1,22 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Alert } from "@/components/ui/alert";
-import { apiGet, apiPost, apiPatch } from "@/lib/api/client";
+import {
+  useModelStatus,
+  useModelProviders,
+  usePullModel,
+  useDeleteModel,
+  useLoadModel,
+  useUnloadModel,
+  useToggleProvider,
+} from "@/hooks/useModels";
+import { useQueryClient } from "@tanstack/react-query";
+import { KEYS } from "@/lib/api/query-keys";
 import {
   RefreshCw,
   Download,
@@ -17,26 +27,6 @@ import {
   XCircle,
   Cpu,
 } from "lucide-react";
-
-interface OllamaModel {
-  name: string;
-  size: number;
-  digest: string;
-  modified_at: string;
-  details?: { parameter_size?: string; family?: string };
-}
-
-interface OllamaStatus {
-  healthy: boolean;
-  models: OllamaModel[];
-}
-
-interface Providers {
-  openai: boolean;
-  anthropic: boolean;
-  google: boolean;
-  ollama: boolean;
-}
 
 const PROVIDER_LABELS: Record<string, string> = {
   openai: "OpenAI",
@@ -54,33 +44,20 @@ function formatBytes(bytes: number) {
 }
 
 export default function ModelsPage() {
-  const [status, setStatus] = useState<OllamaStatus | null>(null);
-  const [providers, setProviders] = useState<Providers | null>(null);
-  const [loadingStatus, setLoadingStatus] = useState(true);
+  const queryClient = useQueryClient();
   const [pullInput, setPullInput] = useState("");
-  const [pulling, setPulling] = useState(false);
   const [actionModel, setActionModel] = useState<string | null>(null);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
-  async function loadStatus() {
-    setLoadingStatus(true);
-    setError("");
-    try {
-      const [s, p] = await Promise.all([
-        apiGet<OllamaStatus>("/api/models?action=status"),
-        apiGet<Providers>("/api/models?action=providers"),
-      ]);
-      setStatus(s);
-      setProviders(p);
-    } catch {
-      setError("Failed to load Ollama status");
-    } finally {
-      setLoadingStatus(false);
-    }
-  }
+  const { data: status, isLoading: loadingStatus } = useModelStatus();
+  const { data: providers } = useModelProviders();
 
-  useEffect(() => { loadStatus(); }, []);
+  const pullMutation = usePullModel();
+  const deleteMutation = useDeleteModel();
+  const loadMutation = useLoadModel();
+  const unloadMutation = useUnloadModel();
+  const toggleProviderMutation = useToggleProvider();
 
   function flash(msg: string, isError = false) {
     if (isError) { setError(msg); setSuccess(""); }
@@ -88,69 +65,56 @@ export default function ModelsPage() {
     setTimeout(() => { setError(""); setSuccess(""); }, 4000);
   }
 
+  function refreshStatus() {
+    queryClient.invalidateQueries({ queryKey: KEYS.models() });
+    queryClient.invalidateQueries({ queryKey: KEYS.modelProviders() });
+  }
+
   async function pullModel() {
     if (!pullInput.trim()) return;
-    setPulling(true);
-    setError("");
-    setSuccess("");
-    try {
-      await apiPost("/api/models", { action: "pull", model: pullInput.trim() });
-      flash(`Model "${pullInput.trim()}" pulled successfully`);
-      setPullInput("");
-      await loadStatus();
-    } catch {
-      flash("Failed to pull model", true);
-    } finally {
-      setPulling(false);
-    }
+    const modelName = pullInput.trim();
+    pullMutation.mutate(modelName, {
+      onSuccess: () => {
+        flash(`Model "${modelName}" pulled successfully`);
+        setPullInput("");
+      },
+      onError: () => flash("Failed to pull model", true),
+    });
   }
 
   async function deleteModel(name: string) {
     if (!confirm(`Delete model "${name}"? This cannot be undone.`)) return;
     setActionModel(name);
-    try {
-      await fetch(`/api/models?model=${encodeURIComponent(name)}`, { method: "DELETE" });
-      flash(`Model "${name}" deleted`);
-      await loadStatus();
-    } catch {
-      flash("Failed to delete model", true);
-    } finally {
-      setActionModel(null);
-    }
+    deleteMutation.mutate(name, {
+      onSuccess: () => flash(`Model "${name}" deleted`),
+      onError: () => flash("Failed to delete model", true),
+      onSettled: () => setActionModel(null),
+    });
   }
 
   async function loadModel(name: string) {
     setActionModel(name);
-    try {
-      await apiPost("/api/models", { action: "load", model: name });
-      flash(`Model "${name}" loaded into memory`);
-    } catch {
-      flash("Failed to load model", true);
-    } finally {
-      setActionModel(null);
-    }
+    loadMutation.mutate(name, {
+      onSuccess: () => flash(`Model "${name}" loaded into memory`),
+      onError: () => flash("Failed to load model", true),
+      onSettled: () => setActionModel(null),
+    });
   }
 
   async function unloadModel(name: string) {
     setActionModel(name);
-    try {
-      await apiPost("/api/models", { action: "unload", model: name });
-      flash(`Model "${name}" unloaded from memory`);
-    } catch {
-      flash("Failed to unload model", true);
-    } finally {
-      setActionModel(null);
-    }
+    unloadMutation.mutate(name, {
+      onSuccess: () => flash(`Model "${name}" unloaded from memory`),
+      onError: () => flash("Failed to unload model", true),
+      onSettled: () => setActionModel(null),
+    });
   }
 
   async function toggleProvider(provider: string, enabled: boolean) {
-    try {
-      await apiPatch("/api/models", { provider, enabled });
-      setProviders((prev) => prev ? { ...prev, [provider]: enabled } : prev);
-      flash(`${PROVIDER_LABELS[provider]} ${enabled ? "enabled" : "disabled"}`);
-    } catch {
-      flash("Failed to update provider", true);
-    }
+    toggleProviderMutation.mutate({ provider, enabled }, {
+      onSuccess: () => flash(`${PROVIDER_LABELS[provider]} ${enabled ? "enabled" : "disabled"}`),
+      onError: () => flash("Failed to update provider", true),
+    });
   }
 
   return (
@@ -162,7 +126,7 @@ export default function ModelsPage() {
             Manage local Ollama models and LLM provider availability.
           </p>
         </div>
-        <Button variant="outline" size="sm" onClick={loadStatus} disabled={loadingStatus}>
+        <Button variant="outline" size="sm" onClick={refreshStatus} disabled={loadingStatus}>
           <RefreshCw className={`h-4 w-4 mr-2 ${loadingStatus ? "animate-spin" : ""}`} />
           Refresh
         </Button>
@@ -207,10 +171,10 @@ export default function ModelsPage() {
               onKeyDown={(e) => e.key === "Enter" && pullModel()}
               placeholder="e.g. qwen2.5-coder:1.5b, llama3.2:3b, mistral"
               className="flex-1"
-              disabled={pulling}
+              disabled={pullMutation.isPending}
             />
-            <Button onClick={pullModel} disabled={pulling || !pullInput.trim()}>
-              {pulling ? (
+            <Button onClick={pullModel} disabled={pullMutation.isPending || !pullInput.trim()}>
+              {pullMutation.isPending ? (
                 <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
               ) : (
                 <Download className="h-4 w-4 mr-2" />

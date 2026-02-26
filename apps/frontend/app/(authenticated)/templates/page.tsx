@@ -1,6 +1,9 @@
 "use client";
-import { useEffect, useState } from "react";
-import { Plus, Search, Download, Upload, Loader2, Edit2, X, ChevronDown, ChevronUp } from "lucide-react";
+import { useState } from "react";
+import { Plus, Search, Download, Upload, Loader2, Edit2, ChevronDown, ChevronUp } from "lucide-react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { axiosGet, axiosPost, axiosPatch } from "@/lib/api/axios";
+import { KEYS } from "@/lib/api/query-keys";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -62,7 +65,8 @@ function TemplateCard({ template, onSelect }: { template: AgentTemplate; onSelec
   );
 }
 
-function TemplateModal({ template, onClose, onSaved }: { template: AgentTemplate | null; onClose: () => void; onSaved: () => void }) {
+function TemplateModal({ template, onClose }: { template: AgentTemplate | null; onClose: () => void }) {
+  const queryClient = useQueryClient();
   const [editMode, setEditMode] = useState(!template);
   const [form, setForm] = useState({
     displayName: template?.displayName ?? "",
@@ -75,31 +79,27 @@ function TemplateModal({ template, onClose, onSaved }: { template: AgentTemplate
     skills: template?.config?.skills ?? "",
   });
   const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
   const [showAieos, setShowAieos] = useState(false);
 
-  const save = async () => {
-    setError(null);
-    setLoading(true);
-    const payload = {
-      displayName: form.displayName,
-      role: form.role,
-      soul: form.soul,
-      tags: form.tags.split(",").map((t) => t.trim()).filter(Boolean),
-      config: { model: form.model, provider: form.provider, canWriteCode: form.canWriteCode, skills: form.skills, mcpServers: template?.config?.mcpServers ?? [] },
-    };
-    try {
-      const res = template
-        ? await fetch(`/api/templates/${template._id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) })
-        : await fetch("/api/templates", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
-      if (!res.ok) throw new Error((await res.json()).message ?? "Save failed");
-      onSaved();
-    } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : "Save failed");
-    } finally {
-      setLoading(false);
-    }
-  };
+  const saveMutation = useMutation({
+    mutationFn: () => {
+      const payload = {
+        displayName: form.displayName,
+        role: form.role,
+        soul: form.soul,
+        tags: form.tags.split(",").map((t) => t.trim()).filter(Boolean),
+        config: { model: form.model, provider: form.provider, canWriteCode: form.canWriteCode, skills: form.skills, mcpServers: template?.config?.mcpServers ?? [] },
+      };
+      return template
+        ? axiosPatch<AgentTemplate>(`/api/templates/${template._id}`, payload)
+        : axiosPost<AgentTemplate>("/api/templates", payload);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: KEYS.templates() });
+      onClose();
+    },
+    onError: (err: Error) => setError(err.message ?? "Save failed"),
+  });
 
   return (
     <Dialog open onOpenChange={onClose}>
@@ -187,8 +187,8 @@ function TemplateModal({ template, onClose, onSaved }: { template: AgentTemplate
 
             <div className="flex gap-3 justify-end">
               <Button variant="outline" onClick={() => template ? setEditMode(false) : onClose()}>Cancel</Button>
-              <Button onClick={save} disabled={loading}>
-                {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Save"}
+              <Button onClick={() => saveMutation.mutate()} disabled={saveMutation.isPending}>
+                {saveMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : "Save"}
               </Button>
             </div>
           </div>
@@ -199,22 +199,21 @@ function TemplateModal({ template, onClose, onSaved }: { template: AgentTemplate
 }
 
 export default function TemplatesPage() {
-  const [templates, setTemplates] = useState<AgentTemplate[]>([]);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
   const [roleFilter, setRoleFilter] = useState("all");
   const [selected, setSelected] = useState<AgentTemplate | null | undefined>(undefined);
 
-  const fetchTemplates = () => {
-    setLoading(true);
-    fetch("/api/templates")
-      .then((r) => r.json())
-      .then((d) => setTemplates(Array.isArray(d) ? d : []))
-      .catch(console.error)
-      .finally(() => setLoading(false));
-  };
+  const { data: templates = [], isLoading } = useQuery({
+    queryKey: KEYS.templates(),
+    queryFn: () => axiosGet<AgentTemplate[]>("/api/templates"),
+    select: (data) => (Array.isArray(data) ? data : []),
+  });
 
-  useEffect(() => { fetchTemplates(); }, []);
+  const importMutation = useMutation({
+    mutationFn: (data: Partial<AgentTemplate>) => axiosPost("/api/templates", data),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: KEYS.templates() }),
+  });
 
   const filtered = templates.filter((t) => {
     const matchSearch = t.displayName.toLowerCase().includes(search.toLowerCase()) || t.tags.some(tag => tag.includes(search.toLowerCase()));
@@ -237,9 +236,8 @@ export default function TemplatesPage() {
       const file = input.files?.[0];
       if (!file) return;
       const text = await file.text();
-      const data = JSON.parse(text);
-      await fetch("/api/templates", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(data) });
-      fetchTemplates();
+      const data = JSON.parse(text) as Partial<AgentTemplate>;
+      importMutation.mutate(data);
     };
     input.click();
   };
@@ -273,7 +271,7 @@ export default function TemplatesPage() {
       </div>
 
       {/* Grid */}
-      {loading ? (
+      {isLoading ? (
         <div className="flex items-center justify-center py-16"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>
       ) : (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
@@ -297,7 +295,7 @@ export default function TemplatesPage() {
 
       {/* Modal */}
       {selected !== undefined && (
-        <TemplateModal template={selected} onClose={() => setSelected(undefined)} onSaved={() => { setSelected(undefined); fetchTemplates(); }} />
+        <TemplateModal template={selected} onClose={() => setSelected(undefined)} />
       )}
     </div>
   );

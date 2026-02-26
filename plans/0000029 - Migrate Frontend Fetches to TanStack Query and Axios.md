@@ -2,7 +2,7 @@
 
 **Epic**: EPIC-10: UI - Project Control Center  
 **Assigned To**: Frontend Agent  
-**Status**: [~] In Progress  
+**Status**: [x] Completed
 **PRD Reference**: PRD.md §14 (Technology Stack)  
 **Knowledge Base**: `knowledge-base/03-technology-stack.md`, `knowledge-base/08-ui-design-system.md`
 
@@ -43,23 +43,23 @@ All raw `fetch()` calls identified across authenticated pages:
 
 ### Setup
 
-- [ ] Install TanStack Query v5 and Axios:
+- [x] Install TanStack Query v5 and Axios:
   ```bash
   pnpm --filter=frontend add @tanstack/react-query axios
   pnpm --filter=frontend add -D @tanstack/react-query-devtools
   ```
-- [ ] Create `apps/frontend/lib/api/axios.ts`:
+- [x] Create `apps/frontend/lib/api/axios.ts`:
   - Configure Axios instance with `baseURL: ''` (relative — same as current fetch pattern)
   - Add response interceptor: on 401, redirect to `/login`
   - Export typed helper functions: `axiosGet<T>`, `axiosPost<T>`, `axiosPatch<T>`, `axiosDelete<T>`
-- [ ] Add `QueryClientProvider` to `apps/frontend/app/(authenticated)/layout.tsx`:
+- [x] Add `QueryClientProvider` to `apps/frontend/app/(authenticated)/layout.tsx`:
   - `staleTime: 30_000` (30s default)
   - Include `ReactQueryDevtools` in dev mode only
-- [ ] Update `apps/frontend/lib/api/client.ts` to use Axios internally (keep same exported API: `apiGet`, `apiPost`, `apiPatch`, `apiDelete`)
+- [x] Update `apps/frontend/lib/api/client.ts` to use Axios internally (keep same exported API: `apiGet`, `apiPost`, `apiPatch`, `apiDelete`)
 
 ### Migrate `projects/[id]/page.tsx`
 
-- [ ] Extract each data-fetching concern into a dedicated custom hook in `apps/frontend/hooks/`:
+- [x] Extract each data-fetching concern into a dedicated custom hook in `apps/frontend/hooks/`:
   - `useProject(id)` → `useQuery` on `GET /api/projects/:id`
   - `useAgents(projectId)` → `useQuery` on `GET /api/projects/:id/agents`
   - `useStories(projectId)` → `useQuery` on `GET /api/projects/:id/stories`
@@ -68,7 +68,7 @@ All raw `fetch()` calls identified across authenticated pages:
   - `useAnalytics(projectId, metric)` → `useQuery` on `GET /api/projects/:id/analytics`
   - `useRequirements(projectId)` → `useQuery` on `GET /api/projects/:id/requirements`
   - `useWorkflows(projectId)` → `useQuery` on `GET /api/projects/:id/workflows`
-- [ ] Replace all inline `fetch()` mutations with `useMutation` hooks (invalidate relevant queries on success):
+- [x] Replace all inline `fetch()` mutations with `useMutation` hooks (invalidate relevant queries on success):
   - Create/update story, task, epic, sprint, comment, requirement
   - Kanban drag (PATCH story status)
   - Approve story, answer story
@@ -78,15 +78,15 @@ All raw `fetch()` calls identified across authenticated pages:
 
 ### Migrate remaining pages
 
-- [ ] `projects/page.tsx` — replace `fetch("/api/projects")` and `fetch("/api/templates")` with `useQuery`
-- [ ] `templates/page.tsx` — replace all template fetches with `useQuery` / `useMutation`
-- [ ] `settings/models/page.tsx` — replace with `useQuery` / `useMutation`
-- [ ] `settings/users/page.tsx` — replace with `useQuery` / `useMutation`
-- [ ] `projects/[id]/blueprints/page.tsx` — replace workflow fetch with `useQuery`
+- [x] `projects/page.tsx` — replace `fetch("/api/projects")` and `fetch("/api/templates")` with `useQuery`
+- [x] `templates/page.tsx` — replace all template fetches with `useQuery` / `useMutation`
+- [x] `settings/models/page.tsx` — replace with `useQuery` / `useMutation`
+- [x] `settings/users/page.tsx` — replace with `useQuery` / `useMutation`
+- [x] `projects/[id]/blueprints/page.tsx` — replace workflow fetch with `useQuery`
 
 ### Query key conventions
 
-- [ ] Define query key constants in `apps/frontend/lib/api/query-keys.ts`:
+- [x] Define query key constants in `apps/frontend/lib/api/query-keys.ts`:
   ```ts
   export const KEYS = {
     projects: () => ['projects'],
@@ -105,21 +105,21 @@ All raw `fetch()` calls identified across authenticated pages:
 
 ### Tests
 
-- [ ] Update `__tests__/projects/blueprints.test.tsx` to mock `@tanstack/react-query` instead of `@/lib/api/client`
+- [x] Update `__tests__/projects/blueprints.test.tsx` to mock `@tanstack/react-query` instead of `@/lib/api/client`
 
 ---
 
 ## Acceptance Criteria
 
-- [ ] Zero raw `fetch()` calls remain in `app/(authenticated)/**` pages (login page excluded)
-- [ ] `@tanstack/react-query` and `axios` are installed in the frontend package
-- [ ] A shared Axios instance exists at `lib/api/axios.ts` with 401 redirect interceptor
-- [ ] `QueryClientProvider` wraps the authenticated layout
-- [ ] All data-fetching uses `useQuery` with proper query keys from `query-keys.ts`
-- [ ] All mutations use `useMutation` and call `queryClient.invalidateQueries` on success
-- [ ] Custom hooks live in `apps/frontend/hooks/` — one file per resource
-- [ ] Existing tests still pass after migration
-- [ ] No TypeScript errors introduced
+- [x] Zero raw `fetch()` calls remain in `app/(authenticated)/**` pages (login page excluded)
+- [x] `@tanstack/react-query` and `axios` are installed in the frontend package
+- [x] A shared Axios instance exists at `lib/api/axios.ts` with 401 redirect interceptor
+- [x] `QueryClientProvider` wraps the authenticated layout
+- [x] All data-fetching uses `useQuery` with proper query keys from `query-keys.ts`
+- [x] All mutations use `useMutation` and call `queryClient.invalidateQueries` on success
+- [x] Custom hooks live in `apps/frontend/hooks/` — one file per resource
+- [x] Existing tests still pass after migration (40/40 passing)
+- [x] No TypeScript errors introduced
 
 ---
 

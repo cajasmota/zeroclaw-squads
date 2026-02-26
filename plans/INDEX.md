@@ -113,7 +113,7 @@
 | [0000015](0000015%20-%20Project%20Control%20Center%20UI%20Dashboard%20and%20Agents.md) | Control Center Layout, Dashboard Tab, and Agents Tab | `[x]` | Frontend |
 | [0000016](0000016%20-%20Backlog%20and%20Kanban%20Board%20UI.md) | Backlog (Epic/Story/Task hierarchy) and Kanban Board Tabs | `[x]` | Frontend |
 | [0000019](0000019%20-%20Requirements%20Space%20and%20Project%20Settings%20UI.md) | Requirements Space (Tiptap) and Project Settings Tab | `[x]` | Frontend |
-| [0000029](0000029%20-%20Migrate%20Frontend%20Fetches%20to%20TanStack%20Query%20and%20Axios.md) | Migrate all raw fetch() calls to TanStack Query + Axios | `[~]` | Frontend |
+| [0000029](0000029%20-%20Migrate%20Frontend%20Fetches%20to%20TanStack%20Query%20and%20Axios.md) | Migrate all raw fetch() calls to TanStack Query + Axios | `[x]` | Frontend |
 
 ---
 

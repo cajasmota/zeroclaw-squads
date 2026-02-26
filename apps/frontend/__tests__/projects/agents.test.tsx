@@ -4,6 +4,7 @@
  */
 import React from "react";
 import { render, screen, waitFor, fireEvent, act } from "@testing-library/react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { AgentsTab } from "@/app/(authenticated)/projects/[id]/page";
 
 // ── Mocks ────────────────────────────────────────────────────────────────────
@@ -14,6 +15,14 @@ jest.mock("socket.io-client", () => ({ io: jest.fn(() => ({ on: jest.fn(), emit:
 // useProjectSocket — not called inside AgentsTab (it lives in the parent page)
 jest.mock("@/hooks/useProjectSocket", () => ({
   useProjectSocket: jest.fn(),
+}));
+
+jest.mock("@/lib/api/axios", () => ({
+  axiosGet: jest.fn(),
+  axiosPost: jest.fn().mockResolvedValue({}),
+  axiosPatch: jest.fn().mockResolvedValue({}),
+  axiosDelete: jest.fn().mockResolvedValue({}),
+  default: { get: jest.fn(), post: jest.fn(), patch: jest.fn(), delete: jest.fn() },
 }));
 
 const MOCK_AGENTS = [
@@ -39,18 +48,30 @@ const MOCK_AGENTS = [
   },
 ];
 
-function mockFetch(agents = MOCK_AGENTS) {
-  global.fetch = jest.fn().mockResolvedValue({
-    ok: true,
-    json: async () => agents,
-  } as Response);
+function mockAxiosGet(agents = MOCK_AGENTS) {
+  const { axiosGet } = require("@/lib/api/axios");
+  axiosGet.mockImplementation((url: string) => {
+    if (url.includes("/agents")) return Promise.resolve(agents);
+    // stories query (AgentsTab also queries stories)
+    return Promise.resolve([]);
+  });
+}
+
+// Helper to wrap with a fresh QueryClientProvider per test
+function createWrapper() {
+  const queryClient = new QueryClient({
+    defaultOptions: { queries: { retry: false } },
+  });
+  return function Wrapper({ children }: { children: React.ReactNode }) {
+    return <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>;
+  };
 }
 
 // ── AgentCard tests ───────────────────────────────────────────────────────────
 
 describe("AgentCard", () => {
   beforeEach(() => {
-    mockFetch();
+    mockAxiosGet();
   });
 
   afterEach(() => {
@@ -58,7 +79,7 @@ describe("AgentCard", () => {
   });
 
   it("renders agent display name and role badge", async () => {
-    render(<AgentsTab projectId="proj-1" />);
+    render(<AgentsTab projectId="proj-1" />, { wrapper: createWrapper() });
 
     await waitFor(() => {
       expect(screen.getByText("Alice Dev")).toBeInTheDocument();
@@ -70,7 +91,7 @@ describe("AgentCard", () => {
   });
 
   it("renders status text for each agent", async () => {
-    render(<AgentsTab projectId="proj-1" />);
+    render(<AgentsTab projectId="proj-1" />, { wrapper: createWrapper() });
 
     await waitFor(() => {
       expect(screen.getByText("idle")).toBeInTheDocument();
@@ -79,7 +100,7 @@ describe("AgentCard", () => {
   });
 
   it("overrides status when liveStatuses prop is provided", async () => {
-    render(<AgentsTab projectId="proj-1" liveStatuses={{ "agent-001": "error" }} />);
+    render(<AgentsTab projectId="proj-1" liveStatuses={{ "agent-001": "error" }} />, { wrapper: createWrapper() });
 
     await waitFor(() => {
       expect(screen.getByText("error")).toBeInTheDocument();
@@ -87,7 +108,7 @@ describe("AgentCard", () => {
   });
 
   it("renders soul bio snippet for agents that have one", async () => {
-    render(<AgentsTab projectId="proj-1" />);
+    render(<AgentsTab projectId="proj-1" />, { wrapper: createWrapper() });
 
     await waitFor(() => {
       expect(screen.getByText(/A seasoned developer/)).toBeInTheDocument();
@@ -95,7 +116,7 @@ describe("AgentCard", () => {
   });
 
   it("renders tags for agents", async () => {
-    render(<AgentsTab projectId="proj-1" />);
+    render(<AgentsTab projectId="proj-1" />, { wrapper: createWrapper() });
 
     await waitFor(() => {
       expect(screen.getByText("typescript")).toBeInTheDocument();
@@ -105,27 +126,31 @@ describe("AgentCard", () => {
   });
 
   it("calls GET /api/projects/:id/agents on mount", async () => {
-    render(<AgentsTab projectId="proj-42" />);
+    const { axiosGet } = require("@/lib/api/axios");
+
+    render(<AgentsTab projectId="proj-42" />, { wrapper: createWrapper() });
 
     await waitFor(() => {
-      expect(global.fetch).toHaveBeenCalledWith("/api/projects/proj-42/agents");
+      expect(axiosGet).toHaveBeenCalledWith("/api/projects/proj-42/agents");
     });
   });
 
   it("renders loading spinner initially then agent grid", async () => {
-    // Delay the fetch to catch the loading state
-    let resolve: (v: unknown) => void;
-    global.fetch = jest.fn().mockReturnValue(
-      new Promise((res) => {
-        resolve = res;
-      })
-    );
+    const { axiosGet } = require("@/lib/api/axios");
+    let resolveAgents: (v: unknown) => void;
 
-    render(<AgentsTab projectId="proj-1" />);
+    axiosGet.mockImplementation((url: string) => {
+      if (url.includes("/agents")) {
+        return new Promise((res) => { resolveAgents = res; });
+      }
+      return Promise.resolve([]);
+    });
+
+    render(<AgentsTab projectId="proj-1" />, { wrapper: createWrapper() });
     expect(document.querySelector("svg.animate-spin")).toBeInTheDocument();
 
     act(() => {
-      resolve!({ ok: true, json: async () => MOCK_AGENTS });
+      resolveAgents!(MOCK_AGENTS);
     });
 
     await waitFor(() => {
@@ -138,7 +163,7 @@ describe("AgentCard", () => {
 
 describe("AgentProfileModal", () => {
   beforeEach(() => {
-    mockFetch();
+    mockAxiosGet();
   });
 
   afterEach(() => {
@@ -146,7 +171,7 @@ describe("AgentProfileModal", () => {
   });
 
   it("opens modal with agent details when card is clicked", async () => {
-    render(<AgentsTab projectId="proj-1" />);
+    render(<AgentsTab projectId="proj-1" />, { wrapper: createWrapper() });
 
     await waitFor(() => {
       expect(screen.getByText("Alice Dev")).toBeInTheDocument();
@@ -161,7 +186,7 @@ describe("AgentProfileModal", () => {
   });
 
   it("modal view mode shows role, status, and soul", async () => {
-    render(<AgentsTab projectId="proj-1" />);
+    render(<AgentsTab projectId="proj-1" />, { wrapper: createWrapper() });
 
     await waitFor(() => screen.getByText("Alice Dev"));
 
@@ -176,7 +201,7 @@ describe("AgentProfileModal", () => {
   });
 
   it("modal has Edit button that switches to edit mode", async () => {
-    render(<AgentsTab projectId="proj-1" />);
+    render(<AgentsTab projectId="proj-1" />, { wrapper: createWrapper() });
 
     await waitFor(() => screen.getByText("Alice Dev"));
     fireEvent.click(screen.getAllByText("Alice Dev")[0]);
@@ -194,7 +219,7 @@ describe("AgentProfileModal", () => {
   });
 
   it("edit mode Cancel button returns to view mode", async () => {
-    render(<AgentsTab projectId="proj-1" />);
+    render(<AgentsTab projectId="proj-1" />, { wrapper: createWrapper() });
 
     await waitFor(() => screen.getByText("Alice Dev"));
     fireEvent.click(screen.getAllByText("Alice Dev")[0]);
@@ -212,13 +237,10 @@ describe("AgentProfileModal", () => {
   });
 
   it("Save button calls PATCH /api/projects/:id/agents/:agentId", async () => {
-    global.fetch = jest.fn()
-      .mockResolvedValueOnce({ ok: true, json: async () => MOCK_AGENTS })  // initial agents load
-      .mockResolvedValueOnce({ ok: true, json: async () => [] })           // stories load
-      .mockResolvedValueOnce({ ok: true, json: async () => ({}) })         // PATCH call
-      .mockResolvedValueOnce({ ok: true, json: async () => MOCK_AGENTS }); // refetch after save
+    const { axiosPatch } = require("@/lib/api/axios");
+    axiosPatch.mockResolvedValue({});
 
-    render(<AgentsTab projectId="proj-1" />);
+    render(<AgentsTab projectId="proj-1" />, { wrapper: createWrapper() });
 
     await waitFor(() => screen.getByText("Alice Dev"));
     fireEvent.click(screen.getAllByText("Alice Dev")[0]);
@@ -235,12 +257,10 @@ describe("AgentProfileModal", () => {
     fireEvent.click(screen.getByRole("button", { name: /save/i }));
 
     await waitFor(() => {
-      const calls = (global.fetch as jest.Mock).mock.calls;
-      const patchCall = calls.find(
-        ([url, opts]: [string, RequestInit]) =>
-          url.includes("/agents/agent-001") && opts?.method === "PATCH"
+      expect(axiosPatch).toHaveBeenCalledWith(
+        expect.stringContaining("/agents/agent-001"),
+        expect.objectContaining({ displayName: "Alice Updated" }),
       );
-      expect(patchCall).toBeDefined();
     });
   });
 });

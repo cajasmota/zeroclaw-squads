@@ -4,6 +4,7 @@
  */
 import React from "react";
 import { render, screen, waitFor, fireEvent, act } from "@testing-library/react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { KanbanTab } from "@/app/(authenticated)/projects/[id]/page";
 
 // ── Mocks ────────────────────────────────────────────────────────────────────
@@ -14,6 +15,14 @@ jest.mock("socket.io-client", () => ({
 
 jest.mock("@/hooks/useProjectSocket", () => ({
   useProjectSocket: jest.fn(),
+}));
+
+jest.mock("@/lib/api/axios", () => ({
+  axiosGet: jest.fn(),
+  axiosPost: jest.fn().mockResolvedValue({}),
+  axiosPatch: jest.fn().mockResolvedValue({}),
+  axiosDelete: jest.fn().mockResolvedValue({}),
+  default: { get: jest.fn(), post: jest.fn(), patch: jest.fn(), delete: jest.fn() },
 }));
 
 const MOCK_STORIES = [
@@ -71,24 +80,30 @@ const MOCK_TASKS = [
   { _id: "task-002", title: "Update changelog", completed: true },
 ];
 
-function mockFetch(stories = MOCK_STORIES, comments = MOCK_COMMENTS, tasks = MOCK_TASKS) {
-  global.fetch = jest.fn().mockImplementation((url: string) => {
-    if (url.includes("/comments")) {
-      return Promise.resolve({ ok: true, json: async () => comments });
-    }
-    if (url.includes("/tasks")) {
-      return Promise.resolve({ ok: true, json: async () => tasks });
-    }
-    // Stories fetch
-    return Promise.resolve({ ok: true, json: async () => stories });
+function mockAxiosGet(stories = MOCK_STORIES, comments = MOCK_COMMENTS, tasks = MOCK_TASKS) {
+  const { axiosGet } = require("@/lib/api/axios");
+  axiosGet.mockImplementation((url: string) => {
+    if (url.includes("/comments")) return Promise.resolve(comments);
+    if (url.includes("/tasks")) return Promise.resolve(tasks);
+    return Promise.resolve(stories);
   });
+}
+
+// Helper to wrap with a fresh QueryClientProvider per test
+function createWrapper() {
+  const queryClient = new QueryClient({
+    defaultOptions: { queries: { retry: false } },
+  });
+  return function Wrapper({ children }: { children: React.ReactNode }) {
+    return <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>;
+  };
 }
 
 // ── KanbanCard tests ─────────────────────────────────────────────────────────
 
 describe("KanbanCard", () => {
   beforeEach(() => {
-    mockFetch();
+    mockAxiosGet();
   });
 
   afterEach(() => {
@@ -96,7 +111,7 @@ describe("KanbanCard", () => {
   });
 
   it("renders story cards in their correct columns", async () => {
-    render(<KanbanTab projectId="proj-1" />);
+    render(<KanbanTab projectId="proj-1" />, { wrapper: createWrapper() });
 
     await waitFor(() => {
       expect(screen.getByText("Implement login flow")).toBeInTheDocument();
@@ -106,7 +121,7 @@ describe("KanbanCard", () => {
   });
 
   it("renders all 5 kanban columns with headers", async () => {
-    render(<KanbanTab projectId="proj-1" />);
+    render(<KanbanTab projectId="proj-1" />, { wrapper: createWrapper() });
 
     await waitFor(() => {
       expect(screen.getByText("Backlog")).toBeInTheDocument();
@@ -118,7 +133,7 @@ describe("KanbanCard", () => {
   });
 
   it("shows Approval badge on stories with waitingForApproval", async () => {
-    render(<KanbanTab projectId="proj-1" />);
+    render(<KanbanTab projectId="proj-1" />, { wrapper: createWrapper() });
 
     await waitFor(() => {
       expect(screen.getAllByText("Approval").length).toBeGreaterThanOrEqual(1);
@@ -126,7 +141,7 @@ describe("KanbanCard", () => {
   });
 
   it("shows Answer badge on stories with waitingForAnswer", async () => {
-    render(<KanbanTab projectId="proj-1" />);
+    render(<KanbanTab projectId="proj-1" />, { wrapper: createWrapper() });
 
     await waitFor(() => {
       expect(screen.getAllByText("Answer").length).toBeGreaterThanOrEqual(1);
@@ -134,7 +149,7 @@ describe("KanbanCard", () => {
   });
 
   it("shows type badge on each card", async () => {
-    render(<KanbanTab projectId="proj-1" />);
+    render(<KanbanTab projectId="proj-1" />, { wrapper: createWrapper() });
 
     await waitFor(() => {
       expect(screen.getByText("feature")).toBeInTheDocument();
@@ -144,7 +159,7 @@ describe("KanbanCard", () => {
   });
 
   it("shows column story count badge", async () => {
-    render(<KanbanTab projectId="proj-1" />);
+    render(<KanbanTab projectId="proj-1" />, { wrapper: createWrapper() });
 
     await waitFor(() => {
       // Each column shows a count; In Progress should have 1, Review should have 1
@@ -154,7 +169,7 @@ describe("KanbanCard", () => {
   });
 
   it("filters cards by Waiting Approval when filter toggled", async () => {
-    render(<KanbanTab projectId="proj-1" />);
+    render(<KanbanTab projectId="proj-1" />, { wrapper: createWrapper() });
 
     await waitFor(() => screen.getByText("Implement login flow"));
 
@@ -168,7 +183,7 @@ describe("KanbanCard", () => {
   });
 
   it("filters cards by Waiting Answer when filter toggled", async () => {
-    render(<KanbanTab projectId="proj-1" />);
+    render(<KanbanTab projectId="proj-1" />, { wrapper: createWrapper() });
 
     await waitFor(() => screen.getByText("Update docs"));
 
@@ -186,7 +201,8 @@ describe("KanbanCard", () => {
       <KanbanTab
         projectId="proj-1"
         liveStoryStatuses={{ "story-001": "done" }}
-      />
+      />,
+      { wrapper: createWrapper() }
     );
 
     await waitFor(() => {
@@ -200,7 +216,7 @@ describe("KanbanCard", () => {
 
 describe("TicketModal", () => {
   beforeEach(() => {
-    mockFetch();
+    mockAxiosGet();
   });
 
   afterEach(() => {
@@ -208,7 +224,7 @@ describe("TicketModal", () => {
   });
 
   it("opens modal with story details on card click", async () => {
-    render(<KanbanTab projectId="proj-1" />);
+    render(<KanbanTab projectId="proj-1" />, { wrapper: createWrapper() });
 
     await waitFor(() => screen.getByText("Implement login flow"));
 
@@ -221,7 +237,7 @@ describe("TicketModal", () => {
   });
 
   it("shows Discussion tab with comments", async () => {
-    render(<KanbanTab projectId="proj-1" />);
+    render(<KanbanTab projectId="proj-1" />, { wrapper: createWrapper() });
 
     await waitFor(() => screen.getByText("Implement login flow"));
     fireEvent.click(screen.getByText("Implement login flow"));
@@ -233,7 +249,7 @@ describe("TicketModal", () => {
   });
 
   it("shows Tasks tab with checklist", async () => {
-    render(<KanbanTab projectId="proj-1" />);
+    render(<KanbanTab projectId="proj-1" />, { wrapper: createWrapper() });
 
     await waitFor(() => screen.getByText("Implement login flow"));
     fireEvent.click(screen.getByText("Implement login flow"));
@@ -249,7 +265,7 @@ describe("TicketModal", () => {
   });
 
   it("shows Live Activity tab", async () => {
-    render(<KanbanTab projectId="proj-1" />);
+    render(<KanbanTab projectId="proj-1" />, { wrapper: createWrapper() });
 
     await waitFor(() => screen.getByText("Implement login flow"));
     fireEvent.click(screen.getByText("Implement login flow"));
@@ -264,7 +280,7 @@ describe("TicketModal", () => {
   });
 
   it("shows Approve button on story with waitingForApproval", async () => {
-    render(<KanbanTab projectId="proj-1" />);
+    render(<KanbanTab projectId="proj-1" />, { wrapper: createWrapper() });
 
     await waitFor(() => screen.getByText("Fix navigation bug"));
     fireEvent.click(screen.getByText("Fix navigation bug"));
@@ -275,7 +291,7 @@ describe("TicketModal", () => {
   });
 
   it("shows Answer button on story with waitingForAnswer", async () => {
-    render(<KanbanTab projectId="proj-1" />);
+    render(<KanbanTab projectId="proj-1" />, { wrapper: createWrapper() });
 
     await waitFor(() => screen.getByText("Update docs"));
     fireEvent.click(screen.getByText("Update docs"));
@@ -286,14 +302,10 @@ describe("TicketModal", () => {
   });
 
   it("calls POST /approve when Approve button clicked", async () => {
-    global.fetch = jest.fn()
-      .mockResolvedValueOnce({ ok: true, json: async () => MOCK_STORIES }) // initial
-      .mockResolvedValueOnce({ ok: true, json: async () => MOCK_COMMENTS }) // comments
-      .mockResolvedValueOnce({ ok: true, json: async () => MOCK_TASKS })    // tasks
-      .mockResolvedValueOnce({ ok: true, json: async () => ({}) })          // approve POST
-      .mockResolvedValueOnce({ ok: true, json: async () => MOCK_STORIES }); // refetch
+    const { axiosPost } = require("@/lib/api/axios");
+    axiosPost.mockResolvedValue({});
 
-    render(<KanbanTab projectId="proj-1" />);
+    render(<KanbanTab projectId="proj-1" />, { wrapper: createWrapper() });
 
     await waitFor(() => screen.getByText("Fix navigation bug"));
     fireEvent.click(screen.getByText("Fix navigation bug"));
@@ -302,25 +314,17 @@ describe("TicketModal", () => {
     fireEvent.click(screen.getByRole("button", { name: /approve.*merge/i }));
 
     await waitFor(() => {
-      const calls = (global.fetch as jest.Mock).mock.calls;
-      const approveCall = calls.find(
-        ([url, opts]: [string, RequestInit]) =>
-          url.includes("/approve") && opts?.method === "POST"
+      expect(axiosPost).toHaveBeenCalledWith(
+        expect.stringContaining("/approve"),
       );
-      expect(approveCall).toBeDefined();
     });
   });
 
   it("calls POST /answer when Answer button clicked", async () => {
-    global.fetch = jest.fn()
-      .mockResolvedValueOnce({ ok: true, json: async () => MOCK_STORIES }) // initial stories
-      .mockResolvedValueOnce({ ok: true, json: async () => MOCK_COMMENTS }) // openTicket comments
-      .mockResolvedValueOnce({ ok: true, json: async () => MOCK_TASKS })    // openTicket tasks
-      .mockResolvedValueOnce({ ok: true, json: async () => ({}) })          // answer POST
-      .mockResolvedValueOnce({ ok: true, json: async () => MOCK_STORIES }) // fetchStories after answer
-      .mockResolvedValueOnce({ ok: true, json: async () => MOCK_COMMENTS }); // refresh comments after answer
+    const { axiosPost } = require("@/lib/api/axios");
+    axiosPost.mockResolvedValue({});
 
-    render(<KanbanTab projectId="proj-1" />);
+    render(<KanbanTab projectId="proj-1" />, { wrapper: createWrapper() });
 
     await waitFor(() => screen.getByText("Update docs"));
     fireEvent.click(screen.getByText("Update docs"));
@@ -334,12 +338,10 @@ describe("TicketModal", () => {
     fireEvent.click(screen.getByRole("button", { name: /^answer$/i }));
 
     await waitFor(() => {
-      const calls = (global.fetch as jest.Mock).mock.calls;
-      const answerCall = calls.find(
-        ([url, opts]: [string, RequestInit]) =>
-          url.includes("/answer") && opts?.method === "POST"
+      expect(axiosPost).toHaveBeenCalledWith(
+        expect.stringContaining("/answer"),
+        expect.objectContaining({ content: "This is the answer" }),
       );
-      expect(answerCall).toBeDefined();
     });
   });
 
@@ -348,7 +350,7 @@ describe("TicketModal", () => {
       { agentInstanceId: "agent-1", line: "Compiling...", type: "stdout" as const, timestamp: new Date().toISOString() },
     ];
 
-    render(<KanbanTab projectId="proj-1" liveAgentLogs={mockLogs} />);
+    render(<KanbanTab projectId="proj-1" liveAgentLogs={mockLogs} />, { wrapper: createWrapper() });
 
     await waitFor(() => screen.getByText("Implement login flow"));
     fireEvent.click(screen.getByText("Implement login flow"));

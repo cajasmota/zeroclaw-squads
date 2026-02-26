@@ -4,6 +4,7 @@
  */
 import React from "react";
 import { render, screen, waitFor, fireEvent } from "@testing-library/react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 // ── Mocks ────────────────────────────────────────────────────────────────────
 
@@ -53,10 +54,30 @@ jest.mock("@xyflow/react", () => {
   };
 });
 
+// Mock axios so useQuery calls don't hit real network
+jest.mock("@/lib/api/axios", () => ({
+  axiosGet: jest.fn().mockResolvedValue([]),
+  axiosPost: jest.fn().mockResolvedValue({ _id: "new-template-id" }),
+  axiosPatch: jest.fn().mockResolvedValue({}),
+  axiosDelete: jest.fn().mockResolvedValue({}),
+  default: { get: jest.fn(), post: jest.fn(), patch: jest.fn(), delete: jest.fn() },
+}));
+
+// Keep apiPost mock for direct calls that haven't been migrated to useQuery
 jest.mock("@/lib/api/client", () => ({
   apiGet: jest.fn().mockResolvedValue([]),
   apiPost: jest.fn().mockResolvedValue({ _id: "new-template-id" }),
 }));
+
+// Helper to wrap with QueryClientProvider
+function createWrapper() {
+  const queryClient = new QueryClient({
+    defaultOptions: { queries: { retry: false } },
+  });
+  return function Wrapper({ children }: { children: React.ReactNode }) {
+    return <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>;
+  };
+}
 
 // Import page after mocks are set up
 import BlueprintsPage from "@/app/(authenticated)/projects/[id]/blueprints/page";
@@ -76,7 +97,7 @@ describe("WorkflowCanvas node rendering", () => {
   });
 
   it("renders the blueprints page with sidebar and canvas", async () => {
-    render(<BlueprintsPage />);
+    render(<BlueprintsPage />, { wrapper: createWrapper() });
 
     await waitFor(() => {
       expect(screen.getByText("New Workflow")).toBeInTheDocument();
@@ -86,7 +107,7 @@ describe("WorkflowCanvas node rendering", () => {
   });
 
   it("shows empty template list when no templates exist", async () => {
-    render(<BlueprintsPage />);
+    render(<BlueprintsPage />, { wrapper: createWrapper() });
 
     await waitFor(() => {
       expect(screen.getByText("No templates yet.")).toBeInTheDocument();
@@ -94,13 +115,13 @@ describe("WorkflowCanvas node rendering", () => {
   });
 
   it("renders templates in sidebar when templates are loaded", async () => {
-    const { apiGet } = require("@/lib/api/client");
-    apiGet.mockResolvedValueOnce([
+    const { axiosGet } = require("@/lib/api/axios");
+    axiosGet.mockResolvedValueOnce([
       { _id: "tmpl-1", name: "Dev Workflow", description: "Standard dev loop", nodes: [], edges: [] },
       { _id: "tmpl-2", name: "Review Workflow", description: "Code review pipeline", nodes: [], edges: [] },
     ]);
 
-    render(<BlueprintsPage />);
+    render(<BlueprintsPage />, { wrapper: createWrapper() });
 
     await waitFor(() => {
       expect(screen.getByText("Dev Workflow")).toBeInTheDocument();
@@ -113,7 +134,7 @@ describe("WorkflowCanvas node rendering", () => {
     const setNodesMock = jest.fn();
     useNodesState.mockImplementation((initial: any) => [initial, setNodesMock, jest.fn()]);
 
-    render(<BlueprintsPage />);
+    render(<BlueprintsPage />, { wrapper: createWrapper() });
 
     await waitFor(() => screen.getByText("New Workflow"));
     fireEvent.click(screen.getByText("New Workflow"));
@@ -130,7 +151,7 @@ describe("WorkflowCanvas node rendering", () => {
   });
 
   it("Agent Task node palette button is present", async () => {
-    render(<BlueprintsPage />);
+    render(<BlueprintsPage />, { wrapper: createWrapper() });
 
     await waitFor(() => {
       expect(screen.getByText("Agent Task")).toBeInTheDocument();
@@ -138,7 +159,7 @@ describe("WorkflowCanvas node rendering", () => {
   });
 
   it("Approval Gate node palette button is present", async () => {
-    render(<BlueprintsPage />);
+    render(<BlueprintsPage />, { wrapper: createWrapper() });
 
     await waitFor(() => {
       expect(screen.getByText("Approval Gate")).toBeInTheDocument();
@@ -163,7 +184,7 @@ describe("WorkflowCanvas node rendering", () => {
     ];
     useNodesState.mockReturnValue([mockNodes, jest.fn(), jest.fn()]);
 
-    render(<BlueprintsPage />);
+    render(<BlueprintsPage />, { wrapper: createWrapper() });
 
     await waitFor(() => {
       expect(screen.getByText("Write Code")).toBeInTheDocument();
@@ -186,7 +207,7 @@ describe("WorkflowCanvas node rendering", () => {
     ];
     useNodesState.mockReturnValue([mockNodes, jest.fn(), jest.fn()]);
 
-    render(<BlueprintsPage />);
+    render(<BlueprintsPage />, { wrapper: createWrapper() });
 
     await waitFor(() => {
       expect(screen.getByText("Human Approval")).toBeInTheDocument();
@@ -194,10 +215,9 @@ describe("WorkflowCanvas node rendering", () => {
   });
 
   it("Save button calls apiPost with workflow data", async () => {
-    const { apiGet, apiPost } = require("@/lib/api/client");
-    apiGet.mockResolvedValue([]);
+    const { apiPost } = require("@/lib/api/client");
 
-    render(<BlueprintsPage />);
+    render(<BlueprintsPage />, { wrapper: createWrapper() });
 
     await waitFor(() => screen.getByText("Save"));
     fireEvent.click(screen.getByText("Save"));
@@ -219,7 +239,7 @@ describe("WorkflowCanvas node rendering", () => {
       return { emit: jest.fn() };
     });
 
-    render(<BlueprintsPage />);
+    render(<BlueprintsPage />, { wrapper: createWrapper() });
 
     await waitFor(() => screen.getByTestId("react-flow"));
 

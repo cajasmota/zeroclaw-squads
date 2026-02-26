@@ -1,7 +1,10 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Plus, Loader2, Users, ArrowRight, ArrowLeft, Check } from "lucide-react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { axiosGet, axiosPost } from "@/lib/api/axios";
+import { KEYS } from "@/lib/api/query-keys";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -63,14 +66,20 @@ interface WizardState {
 
 function NewProjectWizard({ onClose, onCreated }: { onClose: () => void; onCreated: () => void }) {
   const [step, setStep] = useState<WizardStep>(1);
-  const [templates, setTemplates] = useState<Template[]>([]);
   const [state, setState] = useState<WizardState>({ name: "", slug: "", brandColor: "#004176", assignments: [] });
   const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    fetch("/api/templates").then((r) => r.json()).then((d) => setTemplates(Array.isArray(d) ? d : [])).catch(console.error);
-  }, []);
+  const { data: templates = [] } = useQuery({
+    queryKey: KEYS.templates(),
+    queryFn: () => axiosGet<Template[]>("/api/templates"),
+    select: (data) => (Array.isArray(data) ? data : []),
+  });
+
+  const createProjectMutation = useMutation({
+    mutationFn: (payload: object) => axiosPost<Project>("/api/projects", payload),
+    onSuccess: () => onCreated(),
+    onError: (err: Error) => setError(err.message ?? "Failed to create project"),
+  });
 
   const generateSlug = (name: string) => name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 30);
 
@@ -84,7 +93,6 @@ function NewProjectWizard({ onClose, onCreated }: { onClose: () => void; onCreat
       if (existing >= 0) {
         return { ...prev, assignments: prev.assignments.filter((_, i) => i !== existing) };
       }
-      // Singleton roles: remove others of same role
       const isSingleton = SINGLETON_ROLES.includes(role);
       const filtered = isSingleton ? prev.assignments.filter((a) => a.role !== role) : prev.assignments;
       const template = templates.find((t) => t._id === templateId);
@@ -95,27 +103,14 @@ function NewProjectWizard({ onClose, onCreated }: { onClose: () => void; onCreat
   const isAssigned = (role: string, templateId: string) =>
     state.assignments.some((a) => a.role === role && a.templateId === templateId);
 
-  const handleCreate = async () => {
+  const handleCreate = () => {
     setError(null);
-    setLoading(true);
-    try {
-      const res = await fetch("/api/projects", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: state.name,
-          slug: state.slug,
-          brandColor: state.brandColor,
-          agentAssignments: state.assignments,
-        }),
-      });
-      if (!res.ok) throw new Error((await res.json()).message ?? "Failed to create project");
-      onCreated();
-    } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : "Failed");
-    } finally {
-      setLoading(false);
-    }
+    createProjectMutation.mutate({
+      name: state.name,
+      slug: state.slug,
+      brandColor: state.brandColor,
+      agentAssignments: state.assignments,
+    });
   };
 
   const roleGroups = MANDATORY_ROLES.map((role) => ({
@@ -256,8 +251,8 @@ function NewProjectWizard({ onClose, onCreated }: { onClose: () => void; onCreat
               Next <ArrowRight className="h-4 w-4 ml-2" />
             </Button>
           ) : (
-            <Button onClick={handleCreate} disabled={loading}>
-              {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <><Check className="h-4 w-4 mr-2" />Create Project</>}
+            <Button onClick={handleCreate} disabled={createProjectMutation.isPending}>
+              {createProjectMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <><Check className="h-4 w-4 mr-2" />Create Project</>}
             </Button>
           )}
         </div>
@@ -267,16 +262,14 @@ function NewProjectWizard({ onClose, onCreated }: { onClose: () => void; onCreat
 }
 
 export default function ProjectsPage() {
-  const [projects, setProjects] = useState<Project[]>([]);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
   const [showWizard, setShowWizard] = useState(false);
 
-  const fetchProjects = () => {
-    setLoading(true);
-    fetch("/api/projects").then((r) => r.json()).then((d) => setProjects(Array.isArray(d) ? d : [])).catch(console.error).finally(() => setLoading(false));
-  };
-
-  useEffect(() => { fetchProjects(); }, []);
+  const { data: projects = [], isLoading } = useQuery({
+    queryKey: KEYS.projects(),
+    queryFn: () => axiosGet<Project[]>("/api/projects"),
+    select: (data) => (Array.isArray(data) ? data : []),
+  });
 
   return (
     <div className="space-y-6">
@@ -290,7 +283,7 @@ export default function ProjectsPage() {
         </Button>
       </div>
 
-      {loading ? (
+      {isLoading ? (
         <div className="flex items-center justify-center py-16"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>
       ) : projects.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-24 text-center gap-4">
@@ -305,7 +298,15 @@ export default function ProjectsPage() {
         </div>
       )}
 
-      {showWizard && <NewProjectWizard onClose={() => setShowWizard(false)} onCreated={() => { setShowWizard(false); fetchProjects(); }} />}
+      {showWizard && (
+        <NewProjectWizard
+          onClose={() => setShowWizard(false)}
+          onCreated={() => {
+            setShowWizard(false);
+            queryClient.invalidateQueries({ queryKey: KEYS.projects() });
+          }}
+        />
+      )}
     </div>
   );
 }

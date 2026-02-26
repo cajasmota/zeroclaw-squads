@@ -1,8 +1,9 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Plus, Loader2 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
+import { useUsers, useCreateUser, useUpdateUser } from "@/hooks/useUsers";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -10,85 +11,44 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-
-interface User {
-  _id: string;
-  name: string;
-  email: string;
-  role: "admin" | "member";
-  status: "active" | "inactive";
-  createdAt: string;
-}
+import { useEffect } from "react";
 
 export default function UsersPage() {
   const { isAdmin, isLoading: authLoading } = useAuth();
   const router = useRouter();
-  const [users, setUsers] = useState<User[]>([]);
-  const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [form, setForm] = useState({ name: "", email: "", password: "", role: "member" as "admin" | "member" });
   const [formError, setFormError] = useState<string | null>(null);
-  const [formLoading, setFormLoading] = useState(false);
+
+  const { data: users = [], isLoading } = useUsers();
+  const createUserMutation = useCreateUser();
+  const updateUserMutation = useUpdateUser();
 
   useEffect(() => {
     if (!authLoading && !isAdmin) router.push("/projects");
   }, [authLoading, isAdmin, router]);
 
-  const fetchUsers = () => {
-    setLoading(true);
-    fetch("/api/users")
-      .then((r) => r.json())
-      .then((d) => setUsers(Array.isArray(d) ? d : []))
-      .catch(console.error)
-      .finally(() => setLoading(false));
-  };
-
-  useEffect(() => { fetchUsers(); }, []);
-
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
     setFormError(null);
     if (form.password.length < 8) { setFormError("Password must be at least 8 characters"); return; }
-    setFormLoading(true);
-    try {
-      const res = await fetch("/api/users", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
-      });
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        setFormError(data.message ?? "Failed to create user");
-        return;
-      }
-      setDialogOpen(false);
-      setForm({ name: "", email: "", password: "", role: "member" });
-      fetchUsers();
-    } catch {
-      setFormError("Network error");
-    } finally {
-      setFormLoading(false);
-    }
+    createUserMutation.mutate(form, {
+      onSuccess: () => {
+        setDialogOpen(false);
+        setForm({ name: "", email: "", password: "", role: "member" });
+      },
+      onError: (err) => setFormError(err.message ?? "Failed to create user"),
+    });
   };
 
-  const toggleRole = async (user: User) => {
+  const toggleRole = (user: { _id: string; role: string }) => {
     const newRole = user.role === "admin" ? "member" : "admin";
-    await fetch(`/api/users/${user._id}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ role: newRole }),
-    });
-    fetchUsers();
+    updateUserMutation.mutate({ id: user._id, payload: { role: newRole as "admin" | "member" } });
   };
 
-  const toggleStatus = async (user: User) => {
+  const toggleStatus = (user: { _id: string; status: string }) => {
     const newStatus = user.status === "active" ? "inactive" : "active";
-    await fetch(`/api/users/${user._id}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ status: newStatus }),
-    });
-    fetchUsers();
+    updateUserMutation.mutate({ id: user._id, payload: { status: newStatus as "active" | "inactive" } });
   };
 
   if (authLoading || !isAdmin) return null;
@@ -105,7 +65,7 @@ export default function UsersPage() {
         </Button>
       </div>
 
-      {loading ? (
+      {isLoading ? (
         <div className="flex items-center justify-center py-10">
           <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
         </div>
@@ -195,8 +155,8 @@ export default function UsersPage() {
             </div>
             <div className="flex gap-3 justify-end">
               <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>Cancel</Button>
-              <Button type="submit" disabled={formLoading}>
-                {formLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Create User"}
+              <Button type="submit" disabled={createUserMutation.isPending}>
+                {createUserMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : "Create User"}
               </Button>
             </div>
           </form>
