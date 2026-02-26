@@ -1,0 +1,255 @@
+{
+  "project": "AES (Agentic Engineering System)",
+  "branchName": "ralph/0000029-tanstack-query-axios",
+  "description": "Migrate all raw fetch() calls in authenticated frontend pages to TanStack Query v5 + Axios, following the project convention defined in AGENTS.md.",
+  "userStories": [
+    {
+      "id": "US-001",
+      "title": "Install TanStack Query v5 and Axios",
+      "description": "As a developer, I need TanStack Query v5 and Axios installed in the frontend package so I can use them for data fetching.",
+      "acceptanceCriteria": [
+        "Run: pnpm --filter=frontend add @tanstack/react-query axios",
+        "Run: pnpm --filter=frontend add -D @tanstack/react-query-devtools",
+        "@tanstack/react-query and axios appear in apps/frontend/package.json dependencies",
+        "pnpm typecheck passes"
+      ],
+      "priority": 1,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-002",
+      "title": "Create Axios instance at lib/api/axios.ts",
+      "description": "As a developer, I need a shared Axios instance with a 401 redirect interceptor so all API calls automatically handle auth expiry.",
+      "acceptanceCriteria": [
+        "Create apps/frontend/lib/api/axios.ts with a default Axios instance (baseURL: '')",
+        "Response interceptor: on 401, call router.push('/login') or window.location.href='/login'",
+        "Export typed helpers: axiosGet<T>, axiosPost<T>, axiosPatch<T>, axiosDelete<T> wrapping the instance",
+        "pnpm --filter=frontend typecheck passes"
+      ],
+      "priority": 2,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-003",
+      "title": "Update lib/api/client.ts to use Axios internally",
+      "description": "As a developer, I want the existing apiGet/apiPost/apiPatch/apiDelete helpers to use Axios under the hood so all callers get consistent error handling without needing changes.",
+      "acceptanceCriteria": [
+        "apps/frontend/lib/api/client.ts reimplemented using the Axios instance from lib/api/axios.ts",
+        "Exported function signatures (apiGet, apiPost, apiPatch, apiDelete) remain identical",
+        "ApiError class preserved for backward compatibility",
+        "pnpm --filter=frontend typecheck passes"
+      ],
+      "priority": 3,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-004",
+      "title": "Add QueryClientProvider to authenticated layout",
+      "description": "As a developer, I need a QueryClientProvider wrapping the authenticated app shell so all child components can use useQuery and useMutation hooks.",
+      "acceptanceCriteria": [
+        "apps/frontend/app/(authenticated)/layout.tsx wraps children with QueryClientProvider",
+        "QueryClient created with staleTime: 30_000",
+        "ReactQueryDevtools included in dev mode only (process.env.NODE_ENV === 'development')",
+        "Existing layout UI (sidebar, nav, theme toggle) is unchanged",
+        "pnpm --filter=frontend typecheck passes",
+        "Verify in browser: navigate to /projects - no console errors"
+      ],
+      "priority": 4,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-005",
+      "title": "Create query key constants at lib/api/query-keys.ts",
+      "description": "As a developer, I need centralised query key factory functions so cache invalidation is consistent and typo-proof across all hooks.",
+      "acceptanceCriteria": [
+        "Create apps/frontend/lib/api/query-keys.ts exporting a KEYS object",
+        "KEYS includes: projects(), project(id), agents(projectId), stories(projectId), epics(projectId), sprints(projectId), templates(), template(id), users(), settings(), models(), workflows(projectId), requirements(projectId), analytics(projectId, metric)",
+        "All keys return readonly arrays (e.g. ['projects', id])",
+        "pnpm --filter=frontend typecheck passes"
+      ],
+      "priority": 5,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-006",
+      "title": "Create hooks/use-projects.ts with useProjects and useProject",
+      "description": "As a developer, I need useProjects() and useProject(id) hooks backed by TanStack Query so the projects list and detail pages stop using raw fetch().",
+      "acceptanceCriteria": [
+        "Create apps/frontend/hooks/use-projects.ts",
+        "useProjects() → useQuery fetching GET /api/projects, returns array (guards against non-array)",
+        "useProject(id) → useQuery fetching GET /api/projects/:id",
+        "useCreateProject() → useMutation POST /api/projects, invalidates KEYS.projects() on success",
+        "Replace raw fetch('/api/projects') calls in app/(authenticated)/projects/page.tsx with useProjects()",
+        "pnpm --filter=frontend typecheck passes",
+        "Verify in browser: /projects loads project list correctly"
+      ],
+      "priority": 6,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-007",
+      "title": "Create hooks/use-templates.ts and migrate templates/page.tsx",
+      "description": "As a developer, I need useTemplates() and useSaveTemplate() hooks so the templates page stops using raw fetch().",
+      "acceptanceCriteria": [
+        "Create apps/frontend/hooks/use-templates.ts",
+        "useTemplates() → useQuery fetching GET /api/templates, guards Array.isArray",
+        "useSaveTemplate() → useMutation POST/PATCH /api/templates/:id, invalidates KEYS.templates() on success",
+        "useDeleteTemplate() → useMutation DELETE /api/templates/:id, invalidates KEYS.templates() on success",
+        "Replace all raw fetch() calls in app/(authenticated)/templates/page.tsx with these hooks",
+        "Replace raw fetch('/api/templates') in projects/page.tsx wizard with useTemplates()",
+        "pnpm --filter=frontend typecheck passes",
+        "Verify in browser: /templates loads and create/edit/delete works"
+      ],
+      "priority": 7,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-008",
+      "title": "Create hooks/use-agents.ts and migrate AgentsTab",
+      "description": "As a developer, I need useAgents(projectId) and mutation hooks so the AgentsTab in projects/[id]/page.tsx stops using raw fetch().",
+      "acceptanceCriteria": [
+        "Create apps/frontend/hooks/use-agents.ts",
+        "useAgents(projectId) → useQuery GET /api/projects/:id/agents, guards Array.isArray",
+        "useSaveAgent(projectId) → useMutation PATCH, invalidates KEYS.agents(projectId) on success",
+        "useSyncAgent(projectId) → useMutation POST .../sync, invalidates KEYS.agents(projectId) on success",
+        "Replace all raw fetch() calls in the AgentsTab component of projects/[id]/page.tsx",
+        "pnpm --filter=frontend typecheck passes",
+        "Verify in browser: Agents tab in a project loads correctly"
+      ],
+      "priority": 8,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-009",
+      "title": "Create hooks/use-stories.ts and migrate BacklogTab",
+      "description": "As a developer, I need useStories, useEpics, useSprints hooks so the BacklogTab stops using raw fetch().",
+      "acceptanceCriteria": [
+        "Create apps/frontend/hooks/use-stories.ts",
+        "useStories(projectId), useEpics(projectId), useSprints(projectId) → useQuery hooks",
+        "useCreateStory, useCreateEpic, useCreateTask, useToggleTask, useMarkSprintReady → useMutation hooks, each invalidating the relevant query key on success",
+        "Replace all raw fetch() calls for stories/epics/sprints/tasks in the BacklogTab component",
+        "pnpm --filter=frontend typecheck passes",
+        "Verify in browser: Backlog tab loads epics, stories, tasks correctly"
+      ],
+      "priority": 9,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-010",
+      "title": "Migrate KanbanTab story status mutations",
+      "description": "As a developer, I need the kanban drag-and-drop status update to use useMutation so it invalidates the stories cache.",
+      "acceptanceCriteria": [
+        "useUpdateStoryStatus(projectId) → useMutation PATCH /api/projects/:id/stories/:storyId, invalidates KEYS.stories(projectId)",
+        "Replace raw fetch() in the KanbanTab drag handler in projects/[id]/page.tsx",
+        "pnpm --filter=frontend typecheck passes",
+        "Verify in browser: dragging a card between kanban columns persists the change"
+      ],
+      "priority": 10,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-011",
+      "title": "Create hooks/use-ticket-dialogue.ts and migrate TicketDialogueTab",
+      "description": "As a developer, I need hooks for story comments, approval, and answer so the TicketDialogueTab stops using raw fetch().",
+      "acceptanceCriteria": [
+        "Create apps/frontend/hooks/use-ticket-dialogue.ts",
+        "useStoryComments(projectId, storyId) → useQuery GET .../comments",
+        "usePostComment, useApproveStory, useAnswerStory → useMutation hooks, invalidate comments/stories on success",
+        "Replace all raw fetch() calls in the TicketDialogueTab component",
+        "pnpm --filter=frontend typecheck passes",
+        "Verify in browser: Ticket dialogue panel loads comments and post works"
+      ],
+      "priority": 11,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-012",
+      "title": "Create hooks/use-workflows.ts and migrate BlueprintsTab",
+      "description": "As a developer, I need useWorkflows and useTriggerWorkflow hooks so the BlueprintsTab stops using raw fetch().",
+      "acceptanceCriteria": [
+        "Create apps/frontend/hooks/use-workflows.ts",
+        "useWorkflows(projectId) → useQuery GET /api/projects/:id/workflows, guards Array.isArray",
+        "useTriggerWorkflow(projectId) → useMutation POST, invalidates KEYS.workflows(projectId) on success",
+        "Replace all raw fetch() calls in BlueprintsTab in projects/[id]/page.tsx and blueprints/page.tsx",
+        "pnpm --filter=frontend typecheck passes",
+        "Verify in browser: Blueprints tab loads workflow templates correctly"
+      ],
+      "priority": 12,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-013",
+      "title": "Create hooks/use-requirements.ts and migrate RequirementsTab",
+      "description": "As a developer, I need useRequirements and mutation hooks so the RequirementsTab stops using raw fetch().",
+      "acceptanceCriteria": [
+        "Create apps/frontend/hooks/use-requirements.ts",
+        "useRequirements(projectId) → useQuery GET /api/projects/:id/requirements",
+        "useCreateRequirement, useUpdateRequirement → useMutation hooks, invalidate KEYS.requirements(projectId) on success",
+        "Replace all raw fetch() calls in the RequirementsTab component",
+        "pnpm --filter=frontend typecheck passes",
+        "Verify in browser: Requirements tab loads documents and editing works"
+      ],
+      "priority": 13,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-014",
+      "title": "Create hooks/use-settings.ts and migrate settings pages",
+      "description": "As a developer, I need useUsers hook so the settings/users page stops using raw fetch(). (Global settings page already uses apiGet/apiPatch which now go through Axios.)",
+      "acceptanceCriteria": [
+        "Create apps/frontend/hooks/use-users.ts",
+        "useUsers() → useQuery GET /api/users, guards Array.isArray",
+        "useCreateUser, useUpdateUser, useDeleteUser → useMutation hooks, invalidate KEYS.users() on success",
+        "Replace all raw fetch() calls in settings/users/page.tsx",
+        "pnpm --filter=frontend typecheck passes",
+        "Verify in browser: /settings/users loads user list and create/edit/delete works"
+      ],
+      "priority": 14,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-015",
+      "title": "Create hooks/use-models.ts and migrate settings/models/page.tsx",
+      "description": "As a developer, I need useModels and useDeleteModel hooks so the models admin page stops using raw fetch().",
+      "acceptanceCriteria": [
+        "Create apps/frontend/hooks/use-models.ts",
+        "useModels() → useQuery GET /api/models",
+        "useDeleteModel() → useMutation DELETE /api/models?model=..., invalidates KEYS.models() on success",
+        "Replace all raw fetch() calls in settings/models/page.tsx",
+        "pnpm --filter=frontend typecheck passes",
+        "Verify in browser: /settings/models loads model list and delete works"
+      ],
+      "priority": 15,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-016",
+      "title": "Verify zero raw fetch() calls remain in authenticated pages",
+      "description": "As a developer, I want to confirm the migration is complete with no raw fetch() calls left in authenticated page components.",
+      "acceptanceCriteria": [
+        "Run: grep -r 'fetch(' apps/frontend/app/\\(authenticated\\) --include='*.tsx' --include='*.ts' | grep -v 'node_modules' — output must be empty",
+        "app/login/page.tsx is the only permitted remaining fetch() call (pre-auth, no QueryClient available)",
+        "pnpm --filter=frontend build succeeds with no TypeScript errors",
+        "Verify in browser: navigate through /projects, /templates, /settings, /settings/models, /settings/users — no crashes"
+      ],
+      "priority": 16,
+      "passes": false,
+      "notes": ""
+    }
+  ]
+}
