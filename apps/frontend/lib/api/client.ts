@@ -1,23 +1,44 @@
-import { axiosGet, axiosPost, axiosPatch, axiosDelete } from "./axios";
-import type { AxiosError } from "axios";
-
-function extractMessage(error: unknown): string {
-  const axiosErr = error as AxiosError<{ message?: string }>;
-  return axiosErr?.response?.data?.message ?? (error instanceof Error ? error.message : "Request failed");
+async function request<T>(path: string, options: RequestInit): Promise<T> {
+  const res = await fetch(path, { credentials: "include", ...options });
+  if (res.status === 401) {
+    if (typeof window !== "undefined") window.location.href = "/login";
+    throw new Error("Unauthorized");
+  }
+  if (!res.ok) {
+    let message = "Request failed";
+    try {
+      const body = await res.json();
+      if (body?.message) message = body.message;
+    } catch {
+      // ignore parse errors
+    }
+    throw new Error(message);
+  }
+  // Handle empty responses (204 No Content, etc.)
+  const text = await res.text();
+  return text ? (JSON.parse(text) as T) : (undefined as unknown as T);
 }
 
-export function apiGet<T>(path: string, _token?: string): Promise<T> {
-  return axiosGet<T>(path).catch((err) => { throw new Error(extractMessage(err)); });
+export function apiGet<T>(path: string): Promise<T> {
+  return request<T>(path, { method: "GET" });
 }
 
-export function apiPost<T>(path: string, body: unknown, _token?: string): Promise<T> {
-  return axiosPost<T>(path, body).catch((err) => { throw new Error(extractMessage(err)); });
+export function apiPost<T>(path: string, body?: unknown): Promise<T> {
+  return request<T>(path, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: body !== undefined ? JSON.stringify(body) : undefined,
+  });
 }
 
-export function apiPatch<T>(path: string, body: unknown, _token?: string): Promise<T> {
-  return axiosPatch<T>(path, body).catch((err) => { throw new Error(extractMessage(err)); });
+export function apiPatch<T>(path: string, body?: unknown): Promise<T> {
+  return request<T>(path, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: body !== undefined ? JSON.stringify(body) : undefined,
+  });
 }
 
-export function apiDelete<T>(path: string, _token?: string): Promise<T> {
-  return axiosDelete<T>(path).catch((err) => { throw new Error(extractMessage(err)); });
+export function apiDelete<T>(path: string): Promise<T> {
+  return request<T>(path, { method: "DELETE" });
 }

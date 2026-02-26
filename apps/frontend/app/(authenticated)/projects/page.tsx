@@ -1,10 +1,8 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Plus, Loader2, Users, ArrowRight, ArrowLeft, Check } from "lucide-react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { axiosGet, axiosPost } from "@/lib/api/axios";
-import { KEYS } from "@/lib/api/query-keys";
+import { apiGet, apiPost } from "@/lib/api/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -68,18 +66,12 @@ function NewProjectWizard({ onClose, onCreated }: { onClose: () => void; onCreat
   const [step, setStep] = useState<WizardStep>(1);
   const [state, setState] = useState<WizardState>({ name: "", slug: "", brandColor: "#004176", assignments: [] });
   const [error, setError] = useState<string | null>(null);
+  const [creating, setCreating] = useState(false);
+  const [templates, setTemplates] = useState<Template[]>([]);
 
-  const { data: templates = [] } = useQuery({
-    queryKey: KEYS.templates(),
-    queryFn: () => axiosGet<Template[]>("/api/templates"),
-    select: (data) => (Array.isArray(data) ? data : []),
-  });
-
-  const createProjectMutation = useMutation({
-    mutationFn: (payload: object) => axiosPost<Project>("/api/projects", payload),
-    onSuccess: () => onCreated(),
-    onError: (err: Error) => setError(err.message ?? "Failed to create project"),
-  });
+  useEffect(() => {
+    apiGet<Template[]>("/api/templates").then((data) => setTemplates(Array.isArray(data) ? data : [])).catch(() => {});
+  }, []);
 
   const generateSlug = (name: string) => name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 30);
 
@@ -103,14 +95,22 @@ function NewProjectWizard({ onClose, onCreated }: { onClose: () => void; onCreat
   const isAssigned = (role: string, templateId: string) =>
     state.assignments.some((a) => a.role === role && a.templateId === templateId);
 
-  const handleCreate = () => {
+  const handleCreate = async () => {
     setError(null);
-    createProjectMutation.mutate({
-      name: state.name,
-      slug: state.slug,
-      brandColor: state.brandColor,
-      agentAssignments: state.assignments,
-    });
+    setCreating(true);
+    try {
+      await apiPost<Project>("/api/projects", {
+        name: state.name,
+        slug: state.slug,
+        brandColor: state.brandColor,
+        agentAssignments: state.assignments,
+      });
+      onCreated();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to create project");
+    } finally {
+      setCreating(false);
+    }
   };
 
   const roleGroups = MANDATORY_ROLES.map((role) => ({
@@ -251,8 +251,8 @@ function NewProjectWizard({ onClose, onCreated }: { onClose: () => void; onCreat
               Next <ArrowRight className="h-4 w-4 ml-2" />
             </Button>
           ) : (
-            <Button onClick={handleCreate} disabled={createProjectMutation.isPending}>
-              {createProjectMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <><Check className="h-4 w-4 mr-2" />Create Project</>}
+            <Button onClick={handleCreate} disabled={creating}>
+              {creating ? <Loader2 className="h-4 w-4 animate-spin" /> : <><Check className="h-4 w-4 mr-2" />Create Project</>}
             </Button>
           )}
         </div>
@@ -262,14 +262,19 @@ function NewProjectWizard({ onClose, onCreated }: { onClose: () => void; onCreat
 }
 
 export default function ProjectsPage() {
-  const queryClient = useQueryClient();
   const [showWizard, setShowWizard] = useState(false);
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const { data: projects = [], isLoading } = useQuery({
-    queryKey: KEYS.projects(),
-    queryFn: () => axiosGet<Project[]>("/api/projects"),
-    select: (data) => (Array.isArray(data) ? data : []),
-  });
+  const fetchProjects = () => {
+    setLoading(true);
+    apiGet<Project[]>("/api/projects")
+      .then((data) => setProjects(Array.isArray(data) ? data : []))
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  };
+
+  useEffect(() => { fetchProjects(); }, []);
 
   return (
     <div className="space-y-6">
@@ -283,7 +288,7 @@ export default function ProjectsPage() {
         </Button>
       </div>
 
-      {isLoading ? (
+      {loading ? (
         <div className="flex items-center justify-center py-16"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>
       ) : projects.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-24 text-center gap-4">
@@ -303,7 +308,7 @@ export default function ProjectsPage() {
           onClose={() => setShowWizard(false)}
           onCreated={() => {
             setShowWizard(false);
-            queryClient.invalidateQueries({ queryKey: KEYS.projects() });
+            fetchProjects();
           }}
         />
       )}

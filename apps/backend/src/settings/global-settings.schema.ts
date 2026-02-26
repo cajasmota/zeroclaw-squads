@@ -28,6 +28,9 @@ export class GlobalSettings {
   @Prop({ default: '' })
   slackToken: string;
 
+  @Prop({ default: '' })
+  slackSigningSecret: string;
+
   @Prop({
     type: {
       appId: { type: String, default: '' },

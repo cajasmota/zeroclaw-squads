@@ -1,0 +1,48 @@
+# Ralph Progress Log
+Started: (not yet run)
+---
+
+## Codebase Patterns
+- lib/api/client.ts exports apiGet/apiPost/apiPatch/apiDelete — use these, not axios
+- app/api/ proxy routes use getAuth(req) to read accessToken cookie and forward Authorization header to backend
+- Backend sensitive fields (API keys, tokens, secrets) must be AES-256 encrypted via Aes256EncryptionService before saving to MongoDB
+- Every Mongoose query in backend must always scope to { tenantId } — never query without it
+- Frontend UI: Shadcn UI components only — install with: pnpm dlx shadcn@latest add <component>
+- pnpm workspace: use pnpm --filter=frontend or pnpm --filter=backend for all commands
+- Backend NestJS routes: all protected by JwtAuthGuard unless decorated @Public()
+- Typecheck commands: pnpm --filter=frontend tsc --noEmit / pnpm --filter=backend tsc --noEmit
+
+## 2026-02-26 - US-006 - Migrate blueprints/page.tsx to plain fetch
+- Replaced `useQuery` + `axiosGet` + `KEYS` references in `ExecutionHistoryPanel` with `useState([])` + `useEffect` + `apiGet`
+- Replaced `useQuery` for workflow templates in `BlueprintsPage` with `useState([])` + `useEffect` + `apiGet`
+- Added `refreshTemplates()` async helper that re-fetches and updates templates state
+- Updated `saveWorkflow()` to call `refreshTemplates()` instead of `refetchTemplates()`
+- `apiPost` calls for saveWorkflow/triggerWorkflow were already correct — kept as-is
+- Files changed: `apps/frontend/app/(authenticated)/projects/[id]/blueprints/page.tsx`
+- **Learnings for future iterations:**
+  - File had no TanStack/axios imports at top but still used `useQuery`/`axiosGet`/`KEYS` in component bodies — they were removed in prior stories but not fully replaced
+  - Pattern: convert `useQuery({ enabled: open && !!nodeId, ... })` to `useEffect(() => { if (!open || !nodeId) return; ... }, [open, nodeId, projectId])`
+  - `refreshTemplates()` as a standalone async function that can be called after mutations avoids the need for refetch() from useQuery
+---
+
+## 2026-02-26 - US-007 through US-014 - Migrate projects/[id]/page.tsx and all remaining frontend pages to plain fetch
+
+### Stories completed in one pass
+US-007 through US-014 were implemented together because @tanstack/react-query was already uninstalled (US-001); the tsc typecheck cannot pass until ALL tabs in page.tsx are migrated simultaneously.
+
+### Changes made
+- **US-007**: Migrated AnalyticsSection (2 useQuery), TranscriptViewer (1 useQuery), DashboardTab (3 useQuery + 1 useMutation), AgentsTab (2 useQuery + 2 useMutation), and main ProjectPage project query → useState+useEffect+apiGet pattern
+- **US-008**: Migrated BacklogTab (3 useQuery + axiosGet/axiosPatch/axiosPost) → useState+useEffect+apiGet/apiPatch/apiPost; added refreshStories/refreshEpics/refreshSprints helpers
+- **US-009**: Migrated KanbanTab (useQuery + axiosGet/axiosPost/axiosPatch) → same pattern; added refreshStories()
+- **US-010**: Migrated BlueprintsTab, RequirementsTab, ProjectSettingsTab — all useQuery/useMutation/axiosGet/axiosPatch/axiosPost → apiGet/apiPatch/apiPost with useState+useEffect
+- **US-011**: Rewrote settings/users/page.tsx and settings/models/page.tsx to use useState+useEffect+apiGet/apiPost/apiPatch/apiDelete; local interfaces replace hook types
+- **US-012**: Deleted 11 TanStack hook files (useAgents, useAnalytics, useEpics, useModels, useProject, useRequirements, useSprints, useStories, useTemplates, useUsers, useWorkflows) and lib/api/axios.ts and lib/api/query-keys.ts
+- **US-013**: Rewrote 3 test files (agents.test.tsx, kanban.test.tsx, blueprints.test.tsx) to remove QueryClient/QueryClientProvider wrappers and switch from @/lib/api/axios mock to @/lib/api/client mock
+- **US-014**: Final audit — zero tanstack/axios/query-keys imports remain in app/, tsc --noEmit zero errors, all 40 tests pass
+
+### Key patterns
+- `const [data, setData] = useState<T[]>([])` + `const [loading, setLoading] = useState(true)` + `useEffect(() => { apiGet<T[]>(url).then(d => setData(Array.isArray(d) ? d : [])).finally(() => setLoading(false)); }, [dep])`
+- Refresh helpers: `async function refreshX() { setLoading(true); const d = await apiGet<T[]>(url); setData(Array.isArray(d) ? d : []); setLoading(false); }` — called after mutations instead of queryClient.invalidateQueries()
+- Mutation pending: explicit `const [saving, setSaving] = useState(false)` with try/finally
+- All import paths to @tanstack/react-query and @/lib/api/axios and @/lib/api/query-keys fully removed from app/
+---

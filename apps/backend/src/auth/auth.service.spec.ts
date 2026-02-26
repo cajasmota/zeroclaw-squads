@@ -10,6 +10,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import * as bcrypt from 'bcrypt';
 import { Types } from 'mongoose';
 import { AuthService } from './auth.service';
+import { SeedService } from './seed.service';
 import { Tenant } from './tenant.schema';
 import { User } from './user.schema';
 
@@ -71,6 +72,10 @@ describe('AuthService', () => {
           provide: ConfigService,
           useValue: { get: jest.fn().mockReturnValue(undefined) },
         },
+        {
+          provide: SeedService,
+          useValue: { seedDefaultTenantAndAdmin: jest.fn().mockResolvedValue(undefined) },
+        },
       ],
     }).compile();
 
@@ -114,6 +119,25 @@ describe('AuthService', () => {
       await expect(
         service.login({ email: 'nouser@example.com', password: 'password123' }),
       ).rejects.toThrow(UnauthorizedException);
+    });
+
+    it('should auto-seed and succeed when default tenant is missing on first call', async () => {
+      let callCount = 0;
+      tenantFindOne.mockImplementation(() => ({
+        lean: () => ({
+          exec: () => {
+            callCount++;
+            return Promise.resolve(callCount === 1 ? null : mockTenant);
+          },
+        }),
+      }));
+      userFindOne.mockReturnValue({ exec: () => Promise.resolve(mockUser) });
+
+      const result = await service.login({
+        email: 'test@example.com',
+        password: 'password123',
+      });
+      expect(result.accessToken).toBe('mock-token');
     });
   });
 

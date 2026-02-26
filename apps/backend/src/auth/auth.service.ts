@@ -16,6 +16,7 @@ import { User, UserDocument } from './user.schema';
 import { CreateUserDto } from './dto/create-user.dto';
 import { LoginDto } from './dto/login.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { SeedService } from './seed.service';
 
 @Injectable()
 export class AuthService {
@@ -25,6 +26,7 @@ export class AuthService {
     @InjectModel(User.name) private readonly userModel: Model<UserDocument>,
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
+    private readonly seedService: SeedService,
   ) {}
 
   async login(dto: LoginDto) {
@@ -33,10 +35,17 @@ export class AuthService {
     if (dto.tenantId) {
       tenantId = new Types.ObjectId(dto.tenantId);
     } else {
-      const defaultTenant = await this.tenantModel
+      let defaultTenant = await this.tenantModel
         .findOne({ slug: 'default' })
         .lean()
         .exec();
+      if (!defaultTenant) {
+        await this.seedService.seedDefaultTenantAndAdmin();
+        defaultTenant = await this.tenantModel
+          .findOne({ slug: 'default' })
+          .lean()
+          .exec();
+      }
       if (!defaultTenant) throw new UnauthorizedException('No tenant found');
       tenantId = defaultTenant._id;
     }

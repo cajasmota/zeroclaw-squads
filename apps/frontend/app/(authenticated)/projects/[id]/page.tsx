@@ -1,9 +1,7 @@
 "use client";
 import {use, useCallback, useEffect, useRef, useState} from "react";
 import {useRouter} from "next/navigation";
-import {useQuery, useMutation, useQueryClient} from "@tanstack/react-query";
-import {axiosGet, axiosPost, axiosPatch} from "@/lib/api/axios";
-import {KEYS} from "@/lib/api/query-keys";
+import {apiGet, apiPost, apiPatch} from "@/lib/api/client";
 import {EditorContent, useEditor} from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import TiptapImage from "@tiptap/extension-image";
@@ -145,16 +143,18 @@ interface DistributionEntry { role: string; cost: number; }
 interface TranscriptEntry { id: string; timestamp: string; event_type: string; message?: string; }
 
 function AnalyticsSection({ projectId }: { projectId: string }) {
-  const { data: burnRateData } = useQuery({
-    queryKey: KEYS.analytics(projectId, "burn-rate"),
-    queryFn: () => axiosGet<{ data?: BurnRateEntry[]; totalCost?: number; totalTokens?: number }>(`/api/projects/${projectId}/analytics?metric=burn-rate`),
-    enabled: !!projectId,
-  });
-  const { data: distributionData } = useQuery({
-    queryKey: KEYS.analytics(projectId, "distribution"),
-    queryFn: () => axiosGet<{ data?: DistributionEntry[] }>(`/api/projects/${projectId}/analytics?metric=distribution`),
-    enabled: !!projectId,
-  });
+  const [burnRateData, setBurnRateData] = useState<{ data?: BurnRateEntry[]; totalCost?: number; totalTokens?: number } | null>(null);
+  const [distributionData, setDistributionData] = useState<{ data?: DistributionEntry[] } | null>(null);
+
+  useEffect(() => {
+    if (!projectId) return;
+    apiGet<{ data?: BurnRateEntry[]; totalCost?: number; totalTokens?: number }>(`/api/projects/${projectId}/analytics?metric=burn-rate`)
+      .then(setBurnRateData)
+      .catch(console.error);
+    apiGet<{ data?: DistributionEntry[] }>(`/api/projects/${projectId}/analytics?metric=distribution`)
+      .then(setDistributionData)
+      .catch(console.error);
+  }, [projectId]);
 
   const burnRate = burnRateData?.data ?? [];
   const distribution = distributionData?.data ?? [];
@@ -213,11 +213,18 @@ function AnalyticsSection({ projectId }: { projectId: string }) {
 // ─── Transcript Viewer ────────────────────────────────────────────────────────
 
 function TranscriptViewer({ projectId, runId }: { projectId: string; runId: string }) {
-  const { data, isLoading: loading } = useQuery({
-    queryKey: KEYS.analytics(projectId, `transcripts/${runId}`),
-    queryFn: () => axiosGet<{ entries?: TranscriptEntry[] }>(`/api/projects/${projectId}/analytics?metric=transcripts/${runId}`),
-    enabled: !!projectId && !!runId,
-  });
+  const [data, setData] = useState<{ entries?: TranscriptEntry[] } | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!projectId || !runId) return;
+    setLoading(true);
+    apiGet<{ entries?: TranscriptEntry[] }>(`/api/projects/${projectId}/analytics?metric=transcripts/${runId}`)
+      .then(setData)
+      .catch(console.error)
+      .finally(() => setLoading(false));
+  }, [projectId, runId]);
+
   const entries = data?.entries ?? [];
 
   const typeColor = (t: string) =>
@@ -243,38 +250,36 @@ function TranscriptViewer({ projectId, runId }: { projectId: string; runId: stri
 
 function DashboardTab({ projectId, liveStatuses }: { projectId: string; liveStatuses?: Record<string, string> }) {
   const [indexMsg, setIndexMsg] = useState<string | null>(null);
+  const [agents, setAgents] = useState<AgentInstance[]>([]);
+  const [stories, setStories] = useState<Story[]>([]);
+  const [librarianStatus, setLibrarianStatus] = useState("idle");
+  const [indexing, setIndexing] = useState(false);
 
-  const { data: agents = [] } = useQuery({
-    queryKey: KEYS.agents(projectId),
-    queryFn: () => axiosGet<AgentInstance[]>(`/api/projects/${projectId}/agents`),
-    enabled: !!projectId,
-    select: (d) => (Array.isArray(d) ? d : []),
-  });
-  const { data: stories = [] } = useQuery({
-    queryKey: KEYS.stories(projectId),
-    queryFn: () => axiosGet<Story[]>(`/api/projects/${projectId}/stories`),
-    enabled: !!projectId,
-    select: (d) => (Array.isArray(d) ? d : []),
-  });
-  const { data: librarianData } = useQuery({
-    queryKey: [...KEYS.agents(projectId), "librarian-status"],
-    queryFn: () => axiosGet<{ status: string }>(`/api/projects/${projectId}/librarian/status`),
-    enabled: !!projectId,
-  });
-  const librarianStatus = librarianData?.status ?? "idle";
+  useEffect(() => {
+    if (!projectId) return;
+    apiGet<AgentInstance[]>(`/api/projects/${projectId}/agents`)
+      .then(d => setAgents(Array.isArray(d) ? d : []))
+      .catch(console.error);
+    apiGet<Story[]>(`/api/projects/${projectId}/stories`)
+      .then(d => setStories(Array.isArray(d) ? d : []))
+      .catch(console.error);
+    apiGet<{ status: string }>(`/api/projects/${projectId}/librarian/status`)
+      .then(d => setLibrarianStatus(d?.status ?? "idle"))
+      .catch(console.error);
+  }, [projectId]);
 
-  const ingestMutation = useMutation({
-    mutationFn: () => axiosPost(`/api/projects/${projectId}/librarian/ingest`),
-    onSuccess: () => setIndexMsg("Knowledge ingestion triggered."),
-    onError: () => setIndexMsg("Ingest failed."),
-  });
-
-  const triggerIngest = () => {
+  const triggerIngest = async () => {
     setIndexMsg(null);
-    ingestMutation.mutate();
+    setIndexing(true);
+    try {
+      await apiPost(`/api/projects/${projectId}/librarian/ingest`);
+      setIndexMsg("Knowledge ingestion triggered.");
+    } catch {
+      setIndexMsg("Ingest failed.");
+    } finally {
+      setIndexing(false);
+    }
   };
-
-  const indexing = ingestMutation.isPending;
 
   const statusColor = (s: string) => ({ idle: "bg-green-500", busy: "bg-yellow-500", error: "bg-red-500" }[s] ?? "bg-gray-500");
 
@@ -356,7 +361,6 @@ function DashboardTab({ projectId, liveStatuses }: { projectId: string; liveStat
 // ─── Agents Tab ──────────────────────────────────────────────────────────────
 
 export function AgentsTab({ projectId, liveStatuses }: { projectId: string; liveStatuses?: Record<string, string> }) {
-  const queryClient = useQueryClient();
   const [selected, setSelected] = useState<AgentInstance | null>(null);
   const [editMode, setEditMode] = useState(false);
   const [editForm, setEditForm] = useState({ displayName: "", soul: "", aieosJson: "" });
@@ -364,43 +368,28 @@ export function AgentsTab({ projectId, liveStatuses }: { projectId: string; live
   const [syncOpen, setSyncOpen] = useState(false);
   const [syncFields, setSyncFields] = useState({ soul: true, aieos: true, config: false });
   const [syncToast, setSyncToast] = useState<string | null>(null);
+  const [agents, setAgents] = useState<AgentInstance[]>([]);
+  const [stories, setStories] = useState<Story[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [syncing, setSyncing] = useState(false);
 
-  const { data: agents = [], isLoading: loading } = useQuery({
-    queryKey: KEYS.agents(projectId),
-    queryFn: () => axiosGet<AgentInstance[]>(`/api/projects/${projectId}/agents`),
-    enabled: !!projectId,
-    select: (d) => (Array.isArray(d) ? d : []),
-  });
-  const { data: stories = [] } = useQuery({
-    queryKey: KEYS.stories(projectId),
-    queryFn: () => axiosGet<Story[]>(`/api/projects/${projectId}/stories`),
-    enabled: !!projectId,
-    select: (d) => (Array.isArray(d) ? d : []),
-  });
+  useEffect(() => {
+    if (!projectId) return;
+    setLoading(true);
+    Promise.all([
+      apiGet<AgentInstance[]>(`/api/projects/${projectId}/agents`).then(d => Array.isArray(d) ? d : []),
+      apiGet<Story[]>(`/api/projects/${projectId}/stories`).then(d => Array.isArray(d) ? d : []),
+    ]).then(([agentsData, storiesData]) => {
+      setAgents(agentsData);
+      setStories(storiesData);
+    }).catch(console.error).finally(() => setLoading(false));
+  }, [projectId]);
 
-  const saveAgentMutation = useMutation({
-    mutationFn: ({ agentId, payload }: { agentId: string; payload: object }) =>
-      axiosPatch(`/api/projects/${projectId}/agents/${agentId}`, payload),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: KEYS.agents(projectId) });
-      setEditMode(false);
-    },
-  });
-
-  const syncMutation = useMutation({
-    mutationFn: ({ agentId, fields }: { agentId: string; fields: object }) =>
-      axiosPost(`/api/projects/${projectId}/agents/${agentId}/sync`, { fields }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: KEYS.agents(projectId) });
-      setSyncToast("Agent synced from template successfully.");
-      setSyncOpen(false);
-      setTimeout(() => setSyncToast(null), 4000);
-    },
-    onError: () => {
-      setSyncToast("Sync failed. Please try again.");
-      setTimeout(() => setSyncToast(null), 4000);
-    },
-  });
+  const refreshAgents = async () => {
+    const d = await apiGet<AgentInstance[]>(`/api/projects/${projectId}/agents`).catch(() => [] as AgentInstance[]);
+    setAgents(Array.isArray(d) ? d : []);
+  };
 
   const openAgent = (a: AgentInstance) => {
     setSelected(a);
@@ -409,7 +398,7 @@ export function AgentsTab({ projectId, liveStatuses }: { projectId: string; live
     setEditMode(false);
   };
 
-  const saveAgent = () => {
+  const saveAgent = async () => {
     if (!selected) return;
     let aieos_identity: Record<string, unknown> | undefined;
     if (editForm.aieosJson.trim()) {
@@ -421,19 +410,32 @@ export function AgentsTab({ projectId, liveStatuses }: { projectId: string; live
         return;
       }
     }
-    saveAgentMutation.mutate({
-      agentId: selected._id,
-      payload: { displayName: editForm.displayName, soul: editForm.soul, ...(aieos_identity !== undefined ? { aieos_identity } : {}) },
-    });
+    setSaving(true);
+    await apiPatch(`/api/projects/${projectId}/agents/${selected._id}`, {
+      displayName: editForm.displayName,
+      soul: editForm.soul,
+      ...(aieos_identity !== undefined ? { aieos_identity } : {}),
+    }).catch(console.error);
+    setSaving(false);
+    setEditMode(false);
+    await refreshAgents();
   };
 
-  const syncFromTemplate = () => {
+  const syncFromTemplate = async () => {
     if (!selected) return;
-    syncMutation.mutate({ agentId: selected._id, fields: syncFields });
+    setSyncing(true);
+    try {
+      await apiPost(`/api/projects/${projectId}/agents/${selected._id}/sync`, { fields: syncFields });
+      setSyncToast("Agent synced from template successfully.");
+      setSyncOpen(false);
+      await refreshAgents();
+    } catch {
+      setSyncToast("Sync failed. Please try again.");
+    } finally {
+      setSyncing(false);
+      setTimeout(() => setSyncToast(null), 4000);
+    }
   };
-
-  const saving = saveAgentMutation.isPending;
-  const syncing = syncMutation.isPending;
 
   const statusColor = (s: string) => ({ idle: "text-green-500", busy: "text-yellow-500", error: "text-red-500" }[s] ?? "text-gray-500");
 
@@ -589,7 +591,6 @@ export function AgentsTab({ projectId, liveStatuses }: { projectId: string; live
 // ─── Backlog Tab ─────────────────────────────────────────────────────────────
 
 function BacklogTab({ projectId }: { projectId: string }) {
-  const queryClient = useQueryClient();
   const [expandedEpics, setExpandedEpics] = useState<Set<string>>(new Set());
   const [expandedStories, setExpandedStories] = useState<Set<string>>(new Set());
   const [storyTasks, setStoryTasks] = useState<Record<string, Task[]>>({});
@@ -601,25 +602,37 @@ function BacklogTab({ projectId }: { projectId: string }) {
   const [taskInputs, setTaskInputs] = useState<Record<string, string>>({});
   const [form, setForm] = useState({ title: "", type: "feature", priority: "medium", description: "", epicId: "", sprintId: "" });
   const [saving, setSaving] = useState(false);
+  const [stories, setStories] = useState<Story[]>([]);
+  const [epics, setEpics] = useState<Epic[]>([]);
+  const [sprints, setSprints] = useState<Sprint[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const { data: stories = [], isLoading: loading } = useQuery({
-    queryKey: KEYS.stories(projectId),
-    queryFn: () => axiosGet<Story[]>(`/api/projects/${projectId}/stories`),
-    enabled: !!projectId,
-    select: (d) => (Array.isArray(d) ? d : []),
-  });
-  const { data: epics = [] } = useQuery({
-    queryKey: KEYS.epics(projectId),
-    queryFn: () => axiosGet<Epic[]>(`/api/projects/${projectId}/epics`),
-    enabled: !!projectId,
-    select: (d) => (Array.isArray(d) ? d : []),
-  });
-  const { data: sprints = [] } = useQuery({
-    queryKey: KEYS.sprints(projectId),
-    queryFn: () => axiosGet<Sprint[]>(`/api/projects/${projectId}/sprints`),
-    enabled: !!projectId,
-    select: (d) => (Array.isArray(d) ? d : []),
-  });
+  useEffect(() => {
+    if (!projectId) return;
+    setLoading(true);
+    Promise.all([
+      apiGet<Story[]>(`/api/projects/${projectId}/stories`).then(d => Array.isArray(d) ? d : []),
+      apiGet<Epic[]>(`/api/projects/${projectId}/epics`).then(d => Array.isArray(d) ? d : []),
+      apiGet<Sprint[]>(`/api/projects/${projectId}/sprints`).then(d => Array.isArray(d) ? d : []),
+    ]).then(([s, e, sp]) => {
+      setStories(s);
+      setEpics(e);
+      setSprints(sp);
+    }).catch(console.error).finally(() => setLoading(false));
+  }, [projectId]);
+
+  const refreshStories = async () => {
+    const d = await apiGet<Story[]>(`/api/projects/${projectId}/stories`).catch(() => [] as Story[]);
+    setStories(Array.isArray(d) ? d : []);
+  };
+  const refreshEpics = async () => {
+    const d = await apiGet<Epic[]>(`/api/projects/${projectId}/epics`).catch(() => [] as Epic[]);
+    setEpics(Array.isArray(d) ? d : []);
+  };
+  const refreshSprints = async () => {
+    const d = await apiGet<Sprint[]>(`/api/projects/${projectId}/sprints`).catch(() => [] as Sprint[]);
+    setSprints(Array.isArray(d) ? d : []);
+  };
 
   const toggleEpic = (id: string) => setExpandedEpics(prev => {
     const n = new Set(prev);
@@ -635,13 +648,13 @@ function BacklogTab({ projectId }: { projectId: string }) {
       return n;
     });
     if (!storyTasks[storyId]) {
-      const tasks = await axiosGet<Task[]>(`/api/projects/${projectId}/stories/${storyId}/tasks`).catch(() => []);
+      const tasks = await apiGet<Task[]>(`/api/projects/${projectId}/stories/${storyId}/tasks`).catch(() => [] as Task[]);
       setStoryTasks(prev => ({ ...prev, [storyId]: Array.isArray(tasks) ? tasks : [] }));
     }
   };
 
   const toggleTask = async (storyId: string, task: Task) => {
-    await axiosPatch(`/api/projects/${projectId}/stories/${storyId}/tasks/${task._id}`, { completed: !task.completed });
+    await apiPatch(`/api/projects/${projectId}/stories/${storyId}/tasks/${task._id}`, { completed: !task.completed });
     setStoryTasks(prev => ({
       ...prev,
       [storyId]: (prev[storyId] ?? []).map(t => t._id === task._id ? { ...t, completed: !t.completed } : t),
@@ -651,7 +664,7 @@ function BacklogTab({ projectId }: { projectId: string }) {
   const addTask = async (storyId: string) => {
     const title = taskInputs[storyId]?.trim();
     if (!title) return;
-    const task = await axiosPost<Task>(`/api/projects/${projectId}/stories/${storyId}/tasks`, { title }).catch(() => null);
+    const task = await apiPost<Task>(`/api/projects/${projectId}/stories/${storyId}/tasks`, { title }).catch(() => null);
     if (task) {
       setStoryTasks(prev => ({ ...prev, [storyId]: [...(prev[storyId] ?? []), task] }));
       setTaskInputs(prev => ({ ...prev, [storyId]: "" }));
@@ -661,26 +674,26 @@ function BacklogTab({ projectId }: { projectId: string }) {
   const addEpic = async () => {
     if (!newEpicTitle.trim()) return;
     setAddingEpic(true);
-    await axiosPost(`/api/projects/${projectId}/epics`, { title: newEpicTitle }).catch(console.error);
-    queryClient.invalidateQueries({ queryKey: KEYS.epics(projectId) });
+    await apiPost(`/api/projects/${projectId}/epics`, { title: newEpicTitle }).catch(console.error);
+    await refreshEpics();
     setNewEpicTitle("");
     setShowAddEpic(false);
     setAddingEpic(false);
   };
 
   const markSprintReady = async (sprintId: string) => {
-    await axiosPost(`/api/projects/${projectId}/sprints/${sprintId}/ready`).catch(console.error);
-    queryClient.invalidateQueries({ queryKey: KEYS.sprints(projectId) });
+    await apiPost(`/api/projects/${projectId}/sprints/${sprintId}/ready`).catch(console.error);
+    await refreshSprints();
   };
 
   const createStory = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
-    await axiosPost(`/api/projects/${projectId}/stories`, form).catch(console.error);
+    await apiPost(`/api/projects/${projectId}/stories`, form).catch(console.error);
     setSaving(false);
     setShowCreate(false);
     setForm({ title: "", type: "feature", priority: "medium", description: "", epicId: "", sprintId: "" });
-    queryClient.invalidateQueries({ queryKey: KEYS.stories(projectId) });
+    await refreshStories();
   };
 
   const priorityIcon = (p: string) => ({ critical: "🔴", high: "🟠", medium: "🟡", low: "⚪" }[p] ?? "⚪");
@@ -978,7 +991,6 @@ export function KanbanTab({
   liveStoryStatuses?: Record<string, string>;
   liveAgentLogs?: AgentLog[];
 }) {
-  const queryClient = useQueryClient();
   const [selected, setSelected] = useState<Story | null>(null);
   const [comments, setComments] = useState<Comment[]>([]);
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -993,13 +1005,22 @@ export function KanbanTab({
   const [answerText, setAnswerText] = useState("");
   // Optimistic story status overrides for drag-and-drop
   const [optimisticStatuses, setOptimisticStatuses] = useState<Record<string, string>>({});
+  const [storiesData, setStoriesData] = useState<Story[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const { data: storiesData = [], isLoading: loading } = useQuery({
-    queryKey: KEYS.stories(projectId),
-    queryFn: () => axiosGet<Story[]>(`/api/projects/${projectId}/stories`),
-    enabled: !!projectId,
-    select: (d) => (Array.isArray(d) ? d : []),
-  });
+  useEffect(() => {
+    if (!projectId) return;
+    setLoading(true);
+    apiGet<Story[]>(`/api/projects/${projectId}/stories`)
+      .then(d => setStoriesData(Array.isArray(d) ? d : []))
+      .catch(console.error)
+      .finally(() => setLoading(false));
+  }, [projectId]);
+
+  const refreshStories = async () => {
+    const d = await apiGet<Story[]>(`/api/projects/${projectId}/stories`).catch(() => [] as Story[]);
+    setStoriesData(Array.isArray(d) ? d : []);
+  };
 
   // Apply optimistic overrides then live WebSocket statuses
   const stories = storiesData.map(s => {
@@ -1024,8 +1045,8 @@ export function KanbanTab({
     setTicketTab("discussion");
     setAnswerText("");
     const [commentsData, tasksData] = await Promise.all([
-      axiosGet<Comment[]>(`/api/projects/${projectId}/stories/${story._id}/comments`).catch(() => []),
-      axiosGet<Task[]>(`/api/projects/${projectId}/stories/${story._id}/tasks`).catch(() => []),
+      apiGet<Comment[]>(`/api/projects/${projectId}/stories/${story._id}/comments`).catch(() => [] as Comment[]),
+      apiGet<Task[]>(`/api/projects/${projectId}/stories/${story._id}/tasks`).catch(() => [] as Task[]),
     ]);
     setComments(Array.isArray(commentsData) ? commentsData : []);
     setTasks(Array.isArray(tasksData) ? tasksData : []);
@@ -1034,34 +1055,34 @@ export function KanbanTab({
   const postComment = async () => {
     if (!selected || !newComment.trim()) return;
     setPosting(true);
-    await axiosPost(`/api/projects/${projectId}/stories/${selected._id}/comments`, { content: newComment }).catch(console.error);
+    await apiPost(`/api/projects/${projectId}/stories/${selected._id}/comments`, { content: newComment }).catch(console.error);
     setNewComment("");
-    const updated = await axiosGet<Comment[]>(`/api/projects/${projectId}/stories/${selected._id}/comments`).catch(() => []);
+    const updated = await apiGet<Comment[]>(`/api/projects/${projectId}/stories/${selected._id}/comments`).catch(() => [] as Comment[]);
     setComments(Array.isArray(updated) ? updated : []);
     setPosting(false);
   };
 
   const approve = async () => {
     if (!selected) return;
-    await axiosPost(`/api/projects/${projectId}/stories/${selected._id}/approve`).catch(console.error);
-    queryClient.invalidateQueries({ queryKey: KEYS.stories(projectId) });
+    await apiPost(`/api/projects/${projectId}/stories/${selected._id}/approve`).catch(console.error);
+    await refreshStories();
     setSelected(null);
   };
 
   const answer = async () => {
     if (!selected || !answerText.trim()) return;
     setAnswering(true);
-    await axiosPost(`/api/projects/${projectId}/stories/${selected._id}/answer`, { content: answerText }).catch(console.error);
+    await apiPost(`/api/projects/${projectId}/stories/${selected._id}/answer`, { content: answerText }).catch(console.error);
     setAnswerText("");
-    queryClient.invalidateQueries({ queryKey: KEYS.stories(projectId) });
-    const updated = await axiosGet<Comment[]>(`/api/projects/${projectId}/stories/${selected._id}/comments`).catch(() => []);
+    await refreshStories();
+    const updated = await apiGet<Comment[]>(`/api/projects/${projectId}/stories/${selected._id}/comments`).catch(() => [] as Comment[]);
     setComments(Array.isArray(updated) ? updated : []);
     setAnswering(false);
   };
 
   const toggleTaskCompleted = async (task: Task) => {
     if (!selected) return;
-    await axiosPatch(`/api/projects/${projectId}/stories/${selected._id}/tasks/${task._id}`, { completed: !task.completed }).catch(console.error);
+    await apiPatch(`/api/projects/${projectId}/stories/${selected._id}/tasks/${task._id}`, { completed: !task.completed }).catch(console.error);
     setTasks(prev => prev.map(t => t._id === task._id ? { ...t, completed: !t.completed } : t));
   };
 
@@ -1084,8 +1105,8 @@ export function KanbanTab({
     // Optimistic update
     setOptimisticStatuses(prev => ({ ...prev, [draggedId]: toCol }));
     setDraggedId(null);
-    await axiosPatch(`/api/projects/${projectId}/stories/${draggedId}`, { status: toCol }).catch(console.error);
-    queryClient.invalidateQueries({ queryKey: KEYS.stories(projectId) });
+    await apiPatch(`/api/projects/${projectId}/stories/${draggedId}`, { status: toCol }).catch(console.error);
+    await refreshStories();
     setOptimisticStatuses(prev => { const n = { ...prev }; delete n[draggedId!]; return n; });
   };
   const handleDragLeave = () => setDragOverCol(null);
@@ -1283,27 +1304,31 @@ export function KanbanTab({
 function BlueprintsTab({ projectId }: { projectId: string }) {
   const [selected, setSelected] = useState<WorkflowTemplate | null>(null);
   const [triggerMsg, setTriggerMsg] = useState<string | null>(null);
+  const [templates, setTemplates] = useState<WorkflowTemplate[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [triggering, setTriggering] = useState<string | null>(null);
 
-  const { data: templates = [], isLoading: loading } = useQuery({
-    queryKey: KEYS.workflows(projectId),
-    queryFn: () => axiosGet<WorkflowTemplate[]>(`/api/projects/${projectId}/workflows`),
-    enabled: !!projectId,
-    select: (d) => (Array.isArray(d) ? d : []),
-  });
+  useEffect(() => {
+    if (!projectId) return;
+    setLoading(true);
+    apiGet<WorkflowTemplate[]>(`/api/projects/${projectId}/workflows`)
+      .then(d => setTemplates(Array.isArray(d) ? d : []))
+      .catch(console.error)
+      .finally(() => setLoading(false));
+  }, [projectId]);
 
-  const triggerMutation = useMutation({
-    mutationFn: (templateId: string) =>
-      axiosPost(`/api/projects/${projectId}/workflows`, { templateId }),
-    onSuccess: () => setTriggerMsg("Workflow triggered successfully."),
-    onError: () => setTriggerMsg("Failed to trigger workflow."),
-  });
-
-  const triggerWorkflow = (templateId: string) => {
+  const triggerWorkflow = async (templateId: string) => {
     setTriggerMsg(null);
-    triggerMutation.mutate(templateId);
+    setTriggering(templateId);
+    try {
+      await apiPost(`/api/projects/${projectId}/workflows`, { templateId });
+      setTriggerMsg("Workflow triggered successfully.");
+    } catch {
+      setTriggerMsg("Failed to trigger workflow.");
+    } finally {
+      setTriggering(null);
+    }
   };
-
-  const triggering = triggerMutation.isPending ? triggerMutation.variables as string : null;
 
   if (loading) return <div className="flex justify-center py-16"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>;
 
@@ -1407,23 +1432,31 @@ function ReqDocTree({
 }
 
 function RequirementsTab({ projectId }: { projectId: string }) {
-  const queryClient = useQueryClient();
   const [selected, setSelected] = useState<ReqDoc | null>(null);
   const [saving, setSaving] = useState(false);
+  const [docs, setDocs] = useState<ReqDoc[]>([]);
+  const [loading, setLoading] = useState(true);
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const selectedRef = useRef<ReqDoc | null>(null);
   selectedRef.current = selected;
 
-  const { data: docs = [], isLoading: loading } = useQuery({
-    queryKey: KEYS.requirements(projectId),
-    queryFn: () => axiosGet<ReqDoc[]>(`/api/projects/${projectId}/requirements`),
-    enabled: !!projectId,
-    select: (d) => (Array.isArray(d) ? d : []),
-  });
+  useEffect(() => {
+    if (!projectId) return;
+    setLoading(true);
+    apiGet<ReqDoc[]>(`/api/projects/${projectId}/requirements`)
+      .then(d => setDocs(Array.isArray(d) ? d : []))
+      .catch(console.error)
+      .finally(() => setLoading(false));
+  }, [projectId]);
+
+  const refreshDocs = async () => {
+    const d = await apiGet<ReqDoc[]>(`/api/projects/${projectId}/requirements`).catch(() => [] as ReqDoc[]);
+    setDocs(Array.isArray(d) ? d : []);
+  };
 
   const saveDoc = useCallback(async (docId: string, newContent: unknown) => {
     setSaving(true);
-    await axiosPatch(`/api/projects/${projectId}/requirements/${docId}`, { content: newContent }).catch(console.error);
+    await apiPatch(`/api/projects/${projectId}/requirements/${docId}`, { content: newContent }).catch(console.error);
     setSaving(false);
   }, [projectId]);
 
@@ -1459,9 +1492,9 @@ function RequirementsTab({ projectId }: { projectId: string }) {
   };
 
   const createDoc = async (parentId?: string) => {
-    const doc = await axiosPost<ReqDoc>(`/api/projects/${projectId}/requirements`, { title: "New Document", content: "", parentId: parentId ?? null }).catch(() => null);
+    const doc = await apiPost<ReqDoc>(`/api/projects/${projectId}/requirements`, { title: "New Document", content: "", parentId: parentId ?? null }).catch(() => null);
     if (doc) {
-      queryClient.invalidateQueries({ queryKey: KEYS.requirements(projectId) });
+      await refreshDocs();
       selectDoc(doc);
     }
   };
@@ -1541,6 +1574,7 @@ function ProjectSettingsTab({ project, projectId }: { project: Project; projectI
     name: project.name,
     brandColor: project.brandColor,
     slackToken: "",
+    slackSigningSecret: "",
     slackChannelId: "",
     inviteSlackIds: "",
     githubRepo: "",
@@ -1566,11 +1600,12 @@ function ProjectSettingsTab({ project, projectId }: { project: Project; projectI
     if (form.githubInstallationId) githubApp.installationId = form.githubInstallationId;
     if (form.githubWebhookSecret) githubApp.webhookSecret = form.githubWebhookSecret;
 
-    await axiosPatch(`/api/projects/${projectId}`, {
+    await apiPatch(`/api/projects/${projectId}`, {
       name: form.name,
       brandColor: form.brandColor,
       config: {
         ...(form.slackToken ? { slackToken: form.slackToken } : {}),
+        ...(form.slackSigningSecret ? { slackSigningSecret: form.slackSigningSecret } : {}),
         ...(form.slackChannelId ? { slackChannelId: form.slackChannelId } : {}),
         ...(form.githubRepo ? { repoUrl: form.githubRepo } : {}),
         ...(Object.keys(githubApp).length ? { githubApp } : {}),
@@ -1590,7 +1625,7 @@ function ProjectSettingsTab({ project, projectId }: { project: Project; projectI
     setTestingSlack(true);
     setSlackTestMsg(null);
     try {
-      await axiosGet(`/api/projects/${projectId}`);
+      await apiGet(`/api/projects/${projectId}`);
       setSlackTestMsg("Slack connection test requires a configured token.");
     } catch {
       setSlackTestMsg("Unable to reach backend.");
@@ -1625,6 +1660,11 @@ function ProjectSettingsTab({ project, projectId }: { project: Project; projectI
       <div className="space-y-4">
         <h3 className="font-semibold">Slack Integration</h3>
         <p className="text-xs text-muted-foreground">See <code>docs/slack-app-setup.md</code> for setup instructions.</p>
+        <div className="space-y-2">
+          <Label>Signing Secret</Label>
+          <Input type="password" value={form.slackSigningSecret} onChange={e => setForm({ ...form, slackSigningSecret: e.target.value })} placeholder="your-signing-secret" />
+          <p className="text-xs text-muted-foreground">Overrides the global signing secret for this project's Slack workspace.</p>
+        </div>
         <div className="space-y-2">
           <Label>Bot Token (xoxb-...)</Label>
           <Input type="password" value={form.slackToken} onChange={e => setForm({ ...form, slackToken: e.target.value })} placeholder="xoxb-..." />
@@ -1740,11 +1780,17 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
     }, []),
   });
 
-  const { data: project, isLoading: loading } = useQuery({
-    queryKey: KEYS.project(id),
-    queryFn: () => axiosGet<Project>(`/api/projects/${id}`),
-    enabled: !!id,
-  });
+  const [project, setProject] = useState<Project | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!id) return;
+    setLoading(true);
+    apiGet<Project>(`/api/projects/${id}`)
+      .then(setProject)
+      .catch(() => router.push("/projects"))
+      .finally(() => setLoading(false));
+  }, [id, router]);
 
   useEffect(() => {
     if (!loading && !project) router.push("/projects");

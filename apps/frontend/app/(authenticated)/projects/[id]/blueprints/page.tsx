@@ -25,10 +25,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
-import { apiPost } from "@/lib/api/client";
-import { useQuery } from "@tanstack/react-query";
-import { axiosGet } from "@/lib/api/axios";
-import { KEYS } from "@/lib/api/query-keys";
+import { apiGet, apiPost } from "@/lib/api/client";
 import {
   Plus,
   Save,
@@ -370,18 +367,22 @@ function ExecutionHistoryPanel({
   open: boolean; nodeId: string | null; projectId: string; onClose: () => void;
 }) {
   const [selectedRun, setSelectedRun] = useState<{ run: WorkflowRun; exec: NodeExecution } | null>(null);
+  const [runs, setRuns] = useState<WorkflowRun[]>([]);
+  const [loading, setLoading] = useState(false);
 
-  const { data: allRuns = [], isFetching: loading } = useQuery({
-    queryKey: [...KEYS.workflows(projectId), nodeId],
-    queryFn: () => axiosGet<WorkflowRun[]>(`/api/projects/${projectId}/workflows`),
-    enabled: open && !!nodeId,
-    select: (data) =>
-      (Array.isArray(data) ? data : []).filter((run) =>
-        run.nodeExecutions?.some((e) => e.nodeId === nodeId)
-      ),
-  });
-
-  const runs = allRuns;
+  useEffect(() => {
+    if (!open || !nodeId) return;
+    setLoading(true);
+    apiGet<WorkflowRun[]>(`/api/projects/${projectId}/workflows`)
+      .then((data) => {
+        const filtered = (Array.isArray(data) ? data : []).filter((run) =>
+          run.nodeExecutions?.some((e) => e.nodeId === nodeId)
+        );
+        setRuns(filtered);
+      })
+      .catch(() => setRuns([]))
+      .finally(() => setLoading(false));
+  }, [open, nodeId, projectId]);
 
   if (!open) return null;
 
@@ -532,11 +533,18 @@ export default function BlueprintsPage() {
     }, [setNodes]),
   });
 
-  const { data: templates = [], refetch: refetchTemplates } = useQuery({
-    queryKey: KEYS.workflowTemplates(),
-    queryFn: () => axiosGet<WorkflowTemplate[]>("/api/workflows/templates"),
-    select: (data) => (Array.isArray(data) ? data : []),
-  });
+  const [templates, setTemplates] = useState<WorkflowTemplate[]>([]);
+
+  useEffect(() => {
+    apiGet<WorkflowTemplate[]>("/api/workflows/templates")
+      .then((data) => setTemplates(Array.isArray(data) ? data : []))
+      .catch(() => setTemplates([]));
+  }, []);
+
+  async function refreshTemplates() {
+    const data = await apiGet<WorkflowTemplate[]>("/api/workflows/templates");
+    setTemplates(Array.isArray(data) ? data : []);
+  }
 
   function loadTemplate(t: WorkflowTemplate) {
     setSelectedTemplateId(t._id);
@@ -609,7 +617,7 @@ export default function BlueprintsPage() {
         const created = await apiPost<WorkflowTemplate>("/api/workflows/templates", body);
         setSelectedTemplateId(created._id);
       }
-      await refetchTemplates();
+      await refreshTemplates();
     } catch {
       setError("Failed to save workflow");
     } finally {
