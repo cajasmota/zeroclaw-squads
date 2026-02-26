@@ -210,7 +210,6 @@ export default function SettingsPage() {
           <TabsTrigger value="llm">LLM Providers</TabsTrigger>
           <TabsTrigger value="slack">Slack</TabsTrigger>
           <TabsTrigger value="github">GitHub</TabsTrigger>
-          <TabsTrigger value="invites">Invite Users</TabsTrigger>
         </TabsList>
 
         {/* ── General ── */}
@@ -311,6 +310,31 @@ export default function SettingsPage() {
               </div>
             </div>
           </div>
+          <div className="space-y-4 border rounded-lg p-6">
+            <h2 className="font-semibold text-sm uppercase tracking-wide text-muted-foreground">Auto-Invite Users</h2>
+            <p className="text-xs text-muted-foreground">
+              Slack user IDs auto-invited to every new project channel. Project-specific lists override this.
+            </p>
+            <div className="flex gap-2">
+              <Input
+                value={inviteInput}
+                onChange={(e) => setInviteInput(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && addInviteUser()}
+                placeholder="Slack user ID (e.g. U01234567)"
+                className="flex-1"
+              />
+              <Button variant="outline" onClick={addInviteUser}>Add</Button>
+            </div>
+            {inviteUsers.length > 0 && (
+              <div className="flex flex-wrap gap-2">
+                {inviteUsers.map((u) => (
+                  <Badge key={u} variant="secondary" className="cursor-pointer" onClick={() => removeInviteUser(u)}>
+                    {u} ×
+                  </Badge>
+                ))}
+              </div>
+            )}
+          </div>
           <SaveButton />
         </TabsContent>
 
@@ -373,36 +397,6 @@ export default function SettingsPage() {
                 placeholder="-----BEGIN RSA PRIVATE KEY-----&#10;..."
               />
             </div>
-          </div>
-          <SaveButton />
-        </TabsContent>
-
-        {/* ── Invite Users ── */}
-        <TabsContent value="invites" className="space-y-6 pt-4">
-          <div className="space-y-4 border rounded-lg p-6">
-            <h2 className="font-semibold text-sm uppercase tracking-wide text-muted-foreground">Global Slack Invite Users</h2>
-            <p className="text-xs text-muted-foreground">
-              Slack user IDs auto-invited to every new project channel. Project-specific lists override this.
-            </p>
-            <div className="flex gap-2">
-              <Input
-                value={inviteInput}
-                onChange={(e) => setInviteInput(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && addInviteUser()}
-                placeholder="Slack user ID (e.g. U01234567)"
-                className="flex-1"
-              />
-              <Button variant="outline" onClick={addInviteUser}>Add</Button>
-            </div>
-            {inviteUsers.length > 0 && (
-              <div className="flex flex-wrap gap-2">
-                {inviteUsers.map((u) => (
-                  <Badge key={u} variant="secondary" className="cursor-pointer" onClick={() => removeInviteUser(u)}>
-                    {u} ×
-                  </Badge>
-                ))}
-              </div>
-            )}
           </div>
           <SaveButton />
         </TabsContent>
