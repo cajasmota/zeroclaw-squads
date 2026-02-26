@@ -41,3 +41,8 @@ coverage
 # Claude Code local session files
 .claude/ralph-loop.local.md
 .claude/settings.local.json
+
+# Ralph runtime files (copy your PRD here before running, don't commit it)
+scripts/ralph/prd.json
+scripts/ralph/.last-branch
+scripts/ralph/archive/

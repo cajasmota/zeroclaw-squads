@@ -41,6 +41,7 @@ export class GlobalSettingsService {
       }
     }
     if (obj.slackToken) obj.slackToken = SENSITIVE_MASK;
+    if (obj.slackSigningSecret) obj.slackSigningSecret = SENSITIVE_MASK;
     if (obj.githubApp?.privateKey) obj.githubApp = { ...obj.githubApp, privateKey: SENSITIVE_MASK };
     if (obj.githubApp?.webhookSecret) obj.githubApp = { ...obj.githubApp, webhookSecret: SENSITIVE_MASK };
     return obj;
@@ -58,9 +59,12 @@ export class GlobalSettingsService {
         }
       }
     }
-    // Encrypt Slack token
+    // Encrypt Slack credentials
     if (dto.slackToken && dto.slackToken !== SENSITIVE_MASK) {
       dto.slackToken = this.encryption.encrypt(dto.slackToken);
+    }
+    if ((dto as any).slackSigningSecret && (dto as any).slackSigningSecret !== SENSITIVE_MASK) {
+      (dto as any).slackSigningSecret = this.encryption.encrypt((dto as any).slackSigningSecret);
     }
     // Encrypt GitHub App sensitive fields
     if (dto.githubApp) {

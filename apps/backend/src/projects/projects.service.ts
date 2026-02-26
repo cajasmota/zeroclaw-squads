@@ -28,6 +28,8 @@ export class ProjectsService {
     const enc = { ...config };
     if (enc.slackToken)
       enc.slackToken = this.encryption.encrypt(enc.slackToken);
+    if (enc.slackSigningSecret)
+      enc.slackSigningSecret = this.encryption.encrypt(enc.slackSigningSecret);
     if (enc.githubApp?.privateKey) {
       enc.githubApp = {
         ...enc.githubApp,
@@ -64,6 +66,7 @@ export class ProjectsService {
     if (p.config) {
       p.config = { ...p.config };
       if (p.config.slackToken) p.config.slackToken = '[encrypted]';
+      if (p.config.slackSigningSecret) p.config.slackSigningSecret = '[encrypted]';
       if (p.config.githubApp?.privateKey)
         p.config.githubApp = {
           ...p.config.githubApp,

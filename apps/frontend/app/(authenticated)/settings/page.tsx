@@ -17,6 +17,7 @@ interface GlobalSettings {
   defaultOllamaModel: string;
   globalInviteUsers: string[];
   slackToken: string;
+  slackSigningSecret: string;
   githubApp: {
     appId: string;
     privateKey: string;
@@ -70,6 +71,8 @@ export default function SettingsPage() {
   const [inviteUsers, setInviteUsers] = useState<string[]>([]);
   const [slackToken, setSlackToken] = useState("");
   const [showSlackToken, setShowSlackToken] = useState(false);
+  const [slackSigningSecret, setSlackSigningSecret] = useState("");
+  const [showSlackSigningSecret, setShowSlackSigningSecret] = useState(false);
   const [githubApp, setGithubApp] = useState({
     appId: "",
     privateKey: "",
@@ -97,6 +100,7 @@ export default function SettingsPage() {
       });
       setInviteUsers(data.globalInviteUsers ?? []);
       setSlackToken(data.slackToken ?? "");
+      setSlackSigningSecret(data.slackSigningSecret ?? "");
       setGithubApp({
         appId: data.githubApp?.appId ?? "",
         privateKey: data.githubApp?.privateKey ?? "",
@@ -126,6 +130,7 @@ export default function SettingsPage() {
         providers,
         globalInviteUsers: inviteUsers,
         ...(slackToken && slackToken !== ENCRYPTED_MASK ? { slackToken } : {}),
+      ...(slackSigningSecret && slackSigningSecret !== ENCRYPTED_MASK ? { slackSigningSecret } : {}),
         githubApp: {
           ...(githubApp.appId ? { appId: githubApp.appId } : {}),
           ...(githubApp.privateKey && githubApp.privateKey !== ENCRYPTED_MASK ? { privateKey: githubApp.privateKey } : {}),
@@ -288,6 +293,30 @@ export default function SettingsPage() {
               Global fallback bot token. Used when a project has no project-specific Slack token.
               See <code>docs/slack-app-setup.md</code> for setup instructions.
             </p>
+            <p className="text-xs text-muted-foreground bg-muted rounded px-3 py-2">
+              The <strong>Signing Secret</strong> below is stored encrypted in the database and overrides the <code>SLACK_SIGNING_SECRET</code> env var. Used by the backend to verify incoming Slack webhook payloads.
+            </p>
+            <div className="space-y-2">
+              <Label htmlFor="slackSigningSecret">Signing Secret</Label>
+              <div className="relative">
+                <Input
+                  id="slackSigningSecret"
+                  type={showSlackSigningSecret ? "text" : "password"}
+                  value={slackSigningSecret}
+                  onChange={(e) => setSlackSigningSecret(e.target.value)}
+                  placeholder="your-signing-secret"
+                  className="pr-10"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowSlackSigningSecret(!showSlackSigningSecret)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  tabIndex={-1}
+                >
+                  {showSlackSigningSecret ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
+            </div>
             <div className="space-y-2">
               <Label htmlFor="slackToken">Bot Token (xoxb-...)</Label>
               <div className="relative">

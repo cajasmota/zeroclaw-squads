@@ -84,11 +84,51 @@ for i in $(seq 1 $MAX_ITERATIONS); do
   echo "  Ralph Iteration $i of $MAX_ITERATIONS ($TOOL)"
   echo "==============================================================="
 
+  TMP_OUTPUT=$(mktemp)
+
   if [[ "$TOOL" == "amp" ]]; then
-    OUTPUT=$(cat "$SCRIPT_DIR/prompt.md" | amp --dangerously-allow-all 2>&1 | tee /dev/stderr) || true
+    cat "$SCRIPT_DIR/prompt.md" | amp --dangerously-allow-all 2>&1 | tee "$TMP_OUTPUT" || true
   else
-    OUTPUT=$(claude --dangerously-skip-permissions --print < "$SCRIPT_DIR/CLAUDE.md" 2>&1 | tee /dev/stderr) || true
+    # stream-json emits one JSON object per line
+    # We pipe through jq to print text deltas live, and tee saves raw lines for COMPLETE check
+    claude --dangerously-skip-permissions \
+      --print \
+      --output-format stream-json \
+      --include-partial-messages \
+      --verbose \
+      < "$SCRIPT_DIR/CLAUDE.md" 2>&1 | \
+      tee "$TMP_OUTPUT" | \
+      jq -rj --unbuffered '
+        if .type == "stream_event" then
+          if .event.type == "content_block_start" and .event.content_block.type == "tool_use" then
+            "\n\u001b[2m  → \(.event.content_block.name)\u001b[0m"
+          elif .event.type == "content_block_delta" and .event.delta.type == "text_delta" then
+            .event.delta.text
+          else ""
+          end
+        elif .type == "assistant" then
+          # Extract tool use calls from completed assistant messages to show clean file/cmd info
+          ( .message.content[]?
+            | select(.type == "tool_use")
+            | if .name == "Edit" or .name == "Write" or .name == "NotebookEdit" then
+                "\u001b[2m  \(.name): \(.input.file_path // .input.notebook_path // "?")\u001b[0m\n"
+              elif .name == "Read" or .name == "Glob" or .name == "Grep" then
+                "\u001b[2m  \(.name): \(.input.file_path // .input.pattern // .input.query // "?")\u001b[0m\n"
+              elif .name == "Bash" then
+                "\u001b[2m  $ \(.input.command // "?" | .[0:120])\u001b[0m\n"
+              else ""
+              end
+          ) // ""
+        elif .type == "result" then
+          "\n\u001b[2m[Cost: $\(.total_cost_usd // 0)] [Turns: \(.num_turns // 0)]\u001b[0m\n"
+        else ""
+        end
+      ' 2>/dev/null || true
   fi
+
+  # Extract final result text for COMPLETE check
+  OUTPUT=$(jq -r 'select(.type == "result") | .result' "$TMP_OUTPUT" 2>/dev/null || cat "$TMP_OUTPUT")
+  rm -f "$TMP_OUTPUT"
 
   if echo "$OUTPUT" | grep -q "<promise>COMPLETE</promise>"; then
     echo ""

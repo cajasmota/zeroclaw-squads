@@ -12,6 +12,7 @@ export class CreateProjectDto {
   @IsObject()
   config?: {
     slackToken?: string;
+    slackSigningSecret?: string;
     slackChannelId?: string;
     repoUrl?: string;
     githubApp?: {

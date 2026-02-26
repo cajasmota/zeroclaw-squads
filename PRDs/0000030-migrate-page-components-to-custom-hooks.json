@@ -1,0 +1,433 @@
+{
+  "project": "AES (Agentic Engineering System)",
+  "branchName": "ralph/0000030-drop-tanstack-axios-plain-fetch",
+  "description": "Remove @tanstack/react-query and axios from the frontend entirely. Replace all useQuery/useMutation/axiosGet/axiosPost calls in page components with plain fetch() via the existing app/api/ Next.js proxy routes, using typed helpers (apiGet, apiPost, apiPatch, apiDelete) from lib/api/client.ts. Delete lib/api/axios.ts, lib/api/query-keys.ts, all TanStack-dependent hook files, and remove QueryClientProvider from the authenticated layout.",
+
+  "storyReference": {
+    "id": "0000030",
+    "file": "plans/0000030 - Migrate Page Components to Use Custom Hooks.md",
+    "epic": "EPIC-10: UI - Project Control Center",
+    "assignedTo": "Frontend Agent",
+    "status": "Not Started"
+  },
+
+  "dependencies": [
+    {
+      "storyId": "0000029",
+      "title": "Migrate Frontend Fetches to TanStack Query and Axios",
+      "reason": "The app/api/ proxy routes created by prior stories must exist. This story reverses the TanStack/Axios layer introduced in 0000029, keeping only the proxy routes and replacing axios/tanstack with plain fetch."
+    }
+  ],
+
+  "knowledgeBase": [
+    {
+      "file": "plans/knowledge-base/03-technology-stack.md",
+      "relevance": "Full tech stack — Next.js App Router, lib/api/client.ts fetch wrapper pattern"
+    },
+    {
+      "file": "plans/knowledge-base/08-ui-design-system.md",
+      "relevance": "UI routes and authenticated page structure"
+    }
+  ],
+
+  "referencedFiles": {
+    "toModify": [
+      {
+        "path": "apps/frontend/lib/api/client.ts",
+        "reason": "Rewrite to use plain fetch() instead of axios. Keep same exported API: apiGet, apiPost, apiPatch, apiDelete. Add 401 redirect to /login."
+      },
+      {
+        "path": "apps/frontend/app/(authenticated)/layout.tsx",
+        "reason": "Remove QueryClient, QueryClientProvider, ReactQueryDevtools imports and JSX wrapper."
+      },
+      {
+        "path": "apps/frontend/app/(authenticated)/projects/page.tsx",
+        "reason": "Replace useQuery/useMutation/axiosGet/axiosPost with useState+useEffect+apiGet/apiPost."
+      },
+      {
+        "path": "apps/frontend/app/(authenticated)/templates/page.tsx",
+        "reason": "Replace useQuery/useMutation/axiosGet/axiosPost/axiosPatch with useState+useEffect+apiGet/apiPost/apiPatch."
+      },
+      {
+        "path": "apps/frontend/app/(authenticated)/projects/[id]/blueprints/page.tsx",
+        "reason": "Replace useQuery+axiosGet with useState+useEffect+apiGet. saveWorkflow/triggerWorkflow already use apiPost — keep those."
+      },
+      {
+        "path": "apps/frontend/app/(authenticated)/projects/[id]/page.tsx",
+        "reason": "Largest file — replace all useQuery/useMutation/axiosGet/axiosPost/axiosPatch with useState+useEffect+apiGet/apiPost/apiPatch across all tab components."
+      },
+      {
+        "path": "apps/frontend/app/(authenticated)/settings/users/page.tsx",
+        "reason": "Remove useUsers/useCreateUser/useUpdateUser hook imports. Replace with useState+useEffect+apiGet/apiPost/apiPatch from lib/api/client."
+      },
+      {
+        "path": "apps/frontend/app/(authenticated)/settings/models/page.tsx",
+        "reason": "Remove all TanStack hook imports (useModelStatus etc). Replace with useState+useEffect+apiGet/apiPost/apiPatch/apiDelete from lib/api/client."
+      },
+      {
+        "path": "apps/frontend/__tests__/projects/agents.test.tsx",
+        "reason": "Remove QueryClientProvider wrapper. Change mock from @/lib/api/axios to @/lib/api/client (apiGet, apiPost, apiPatch)."
+      },
+      {
+        "path": "apps/frontend/__tests__/projects/kanban.test.tsx",
+        "reason": "Remove QueryClientProvider wrapper. Change mock from @/lib/api/axios to @/lib/api/client (apiGet, apiPost, apiPatch)."
+      },
+      {
+        "path": "apps/frontend/__tests__/projects/blueprints.test.tsx",
+        "reason": "Remove QueryClientProvider wrapper and @/lib/api/axios mock. Mock global.fetch for useEffect data loads; keep @/lib/api/client mock for apiPost."
+      }
+    ],
+    "toDelete": [
+      {
+        "path": "apps/frontend/lib/api/axios.ts",
+        "reason": "Axios instance and helpers — replaced by plain fetch in client.ts"
+      },
+      {
+        "path": "apps/frontend/lib/api/query-keys.ts",
+        "reason": "TanStack query key constants — no longer needed without TanStack"
+      },
+      {
+        "path": "apps/frontend/hooks/useAgents.ts",
+        "reason": "TanStack hook — delete after migrating agents tab to direct apiGet/apiPatch"
+      },
+      {
+        "path": "apps/frontend/hooks/useAnalytics.ts",
+        "reason": "TanStack hook — delete after migrating dashboard tab"
+      },
+      {
+        "path": "apps/frontend/hooks/useEpics.ts",
+        "reason": "TanStack hook — delete after migrating backlog tab"
+      },
+      {
+        "path": "apps/frontend/hooks/useModels.ts",
+        "reason": "TanStack hook — delete after migrating models page"
+      },
+      {
+        "path": "apps/frontend/hooks/useProject.ts",
+        "reason": "TanStack hook — delete after migrating project query"
+      },
+      {
+        "path": "apps/frontend/hooks/useRequirements.ts",
+        "reason": "TanStack hook — delete after migrating requirements tab"
+      },
+      {
+        "path": "apps/frontend/hooks/useSprints.ts",
+        "reason": "TanStack hook — delete after migrating backlog tab"
+      },
+      {
+        "path": "apps/frontend/hooks/useStories.ts",
+        "reason": "TanStack hook — delete after migrating kanban/backlog/ticket tabs"
+      },
+      {
+        "path": "apps/frontend/hooks/useTemplates.ts",
+        "reason": "TanStack hook — delete after migrating templates page"
+      },
+      {
+        "path": "apps/frontend/hooks/useUsers.ts",
+        "reason": "TanStack hook — delete after migrating users page"
+      },
+      {
+        "path": "apps/frontend/hooks/useWorkflows.ts",
+        "reason": "TanStack hook — delete after migrating blueprints/workflows tab"
+      }
+    ],
+    "toLeave": [
+      {
+        "path": "apps/frontend/app/login/page.tsx",
+        "reason": "Pre-auth page — already uses plain fetch, must stay as-is"
+      },
+      {
+        "path": "apps/frontend/app/api/**",
+        "reason": "Next.js server-side proxy routes — these ARE the API layer. Do not change any route handler."
+      },
+      {
+        "path": "apps/frontend/hooks/useProjectSocket.ts",
+        "reason": "WebSocket hook — unrelated to TanStack, must remain"
+      },
+      {
+        "path": "apps/frontend/context/AuthContext.tsx",
+        "reason": "Auth context — check if it uses TanStack; if not, leave as-is"
+      },
+      {
+        "path": "apps/frontend/middleware.ts",
+        "reason": "Route protection middleware — no data fetching, do not touch"
+      }
+    ]
+  },
+
+  "conventions": {
+    "packageManager": "pnpm — always use pnpm --filter=frontend, never npm or yarn",
+    "framework": "Next.js App Router — no Pages Router, no getServerSideProps",
+    "uiComponents": "Shadcn UI only — do not install other component libraries",
+    "apiCalls": "Always through /api/* proxy routes — never call backend port directly. Use apiGet/apiPost/apiPatch/apiDelete from lib/api/client.ts.",
+    "dataFetchingPattern": "All data loading in page components uses useState + useEffect + apiGet. Mutations call apiPost/apiPatch/apiDelete directly inside async event handlers. No useQuery, no useMutation, no TanStack anywhere in page components.",
+    "arrayGuard": "All apiGet responses that return arrays must guard: Array.isArray(data) ? data : []",
+    "noTanstack": "After this migration, @tanstack/react-query must not be imported anywhere in apps/frontend/app/",
+    "noAxios": "After this migration, axios and @/lib/api/axios must not be imported anywhere in apps/frontend/app/",
+    "clientTs": "lib/api/client.ts is the ONLY HTTP abstraction. It uses plain fetch(). On 401, redirect window.location.href to /login.",
+    "typecheck": "Run pnpm --filter=frontend tsc --noEmit after completing each user story"
+  },
+
+  "userStories": [
+    {
+      "id": "US-000",
+      "title": "Audit existing app/api/ proxy routes and create any missing ones",
+      "description": "As a developer, I need to confirm that every API call made by the pages being migrated has a corresponding app/api/ Next.js proxy route handler so no gaps are left after TanStack/axios is removed.",
+      "acceptanceCriteria": [
+        "Read every file under apps/frontend/app/api/ and produce a list of existing routes with their supported HTTP methods",
+        "Cross-reference the list against every apiGet/apiPost/apiPatch/apiDelete call needed by: projects/page.tsx, templates/page.tsx, blueprints/page.tsx, projects/[id]/page.tsx (all tabs), settings/users/page.tsx, settings/models/page.tsx",
+        "The following routes are already confirmed to exist and do NOT need to be created: projects, projects/[id], agents, agents/[agentId], agents/[agentId]/sync, stories, stories/[storyId], tasks, tasks/[taskId], comments, approve, answer, epics, epics/[epicId], sprints, sprints/[sprintId], sprints/[sprintId]/ready, requirements, requirements/[docId], analytics, workflows, workflows/runs/[runId], templates, templates/[id], users, users/[id], models, settings, workflows/templates",
+        "For each gap found, create a new route.ts file in the correct app/api/ directory following the exact same pattern as apps/frontend/app/api/projects/route.ts: getAuth() helper reads accessToken cookie, proxies to BACKEND_URL/<resource> with Authorization header, returns NextResponse.json with matching status",
+        "If no gaps exist, document that finding in notes",
+        "pnpm --filter=frontend tsc --noEmit passes for any new route files"
+      ],
+      "priority": 0,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-001",
+      "title": "Uninstall TanStack Query and Axios packages",
+      "description": "As a developer, I need to remove @tanstack/react-query, @tanstack/react-query-devtools, and axios from the frontend package so the codebase no longer depends on them.",
+      "acceptanceCriteria": [
+        "Run: pnpm --filter=frontend remove @tanstack/react-query @tanstack/react-query-devtools axios",
+        "@tanstack/react-query, @tanstack/react-query-devtools, and axios do NOT appear in apps/frontend/package.json after removal",
+        "Note: TypeScript errors will exist after this step until later stories complete — that is expected"
+      ],
+      "priority": 1,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-002",
+      "title": "Rewrite lib/api/client.ts to use plain fetch",
+      "description": "As a developer, I need lib/api/client.ts to use plain fetch() instead of axios so all page components can import a single typed HTTP helper that calls the /api/ proxy routes.",
+      "acceptanceCriteria": [
+        "apps/frontend/lib/api/client.ts does NOT import axios or @/lib/api/axios",
+        "Exports: apiGet<T>(path: string): Promise<T> — GET with credentials: 'include'",
+        "Exports: apiPost<T>(path: string, body?: unknown): Promise<T> — POST with Content-Type: application/json",
+        "Exports: apiPatch<T>(path: string, body?: unknown): Promise<T> — PATCH with Content-Type: application/json",
+        "Exports: apiDelete<T>(path: string): Promise<T> — DELETE",
+        "On any 401 response: if (typeof window !== 'undefined') window.location.href = '/login'",
+        "On non-ok response: throw an Error with message from response body if available",
+        "pnpm --filter=frontend tsc --noEmit passes for this file in isolation (other files may still error)"
+      ],
+      "priority": 2,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-003",
+      "title": "Remove QueryClientProvider from authenticated layout",
+      "description": "As a developer, I need to remove QueryClientProvider and ReactQueryDevtools from the authenticated layout since TanStack Query is being removed.",
+      "acceptanceCriteria": [
+        "apps/frontend/app/(authenticated)/layout.tsx does NOT import QueryClient, QueryClientProvider, or ReactQueryDevtools",
+        "The <QueryClientProvider> wrapper and <ReactQueryDevtools> element are removed from the JSX",
+        "The queryClient constant is removed",
+        "Children are rendered directly without a QueryClient wrapper",
+        "The layout still renders the AuthProvider and AuthenticatedShell correctly",
+        "pnpm --filter=frontend tsc --noEmit passes for layout.tsx (other files may still error)"
+      ],
+      "priority": 3,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-004",
+      "title": "Migrate projects/page.tsx to plain fetch",
+      "description": "As a developer, I need projects/page.tsx to use apiGet/apiPost with useState+useEffect so it has no TanStack or axios dependencies.",
+      "acceptanceCriteria": [
+        "apps/frontend/app/(authenticated)/projects/page.tsx does NOT import from @tanstack/react-query, @/lib/api/axios, or @/lib/api/query-keys",
+        "Project list loaded via useState([]) + useEffect(() => { apiGet('/api/projects').then(...) }, [])",
+        "Template list in NewProjectWizard loaded via useState([]) + useEffect + apiGet('/api/templates')",
+        "Create project calls apiPost('/api/projects', payload) directly in the submit handler, then updates local state or re-fetches",
+        "Loading spinner still shown while fetching (loading state via useState(true))",
+        "Verify in browser: navigate to /projects — project list renders; New Project wizard opens and templates load; creating a project works",
+        "pnpm --filter=frontend tsc --noEmit passes"
+      ],
+      "priority": 4,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-005",
+      "title": "Migrate templates/page.tsx to plain fetch",
+      "description": "As a developer, I need templates/page.tsx to use apiGet/apiPost/apiPatch with useState+useEffect so it has no TanStack or axios dependencies.",
+      "acceptanceCriteria": [
+        "apps/frontend/app/(authenticated)/templates/page.tsx does NOT import from @tanstack/react-query, @/lib/api/axios, or @/lib/api/query-keys",
+        "Template list loaded via useState([]) + useEffect + apiGet('/api/templates')",
+        "Save template (create/update) calls apiPost or apiPatch directly in the handler, then re-fetches or updates local state",
+        "Import template calls apiPost('/api/templates', data) directly in the file handler",
+        "Verify in browser: navigate to /templates — template grid renders; new template modal saves; export/import works",
+        "pnpm --filter=frontend tsc --noEmit passes"
+      ],
+      "priority": 5,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-006",
+      "title": "Migrate blueprints/page.tsx to plain fetch",
+      "description": "As a developer, I need blueprints/page.tsx to replace its useQuery+axiosGet calls with useState+useEffect+apiGet, while keeping the existing apiPost calls for save/trigger.",
+      "acceptanceCriteria": [
+        "apps/frontend/app/(authenticated)/projects/[id]/blueprints/page.tsx does NOT import from @tanstack/react-query or @/lib/api/axios",
+        "Workflow templates loaded via useState([]) + useEffect + apiGet('/api/workflows/templates')",
+        "Workflow runs (execution history) loaded via useState([]) + useEffect + apiGet(`/api/projects/${projectId}/workflows`) with enabled guard",
+        "saveWorkflow() and triggerWorkflow() continue to use apiPost from @/lib/api/client (already correct — just remove axiosGet/useQuery)",
+        "refetchTemplates pattern replaced: after save, re-call apiGet and setTemplates",
+        "Verify in browser: navigate to /projects/[id]/blueprints — workflow templates load in sidebar; Save button creates a template; Trigger button fires a workflow run",
+        "pnpm --filter=frontend tsc --noEmit passes"
+      ],
+      "priority": 6,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-007",
+      "title": "Migrate projects/[id]/page.tsx — main project query, Dashboard, and Agents tabs",
+      "description": "As a developer, I need the main project useQuery, Dashboard analytics, and Agents tab in projects/[id]/page.tsx to use useState+useEffect+apiGet so they have no TanStack or axios dependencies.",
+      "acceptanceCriteria": [
+        "Top-level project query replaced: useState<Project|null>(null) + useEffect + apiGet(`/api/projects/${id}`)",
+        "Dashboard tab burn rate and distribution loaded via useState + useEffect + apiGet(`/api/projects/${projectId}/analytics?...`)",
+        "AgentsTab: agents loaded via useState([]) + useEffect + apiGet(`/api/projects/${projectId}/agents`)",
+        "AgentsTab: stories loaded via useState([]) + useEffect + apiGet(`/api/projects/${projectId}/stories`)",
+        "Save agent: apiPatch(`/api/projects/${projectId}/agents/${agentId}`, payload) directly in handler",
+        "Sync agent: apiPost(`/api/projects/${projectId}/agents/${agentId}/sync`, {fields}) directly in handler",
+        "No useQuery/useMutation/axiosGet/axiosPatch/axiosPost in these sections",
+        "Verify in browser: /projects/[id] loads project name in header; Dashboard tab shows charts; Agents tab shows agent cards",
+        "pnpm --filter=frontend tsc --noEmit passes"
+      ],
+      "priority": 7,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-008",
+      "title": "Migrate projects/[id]/page.tsx — Backlog tab",
+      "description": "As a developer, I need the Backlog tab in projects/[id]/page.tsx to use useState+useEffect+api* calls so it has no TanStack or axios dependencies.",
+      "acceptanceCriteria": [
+        "Stories, epics, sprints each loaded via useState([]) + useEffect + apiGet",
+        "Create story: apiPost(`/api/projects/${projectId}/stories`, form) then re-fetch or update state",
+        "Create epic: apiPost(`/api/projects/${projectId}/epics`, {title}) then update state",
+        "Mark sprint ready: apiPost(`/api/projects/${projectId}/sprints/${sprintId}/ready`) then update state",
+        "Load tasks for story: apiGet(`/api/projects/${projectId}/stories/${storyId}/tasks`)",
+        "Toggle task: apiPatch(`/api/projects/${projectId}/stories/${storyId}/tasks/${taskId}`, {completed: ...})",
+        "Create task: apiPost(`/api/projects/${projectId}/stories/${storyId}/tasks`, {title})",
+        "No useQuery/useMutation/axiosGet/axiosPost/axiosPatch in BacklogTab",
+        "Verify in browser: Backlog tab renders stories/epics/sprints; creating a story adds it to the list",
+        "pnpm --filter=frontend tsc --noEmit passes"
+      ],
+      "priority": 8,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-009",
+      "title": "Migrate projects/[id]/page.tsx — Kanban tab",
+      "description": "As a developer, I need the Kanban tab to use useState+useEffect+apiGet/apiPatch so it has no TanStack or axios dependencies.",
+      "acceptanceCriteria": [
+        "Stories loaded via useState([]) + useEffect + apiGet(`/api/projects/${projectId}/stories`)",
+        "Drag-and-drop column change: apiPatch(`/api/projects/${projectId}/stories/${storyId}`, {status: toCol}) then update local state",
+        "No useQuery/useMutation/axiosGet/axiosPatch remain in KanbanTab",
+        "Verify in browser: Kanban board renders with story cards in correct columns; dragging a card updates its column",
+        "pnpm --filter=frontend tsc --noEmit passes"
+      ],
+      "priority": 9,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-010",
+      "title": "Migrate projects/[id]/page.tsx — Ticket Dialogue, Workflows, Requirements, and Settings tabs",
+      "description": "As a developer, I need the remaining four tabs in projects/[id]/page.tsx to use api* calls directly so the file has no TanStack or axios dependencies at all.",
+      "acceptanceCriteria": [
+        "KanbanTab ticket modal (TicketDialogueTab): comments loaded via apiGet on modal open, post comment via apiPost, tasks via apiGet, toggle task via apiPatch, approve via apiPost, answer via apiPost",
+        "BlueprintsTab (workflow trigger tab): workflows list loaded via apiGet; trigger via apiPost(`/api/projects/${projectId}/workflows`, {templateId})",
+        "RequirementsTab: docs loaded via useState + useEffect + apiGet; update doc via apiPatch; create doc via apiPost",
+        "ProjectSettingsTab: save settings via apiPatch(`/api/projects/${projectId}`, {...})",
+        "No useQuery/useMutation/axiosGet/axiosPost/axiosPatch remain ANYWHERE in projects/[id]/page.tsx",
+        "No @tanstack/react-query or @/lib/api/axios imports remain in projects/[id]/page.tsx",
+        "Verify in browser: clicking a kanban card opens ticket modal with comments; Requirements tab renders doc tree; Project Settings tab saves",
+        "pnpm --filter=frontend tsc --noEmit passes"
+      ],
+      "priority": 10,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-011",
+      "title": "Migrate settings/users/page.tsx and settings/models/page.tsx to plain fetch",
+      "description": "As a developer, I need the users and models settings pages to call api* functions directly instead of using TanStack hooks from hooks/useUsers.ts and hooks/useModels.ts.",
+      "acceptanceCriteria": [
+        "apps/frontend/app/(authenticated)/settings/users/page.tsx does NOT import from hooks/useUsers, @tanstack/react-query, or @/lib/api/axios",
+        "Users page: user list loaded via useState([]) + useEffect + apiGet('/api/users')",
+        "Create user: apiPost('/api/users', payload) in handler",
+        "Toggle role / toggle status: apiPatch(`/api/users/${id}`, payload) in handler",
+        "apps/frontend/app/(authenticated)/settings/models/page.tsx does NOT import from hooks/useModels, @tanstack/react-query, or @/lib/api/axios",
+        "Models page: model status loaded via apiGet('/api/models?action=status'), providers via apiGet('/api/models?action=providers') — both in useEffect",
+        "Pull: apiPost('/api/models', {action:'pull', model}); Delete: apiDelete(`/api/models?model=...`); Load: apiPost('/api/models', {action:'load', model}); Unload: apiPost('/api/models', {action:'unload', model}); Toggle provider: apiPatch('/api/models', {provider, enabled})",
+        "Verify in browser: /settings/users lists users, invite user works; /settings/models shows Ollama status and provider toggles",
+        "pnpm --filter=frontend tsc --noEmit passes"
+      ],
+      "priority": 11,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-012",
+      "title": "Delete TanStack hooks directory files and lib/api/axios.ts + query-keys.ts",
+      "description": "As a developer, I need to delete all files that no longer have any consumers so the codebase is clean and free of dead code.",
+      "acceptanceCriteria": [
+        "Delete apps/frontend/lib/api/axios.ts",
+        "Delete apps/frontend/lib/api/query-keys.ts",
+        "Delete apps/frontend/hooks/useAgents.ts",
+        "Delete apps/frontend/hooks/useAnalytics.ts",
+        "Delete apps/frontend/hooks/useEpics.ts",
+        "Delete apps/frontend/hooks/useModels.ts",
+        "Delete apps/frontend/hooks/useProject.ts",
+        "Delete apps/frontend/hooks/useRequirements.ts",
+        "Delete apps/frontend/hooks/useSprints.ts",
+        "Delete apps/frontend/hooks/useStories.ts",
+        "Delete apps/frontend/hooks/useTemplates.ts",
+        "Delete apps/frontend/hooks/useUsers.ts",
+        "Delete apps/frontend/hooks/useWorkflows.ts",
+        "Keep apps/frontend/hooks/useProjectSocket.ts — it is a WebSocket hook and must remain",
+        "pnpm --filter=frontend tsc --noEmit passes with no errors after all deletions"
+      ],
+      "priority": 12,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-013",
+      "title": "Update tests to remove TanStack/axios dependencies",
+      "description": "As a developer, I need the three test files to stop using QueryClientProvider and @/lib/api/axios mocks so they match the new plain-fetch architecture.",
+      "acceptanceCriteria": [
+        "apps/frontend/__tests__/projects/agents.test.tsx: remove QueryClient/QueryClientProvider wrapper and createWrapper() helper; remove @/lib/api/axios mock; add jest.mock('@/lib/api/client', () => ({ apiGet: jest.fn(), apiPost: jest.fn(), apiPatch: jest.fn() })); update mockAxiosGet → mockApiGet using apiGet mock; update assertions to check apiGet/apiPatch instead of axiosGet/axiosPatch",
+        "apps/frontend/__tests__/projects/kanban.test.tsx: same pattern — remove TanStack wrapper; mock @/lib/api/client instead of @/lib/api/axios; update all assertions",
+        "apps/frontend/__tests__/projects/blueprints.test.tsx: remove QueryClient/QueryClientProvider wrapper; remove @/lib/api/axios mock; keep @/lib/api/client mock for apiPost; add global.fetch mock for template/workflow useEffect loads",
+        "pnpm --filter=frontend test passes with all tests green",
+        "pnpm --filter=frontend tsc --noEmit passes"
+      ],
+      "priority": 13,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-014",
+      "title": "Final audit — zero TanStack and zero axios in frontend app",
+      "description": "As a developer, I need to confirm that no TanStack Query or axios imports remain anywhere in the frontend app/ directory and that all tests pass.",
+      "acceptanceCriteria": [
+        "Run: grep -r '@tanstack/react-query' apps/frontend/app — output must be empty",
+        "Run: grep -r 'from.*@/lib/api/axios' apps/frontend/app — output must be empty",
+        "Run: grep -r 'from.*@/lib/api/query-keys' apps/frontend/app — output must be empty",
+        "pnpm --filter=frontend tsc --noEmit passes with zero errors",
+        "pnpm --filter=frontend test passes with all tests green",
+        "Verify in browser: /projects loads, /templates loads, /projects/[id] all tabs work, /projects/[id]/blueprints works, /settings/users works, /settings/models works — no console errors on any page"
+      ],
+      "priority": 14,
+      "passes": false,
+      "notes": ""
+    }
+  ]
+}

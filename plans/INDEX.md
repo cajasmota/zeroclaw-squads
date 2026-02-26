@@ -114,6 +114,7 @@
 | [0000016](0000016%20-%20Backlog%20and%20Kanban%20Board%20UI.md) | Backlog (Epic/Story/Task hierarchy) and Kanban Board Tabs | `[x]` | Frontend |
 | [0000019](0000019%20-%20Requirements%20Space%20and%20Project%20Settings%20UI.md) | Requirements Space (Tiptap) and Project Settings Tab | `[x]` | Frontend |
 | [0000029](0000029%20-%20Migrate%20Frontend%20Fetches%20to%20TanStack%20Query%20and%20Axios.md) | Migrate all raw fetch() calls to TanStack Query + Axios | `[x]` | Frontend |
+| [0000030](0000030%20-%20Migrate%20Page%20Components%20to%20Use%20Custom%20Hooks.md) | Migrate all inline axios calls in page components to dedicated custom hooks in hooks/ | `[ ]` | Frontend |
 
 ---
 
@@ -174,11 +175,11 @@ Stories should be implemented in numbered order (0000001 → 0000026). Dependenc
 | EPIC-07: Backlog | 1 | 1 | 0 | 0 |
 | EPIC-08: Librarian | 1 | 1 | 0 | 0 |
 | EPIC-09: Dev Loop | 2 | 2 | 0 | 0 |
-| EPIC-10: UI Control | 4 | 3 | 0 | 1 |
+| EPIC-10: UI Control | 5 | 4 | 0 | 1 |
 | EPIC-11: Workflows | 3 | 3 | 0 | 0 |
 | EPIC-12: Analytics | 1 | 1 | 0 | 0 |
 | EPIC-13: Deployment | 3 | 3 | 0 | 0 |
-| **TOTAL** | **29** | **28** | **0** | **1** |
+| **TOTAL** | **30** | **29** | **0** | **1** |
 
 ---
 

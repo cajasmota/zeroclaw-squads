@@ -3,18 +3,40 @@
 You are an autonomous coding agent working on the AES (Agentic Engineering System) codebase.
 This is a TypeScript monorepo managed with pnpm and Turborepo.
 
-## Your Task
+## ⚠️ CRITICAL RULES — READ BEFORE ANYTHING ELSE
 
-1. Read the PRD at `scripts/ralph/prd.json`
-2. Read the progress log at `scripts/ralph/progress.txt` (check **Codebase Patterns** section first)
-3. Check you're on the correct branch from PRD `branchName`. If not, check it out or create from `main`.
-4. Pick the **lowest priority number** user story where `passes: false`
-5. Implement that single user story — do not implement multiple stories in one pass
-6. Run quality checks (see Quality Requirements below)
-7. Update CLAUDE.md / AGENTS.md files if you discover reusable patterns
-8. If checks pass, commit ALL changes with: `feat: [Story ID] - [Story Title]`
-9. Update the PRD to set `passes: true` for the completed story
-10. Append your progress to `scripts/ralph/progress.txt`
+1. **ONE story per iteration. Exactly one. No more.**
+   - Implement the single highest-priority (`passes: false`) story, then STOP.
+   - Do NOT start, peek at, or partially implement any other story.
+   - Do NOT continue to the next story even if the current one was trivial.
+
+2. **You MUST APPEND to `scripts/ralph/progress.txt` before ending.**
+   - This is not optional. Every iteration MUST leave a log entry.
+   - If you write nothing to progress.txt, the next iteration has no memory of what you did.
+
+3. **End your response after writing the progress log.**
+   - Once you have: committed ✓, updated prd.json ✓, written progress.txt ✓ — stop.
+   - The loop script will spawn a fresh instance for the next story.
+
+4. **Never ask questions. You are running non-interactively — there is no human to answer.**
+   - If something is ambiguous, make the most conservative reasonable decision and document it in `progress.txt` under a `**Decisions made:**` heading.
+   - If you hit a blocker you truly cannot resolve (e.g. a missing secret, a broken dependency), set `passes: false` and add a `"notes"` field to that story in `prd.json` explaining exactly what is needed, then write to `progress.txt` and stop. The human will read it before the next run.
+   - Do NOT output questions, do NOT stall, do NOT produce partial work while waiting for input.
+
+---
+
+## Your Exact Steps This Iteration
+
+1. Read `scripts/ralph/prd.json`
+2. Read `scripts/ralph/progress.txt` — check the **Codebase Patterns** section first
+3. Verify you are on the branch in PRD `branchName`. If not, check it out or create it from `main`.
+4. Find the **lowest `priority` number** story where `passes: false` — that is your ONE story for this iteration
+5. Implement that story completely
+6. Run quality checks (see below) — fix any errors before continuing
+7. If checks pass, commit ALL changes: `feat: [Story ID] - [Story Title]`
+8. In `scripts/ralph/prd.json` set `passes: true` for that story
+9. **MANDATORY: Append your progress entry to `scripts/ralph/progress.txt`** (see format below)
+10. Check if ALL stories now have `passes: true` — if so output `<promise>COMPLETE</promise>`, otherwise end your response here
 
 ## Project Structure
 

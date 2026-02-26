@@ -63,6 +63,7 @@ export class Project {
   @Prop({
     type: {
       slackToken: { type: String, default: '' },
+      slackSigningSecret: { type: String, default: '' },
       slackChannelId: { type: String, default: '' },
       repoUrl: { type: String, default: '' },
       githubApp: {
@@ -85,6 +86,7 @@ export class Project {
   })
   config: {
     slackToken: string;
+    slackSigningSecret: string;
     slackChannelId: string;
     repoUrl: string;
     githubApp: {
