@@ -46,7 +46,7 @@ function LoginForm() {
 
       const redirectParam = searchParams.get("redirect");
       const safeDest = redirectParam?.startsWith("/") ? redirectParam : "/projects";
-      router.push(safeDest);
+      window.location.href = safeDest;
     } catch {
       setError("Unable to connect to server. Please try again.");
     } finally {
