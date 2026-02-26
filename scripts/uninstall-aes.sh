@@ -58,7 +58,8 @@ stop_services() {
   if command -v pm2 &>/dev/null; then
     pm2 delete all 2>/dev/null || true
     pm2 save 2>/dev/null || true
-    pm2 unstartup 2>/dev/null | sudo bash 2>/dev/null || true
+    local pm2_unstartup_cmd; pm2_unstartup_cmd=$(pm2 unstartup 2>/dev/null | tail -1) || true
+    [[ -n "$pm2_unstartup_cmd" ]] && eval "sudo $pm2_unstartup_cmd" 2>/dev/null || true
   fi
   success "pm2 processes stopped."
 }
@@ -128,7 +129,8 @@ remove_components() {
   if confirm_or_skip "Remove Caddy/Nginx configuration for AES?"; then
     sudo rm -f /etc/caddy/Caddyfile 2>/dev/null || true
     sudo rm -f /etc/nginx/sites-enabled/aes.conf /etc/nginx/sites-available/aes.conf 2>/dev/null || true
-    sudo systemctl reload caddy 2>/dev/null || true
+    sudo systemctl stop caddy 2>/dev/null || true
+    sudo systemctl disable caddy 2>/dev/null || true
     sudo systemctl reload nginx 2>/dev/null || true
     success "Reverse proxy configuration removed."
   fi

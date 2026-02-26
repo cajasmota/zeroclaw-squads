@@ -14,11 +14,12 @@ error()   { echo -e "${RED}[ERROR]${NC} $*"; exit 1; }
 
 BRANCH="main"
 AUTO=false
-for arg in "$@"; do
-  case $arg in
+while [[ $# -gt 0 ]]; do
+  case $1 in
     --branch) shift; BRANCH="$1" ;;
     --auto)   AUTO=true ;;
   esac
+  shift
 done
 
 AES_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -82,6 +83,8 @@ check_tools() {
 rebuild() {
   info "Rebuilding application..."
   cd "${AES_DIR}"
+  export NVM_DIR="${NVM_DIR:-$HOME/.nvm}"
+  [[ -s "$NVM_DIR/nvm.sh" ]] && . "$NVM_DIR/nvm.sh"
   pnpm install --frozen-lockfile
   pnpm build
   success "Application rebuilt."
