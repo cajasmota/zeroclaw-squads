@@ -213,8 +213,8 @@
         "pnpm --filter=frontend tsc --noEmit passes for this file in isolation (other files may still error)"
       ],
       "priority": 2,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Rewrote client.ts using plain fetch(). Exports apiGet, apiPost, apiPatch, apiDelete. 401 triggers window.location.href redirect. Other files still show TS errors from TanStack imports (expected, resolved in later stories)."
     },
     {
       "id": "US-003",
