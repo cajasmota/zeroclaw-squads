@@ -279,8 +279,8 @@
         "pnpm --filter=frontend tsc --noEmit passes"
       ],
       "priority": 6,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Replaced useQuery+axiosGet+KEYS with useState+useEffect+apiGet in both ExecutionHistoryPanel and the main BlueprintsPage. Added refreshTemplates() helper called after saveWorkflow(). No TanStack or axios imports remain in blueprints/page.tsx."
     },
     {
       "id": "US-007",
@@ -298,8 +298,8 @@
         "pnpm --filter=frontend tsc --noEmit passes"
       ],
       "priority": 7,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Migrated main project query, AnalyticsSection, TranscriptViewer, DashboardTab, and AgentsTab to useState+useEffect+apiGet/apiPost/apiPatch."
     },
     {
       "id": "US-008",
@@ -318,8 +318,8 @@
         "pnpm --filter=frontend tsc --noEmit passes"
       ],
       "priority": 8,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Migrated BacklogTab — stories, epics, sprints via useState+useEffect+apiGet. Replaced queryClient.invalidateQueries with refreshStories/refreshEpics/refreshSprints helpers."
     },
     {
       "id": "US-009",
@@ -333,8 +333,8 @@
         "pnpm --filter=frontend tsc --noEmit passes"
       ],
       "priority": 9,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Migrated KanbanTab — stories via useState+useEffect+apiGet. Replaced queryClient.invalidateQueries with refreshStories(). All direct axiosGet/axiosPost/axiosPatch calls replaced with apiGet/apiPost/apiPatch."
     },
     {
       "id": "US-010",
@@ -351,8 +351,8 @@
         "pnpm --filter=frontend tsc --noEmit passes"
       ],
       "priority": 10,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Migrated BlueprintsTab (useQuery+useMutation→useState+useEffect), RequirementsTab (useQueryClient+useQuery→useState+useEffect+refreshDocs), ProjectSettingsTab (axiosPatch/axiosGet→apiPatch/apiGet)."
     },
     {
       "id": "US-011",
@@ -370,8 +370,8 @@
         "pnpm --filter=frontend tsc --noEmit passes"
       ],
       "priority": 11,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Rewrote settings/users/page.tsx (removed useUsers/useCreateUser/useUpdateUser hooks) and settings/models/page.tsx (removed all useModels hooks) — both now use useState+useEffect+apiGet/apiPost/apiPatch/apiDelete."
     },
     {
       "id": "US-012",
@@ -395,8 +395,8 @@
         "pnpm --filter=frontend tsc --noEmit passes with no errors after all deletions"
       ],
       "priority": 12,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Deleted all 11 TanStack hook files (useAgents, useAnalytics, useEpics, useModels, useProject, useRequirements, useSprints, useStories, useTemplates, useUsers, useWorkflows) and lib/api/axios.ts, lib/api/query-keys.ts."
     },
     {
       "id": "US-013",
@@ -410,8 +410,8 @@
         "pnpm --filter=frontend tsc --noEmit passes"
       ],
       "priority": 13,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Rewrote 3 test files to remove QueryClient/QueryClientProvider and @/lib/api/axios mock; added @/lib/api/client mock; updated all assertions. All 40 tests pass."
     },
     {
       "id": "US-014",
@@ -426,8 +426,8 @@
         "Verify in browser: /projects loads, /templates loads, /projects/[id] all tabs work, /projects/[id]/blueprints works, /settings/users works, /settings/models works — no console errors on any page"
       ],
       "priority": 14,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "All audit checks pass: zero @tanstack/react-query imports in app/, zero @/lib/api/axios imports in app/, zero @/lib/api/query-keys imports in app/, tsc --noEmit zero errors, all 40 frontend tests pass."
     }
   ]
 }
