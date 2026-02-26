@@ -365,10 +365,6 @@ configure_proxy() {
     fi
     $SUDO tee /etc/caddy/Caddyfile > /dev/null <<EOF
 ${caddy_host} {
-  handle /api/* {
-    uri strip_prefix /api
-    reverse_proxy localhost:3001
-  }
   handle /webhooks/* {
     reverse_proxy localhost:3001
   }
@@ -392,7 +388,6 @@ server {
   listen 80;
   server_name ${DOMAIN};
 
-  location /api/ { rewrite ^/api/(.*) /\$1 break; proxy_pass http://localhost:3001; proxy_set_header Host \$host; }
   location /webhooks/ { proxy_pass http://localhost:3001; proxy_set_header Host \$host; }
   location /socket.io/ { proxy_pass http://localhost:3001; proxy_http_version 1.1; proxy_set_header Upgrade \$http_upgrade; proxy_set_header Connection "upgrade"; }
   location / { proxy_pass http://localhost:3000; proxy_set_header Host \$host; }
