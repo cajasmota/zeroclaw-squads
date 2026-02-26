@@ -230,6 +230,8 @@ ADMIN_NAME=Administrator
 
 BACKEND_PORT=3001
 FRONTEND_PORT=3000
+BACKEND_URL=http://localhost:3001
+NEXT_PUBLIC_BACKEND_WS_URL=https://${DOMAIN}
 EOF
 
   chmod 600 "${AES_DIR}/.env"
@@ -276,12 +278,13 @@ module.exports = {
     },
     {
       name: 'aes-frontend',
-      script: 'node_modules/.bin/next',
-      args: 'start -p 3000',
+      script: 'pnpm',
+      args: 'start',
       cwd: '${AES_DIR}/apps/frontend',
       env_file: '${AES_DIR}/.env',
       instances: 1,
       autorestart: true,
+      interpreter: 'none',
     },
   ],
 };
