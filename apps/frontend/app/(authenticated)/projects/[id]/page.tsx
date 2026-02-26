@@ -1580,11 +1580,17 @@ function ProjectSettingsTab({ project, projectId }: { project: Project; projectI
     name: project.name,
     brandColor: project.brandColor,
     slackToken: "",
+    slackChannelId: "",
+    inviteSlackIds: "",
     githubRepo: "",
+    githubAppId: "",
+    githubPrivateKey: "",
+    githubInstallationId: "",
+    githubWebhookSecret: "",
     openaiKey: "",
     anthropicKey: "",
+    googleKey: "",
     mcpServers: "",
-    inviteSlackIds: "",
   });
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -1593,6 +1599,12 @@ function ProjectSettingsTab({ project, projectId }: { project: Project; projectI
 
   const save = async () => {
     setSaving(true);
+    const githubApp: Record<string, string> = {};
+    if (form.githubAppId) githubApp.appId = form.githubAppId;
+    if (form.githubPrivateKey) githubApp.privateKey = form.githubPrivateKey;
+    if (form.githubInstallationId) githubApp.installationId = form.githubInstallationId;
+    if (form.githubWebhookSecret) githubApp.webhookSecret = form.githubWebhookSecret;
+
     const res = await fetch(`/api/projects/${projectId}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
@@ -1601,10 +1613,16 @@ function ProjectSettingsTab({ project, projectId }: { project: Project; projectI
         brandColor: form.brandColor,
         config: {
           ...(form.slackToken ? { slackToken: form.slackToken } : {}),
-          ...(form.githubRepo ? { githubRepo: form.githubRepo } : {}),
-          llmKeys: { openai: form.openaiKey, anthropic: form.anthropicKey },
+          ...(form.slackChannelId ? { slackChannelId: form.slackChannelId } : {}),
+          ...(form.githubRepo ? { repoUrl: form.githubRepo } : {}),
+          ...(Object.keys(githubApp).length ? { githubApp } : {}),
+          llmKeys: {
+            ...(form.openaiKey ? { openai: form.openaiKey } : {}),
+            ...(form.anthropicKey ? { anthropic: form.anthropicKey } : {}),
+            ...(form.googleKey ? { google: form.googleKey } : {}),
+          },
           ...(form.mcpServers ? { mcpServers: form.mcpServers.split("\n").filter(Boolean) } : {}),
-          ...(form.inviteSlackIds ? { inviteSlackIds: form.inviteSlackIds.split(",").map(s => s.trim()).filter(Boolean) } : {}),
+          ...(form.inviteSlackIds ? { inviteUsers: form.inviteSlackIds.split(",").map(s => s.trim()).filter(Boolean) } : {}),
         },
       }),
     });
@@ -1651,13 +1669,19 @@ function ProjectSettingsTab({ project, projectId }: { project: Project; projectI
       {/* Slack */}
       <div className="space-y-4">
         <h3 className="font-semibold">Slack Integration</h3>
+        <p className="text-xs text-muted-foreground">See <code>docs/slack-app-setup.md</code> for setup instructions.</p>
         <div className="space-y-2">
           <Label>Bot Token (xoxb-...)</Label>
           <Input type="password" value={form.slackToken} onChange={e => setForm({ ...form, slackToken: e.target.value })} placeholder="xoxb-..." />
         </div>
         <div className="space-y-2">
+          <Label>Channel ID</Label>
+          <Input value={form.slackChannelId} onChange={e => setForm({ ...form, slackChannelId: e.target.value })} placeholder="C01234567" />
+        </div>
+        <div className="space-y-2">
           <Label>Invite Slack User IDs (comma-separated)</Label>
           <Input value={form.inviteSlackIds} onChange={e => setForm({ ...form, inviteSlackIds: e.target.value })} placeholder="U12345678, U98765432" />
+          <p className="text-xs text-muted-foreground">Project-specific list overrides the global invite list.</p>
         </div>
         <Button variant="outline" size="sm" onClick={testSlack} disabled={testingSlack}>
           {testingSlack ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
@@ -1671,9 +1695,31 @@ function ProjectSettingsTab({ project, projectId }: { project: Project; projectI
       {/* GitHub */}
       <div className="space-y-4">
         <h3 className="font-semibold">GitHub Integration</h3>
+        <p className="text-xs text-muted-foreground">See <code>docs/github-app-setup.md</code> for setup instructions.</p>
         <div className="space-y-2">
-          <Label>Repository (owner/repo)</Label>
+          <Label>Repository (owner/repo or URL)</Label>
           <Input value={form.githubRepo} onChange={e => setForm({ ...form, githubRepo: e.target.value })} placeholder="my-org/my-repo" />
+        </div>
+        <div className="space-y-2">
+          <Label>GitHub App ID</Label>
+          <Input value={form.githubAppId} onChange={e => setForm({ ...form, githubAppId: e.target.value })} placeholder="123456" />
+        </div>
+        <div className="space-y-2">
+          <Label>GitHub App Private Key (.pem contents)</Label>
+          <textarea
+            className="flex min-h-[100px] w-full rounded-md border border-input bg-transparent px-3 py-2 text-xs font-mono shadow-sm resize-y"
+            value={form.githubPrivateKey}
+            onChange={e => setForm({ ...form, githubPrivateKey: e.target.value })}
+            placeholder="-----BEGIN RSA PRIVATE KEY-----&#10;..."
+          />
+        </div>
+        <div className="space-y-2">
+          <Label>Installation ID</Label>
+          <Input value={form.githubInstallationId} onChange={e => setForm({ ...form, githubInstallationId: e.target.value })} placeholder="12345678" />
+        </div>
+        <div className="space-y-2">
+          <Label>Webhook Secret</Label>
+          <Input type="password" value={form.githubWebhookSecret} onChange={e => setForm({ ...form, githubWebhookSecret: e.target.value })} placeholder="your-webhook-secret" />
         </div>
       </div>
 
@@ -1690,6 +1736,10 @@ function ProjectSettingsTab({ project, projectId }: { project: Project; projectI
         <div className="space-y-2">
           <Label>Anthropic API Key</Label>
           <Input type="password" value={form.anthropicKey} onChange={e => setForm({ ...form, anthropicKey: e.target.value })} placeholder="sk-ant-..." />
+        </div>
+        <div className="space-y-2">
+          <Label>Google API Key</Label>
+          <Input type="password" value={form.googleKey} onChange={e => setForm({ ...form, googleKey: e.target.value })} placeholder="AIza..." />
         </div>
       </div>
 

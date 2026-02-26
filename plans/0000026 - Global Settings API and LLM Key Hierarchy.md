@@ -106,6 +106,15 @@ Global Settings also control:
 - [x] `/settings` page renders all sections and saves correctly
 - [x] Sensitive key fields are masked (dots) unless reveal button clicked
 - [x] Unit tests for key resolution logic pass
+- [x] Project Settings tab includes all GitHub App fields (appId, privateKey, installationId, webhookSecret, repoUrl)
+- [x] Project Settings tab includes Slack channelId and inviteUsers fields
+- [x] Project Settings tab includes Google API key field
+- [x] `lib/api/client.ts` uses relative paths only — never calls backend directly from browser
+
+## Post-Completion Fixes
+
+- **`lib/api/client.ts` browser leak** (fixed): The client was prepending `BACKEND_URL` (server-only env var, undefined in browser) to `/api/*` paths, causing all settings/models/blueprints API calls to hit `http://localhost:3001` directly from the browser. Fixed by removing the `BACKEND_URL` prefix — all paths are now relative and route through Next.js proxy routes.
+- **Project Settings tab incomplete** (fixed): GitHub Integration section was missing App ID, Private Key, Installation ID, and Webhook Secret fields. Added all fields per `knowledge-base/02-data-models.md` `project.config.githubApp` schema. Also added Slack Channel ID, Google API Key, and fixed config payload mapping to use correct nested structure (`config.githubApp`, `config.llmKeys`).
 
 ---
 
