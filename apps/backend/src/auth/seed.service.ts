@@ -50,13 +50,14 @@ export class SeedService implements OnApplicationBootstrap {
       'Administrator',
     );
 
+    const passwordHash = await bcrypt.hash(password, 12);
+
     const adminExists = await this.userModel
       .findOne({ tenantId: tenant!._id, email })
       .lean()
       .exec();
 
     if (!adminExists) {
-      const passwordHash = await bcrypt.hash(password, 12);
       await this.userModel.create({
         tenantId: tenant!._id,
         email,
@@ -65,11 +66,15 @@ export class SeedService implements OnApplicationBootstrap {
         role: 'admin',
         status: 'active',
       });
-
       this.logger.log(`=== ADMIN SEEDED ===`);
       this.logger.log(`Email: ${email}`);
-      this.logger.log(`Password: ${password}`);
       this.logger.log(`===================`);
+    } else {
+      await this.userModel.updateOne(
+        { tenantId: tenant!._id, email },
+        { $set: { passwordHash, name, status: 'active' } },
+      );
+      this.logger.log(`Admin credentials synced from env: ${email}`);
     }
   }
 }
