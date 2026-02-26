@@ -63,40 +63,63 @@ preflight() {
 configure() {
   info "Configuring AES installation..."
 
-  if $NON_INTERACTIVE; then
-    APP_NAME="${APP_NAME:-AES}"
-    DOMAIN="${DOMAIN:-localhost}"
-    ADMIN_EMAIL="${ADMIN_EMAIL:-admin@example.com}"
-    ADMIN_PASSWORD="${ADMIN_PASSWORD:-$(openssl rand -base64 16)}"
-    MONGODB_MODE="${MONGODB_MODE:-local}"
-    MONGODB_URI="${MONGODB_URI:-mongodb://localhost:27017/aes}"
-    DEFAULT_OLLAMA_MODEL="${DEFAULT_OLLAMA_MODEL:-qwen2.5-coder:1.5b}"
-    PROXY_TYPE="${PROXY_TYPE:-caddy}"
+  # Load existing .env as defaults if present
+  if [[ -f "${AES_DIR}/.env" ]]; then
+    info "Found existing .env — using its values as defaults."
+    # shellcheck source=/dev/null
+    set -o allexport; . "${AES_DIR}/.env"; set +o allexport
+  fi
+
+  # Derive defaults from loaded .env where keys differ
+  APP_NAME="${APP_NAME:-AES}"
+  DOMAIN="${DOMAIN:-${NEXT_PUBLIC_BACKEND_WS_URL:-localhost}}"
+  DOMAIN="${DOMAIN#https://}"  # strip https:// prefix if sourced from WS URL
+  ADMIN_EMAIL="${ADMIN_EMAIL:-admin@example.com}"
+  MONGODB_URI="${MONGODB_URI:-mongodb://localhost:27017/aes}"
+  DEFAULT_OLLAMA_MODEL="${DEFAULT_OLLAMA_MODEL:-qwen2.5-coder:1.5b}"
+  PROXY_TYPE="${PROXY_TYPE:-caddy}"
+  if [[ "$MONGODB_URI" == "mongodb://localhost:27017/aes" ]]; then
+    MONGODB_MODE="local"
   else
-    read -rp "App Name [AES]: " APP_NAME; APP_NAME="${APP_NAME:-AES}"
-    read -rp "Public domain (e.g. aes.example.com) [localhost]: " DOMAIN; DOMAIN="${DOMAIN:-localhost}"
-    read -rp "Admin email [admin@example.com]: " ADMIN_EMAIL; ADMIN_EMAIL="${ADMIN_EMAIL:-admin@example.com}"
+    MONGODB_MODE="external"
+  fi
+
+  if $NON_INTERACTIVE; then
+    ADMIN_PASSWORD="${ADMIN_PASSWORD:-$(openssl rand -base64 16)}"
+  else
+    read -rp "App Name [${APP_NAME}]: " _input; APP_NAME="${_input:-${APP_NAME}}"
+    read -rp "Public domain (e.g. aes.example.com) [${DOMAIN}]: " _input; DOMAIN="${_input:-${DOMAIN}}"
+    read -rp "Admin email [${ADMIN_EMAIL}]: " _input; ADMIN_EMAIL="${_input:-${ADMIN_EMAIL}}"
 
     while true; do
-      read -rsp "Admin password (min 6 chars): " ADMIN_PASSWORD; echo
-      [[ ${#ADMIN_PASSWORD} -ge 6 ]] && break
-      warn "Password must be at least 6 characters."
+      read -rsp "Admin password (leave blank to keep existing, min 6 chars): " _input; echo
+      if [[ -z "$_input" && -n "${ADMIN_PASSWORD:-}" ]]; then
+        break  # keep existing password
+      elif [[ ${#_input} -ge 6 ]]; then
+        ADMIN_PASSWORD="$_input"
+        break
+      fi
+      warn "Password must be at least 6 characters (or leave blank to keep existing)."
     done
 
-    read -rp "MongoDB: (L)ocal install or (E)xternal URI? [L]: " mongo_choice
+    read -rp "MongoDB: (L)ocal install or (E)xternal URI? [${MONGODB_MODE^^:0:1}]: " mongo_choice
     if [[ "${mongo_choice,,}" == "e" ]]; then
-      read -rp "MongoDB URI: " MONGODB_URI
+      read -rp "MongoDB URI [${MONGODB_URI}]: " _input; MONGODB_URI="${_input:-${MONGODB_URI}}"
       MONGODB_MODE="external"
     else
-      MONGODB_URI="mongodb://localhost:27017/aes"
-      MONGODB_MODE="local"
+      if [[ "${mongo_choice,,}" != "e" && "$MONGODB_MODE" == "external" && -z "${mongo_choice}" ]]; then
+        : # keep existing external URI
+      else
+        MONGODB_URI="${MONGODB_URI:-mongodb://localhost:27017/aes}"
+        MONGODB_MODE="local"
+      fi
     fi
 
-    read -rp "Default Ollama model [qwen2.5-coder:1.5b]: " DEFAULT_OLLAMA_MODEL
-    DEFAULT_OLLAMA_MODEL="${DEFAULT_OLLAMA_MODEL:-qwen2.5-coder:1.5b}"
+    read -rp "Default Ollama model [${DEFAULT_OLLAMA_MODEL}]: " _input
+    DEFAULT_OLLAMA_MODEL="${_input:-${DEFAULT_OLLAMA_MODEL}}"
 
-    read -rp "Reverse proxy — (C)addy or (N)ginx? [C]: " proxy_choice
-    if [[ "${proxy_choice,,}" == "n" ]]; then PROXY_TYPE="nginx"; else PROXY_TYPE="caddy"; fi
+    read -rp "Reverse proxy — (C)addy or (N)ginx? [${PROXY_TYPE^^:0:1}]: " proxy_choice
+    if [[ "${proxy_choice,,}" == "n" ]]; then PROXY_TYPE="nginx"; elif [[ "${proxy_choice,,}" == "c" ]]; then PROXY_TYPE="caddy"; fi
   fi
 }
 
@@ -206,8 +229,8 @@ install_ollama() {
 # ---------------------------------------------------------------------------
 generate_env() {
   info "Generating .env file..."
-  local JWT_SECRET; JWT_SECRET=$(openssl rand -hex 32)
-  local AES_ENCRYPTION_KEY; AES_ENCRYPTION_KEY=$(openssl rand -hex 32)
+  local JWT_SECRET="${JWT_SECRET:-$(openssl rand -hex 32)}"
+  local AES_ENCRYPTION_KEY="${AES_ENCRYPTION_KEY:-$(openssl rand -hex 32)}"
 
   cat > "${AES_DIR}/.env" <<EOF
 APP_NAME=${APP_NAME}
