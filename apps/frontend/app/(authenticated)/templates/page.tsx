@@ -1,9 +1,7 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Plus, Search, Download, Upload, Loader2, Edit2, ChevronDown, ChevronUp } from "lucide-react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { axiosGet, axiosPost, axiosPatch } from "@/lib/api/axios";
-import { KEYS } from "@/lib/api/query-keys";
+import { apiGet, apiPost, apiPatch } from "@/lib/api/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -17,6 +15,7 @@ interface AgentTemplate {
   role: string;
   tags: string[];
   soul: string;
+  avatarUrl: string;
   aieos_identity: Record<string, unknown>;
   config: {
     model: string;
@@ -46,9 +45,13 @@ function TemplateCard({ template, onSelect }: { template: AgentTemplate; onSelec
       className="text-left flex flex-col gap-3 rounded-lg border p-4 hover:border-[#004176] hover:shadow-md transition-all"
     >
       <div className="flex items-center gap-3">
+        {template.avatarUrl ? (
+          <img src={template.avatarUrl} alt={initials} className={`h-10 w-10 rounded-full object-cover border-2`} style={{ borderColor: ROLE_COLORS[template.role]?.replace('bg-', '') ?? '#6b7280' }} onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+        ) : (
         <div className={`flex h-10 w-10 items-center justify-center rounded-full ${ROLE_COLORS[template.role] ?? "bg-gray-500"} text-white text-sm font-bold`}>
           {initials}
         </div>
+        )}
         <div className="min-w-0">
           <p className="font-semibold truncate">{template.displayName}</p>
           <p className="text-xs text-muted-foreground capitalize">{template.role}</p>
@@ -65,13 +68,13 @@ function TemplateCard({ template, onSelect }: { template: AgentTemplate; onSelec
   );
 }
 
-function TemplateModal({ template, onClose }: { template: AgentTemplate | null; onClose: () => void }) {
-  const queryClient = useQueryClient();
+function TemplateModal({ template, onClose, onSaved }: { template: AgentTemplate | null; onClose: () => void; onSaved: () => void }) {
   const [editMode, setEditMode] = useState(!template);
   const [form, setForm] = useState({
     displayName: template?.displayName ?? "",
     role: template?.role ?? "developer",
     soul: template?.soul ?? "",
+    avatarUrl: template?.avatarUrl ?? "",
     tags: template?.tags.join(", ") ?? "",
     model: template?.config?.model ?? "qwen2.5-coder:1.5b",
     provider: template?.config?.provider ?? "ollama",
@@ -79,27 +82,34 @@ function TemplateModal({ template, onClose }: { template: AgentTemplate | null; 
     skills: template?.config?.skills ?? "",
   });
   const [error, setError] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
   const [showAieos, setShowAieos] = useState(false);
 
-  const saveMutation = useMutation({
-    mutationFn: () => {
-      const payload = {
-        displayName: form.displayName,
-        role: form.role,
-        soul: form.soul,
-        tags: form.tags.split(",").map((t) => t.trim()).filter(Boolean),
-        config: { model: form.model, provider: form.provider, canWriteCode: form.canWriteCode, skills: form.skills, mcpServers: template?.config?.mcpServers ?? [] },
-      };
-      return template
-        ? axiosPatch<AgentTemplate>(`/api/templates/${template._id}`, payload)
-        : axiosPost<AgentTemplate>("/api/templates", payload);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: KEYS.templates() });
+  const handleSave = async () => {
+    setError(null);
+    setSaving(true);
+    const payload = {
+      displayName: form.displayName,
+      role: form.role,
+      soul: form.soul,
+      avatarUrl: form.avatarUrl,
+      tags: form.tags.split(",").map((t) => t.trim()).filter(Boolean),
+      config: { model: form.model, provider: form.provider, canWriteCode: form.canWriteCode, skills: form.skills, mcpServers: template?.config?.mcpServers ?? [] },
+    };
+    try {
+      if (template) {
+        await apiPatch<AgentTemplate>(`/api/templates/${template._id}`, payload);
+      } else {
+        await apiPost<AgentTemplate>("/api/templates", payload);
+      }
+      onSaved();
       onClose();
-    },
-    onError: (err: Error) => setError(err.message ?? "Save failed"),
-  });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Save failed");
+    } finally {
+      setSaving(false);
+    }
+  };
 
   return (
     <Dialog open onOpenChange={onClose}>
@@ -110,9 +120,14 @@ function TemplateModal({ template, onClose }: { template: AgentTemplate | null; 
 
         {!editMode && template ? (
           <div className="space-y-4">
-            <div className="flex gap-2">
-              <Badge>{template.role}</Badge>
-              {template.tags.map((t) => <Badge key={t} variant="outline">{t}</Badge>)}
+            <div className="flex items-center gap-3">
+              {template.avatarUrl && (
+                <img src={template.avatarUrl} alt={template.displayName} className="h-12 w-12 rounded-full object-cover border" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+              )}
+              <div className="flex flex-wrap gap-2">
+                <Badge>{template.role}</Badge>
+                {template.tags.map((t) => <Badge key={t} variant="outline">{t}</Badge>)}
+              </div>
             </div>
             <div>
               <h3 className="text-sm font-medium mb-1">Soul / Persona</h3>
@@ -167,6 +182,21 @@ function TemplateModal({ template, onClose }: { template: AgentTemplate | null; 
               </div>
             </div>
 
+            <div className="space-y-2">
+              <Label>Avatar URL</Label>
+              <div className="flex gap-3 items-center">
+                {form.avatarUrl && (
+                  <img src={form.avatarUrl} alt="avatar preview" className="h-10 w-10 rounded-full object-cover border" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                )}
+                <Input
+                  value={form.avatarUrl}
+                  onChange={(e) => setForm({ ...form, avatarUrl: e.target.value })}
+                  placeholder="https://example.com/avatar.png"
+                />
+              </div>
+              <p className="text-xs text-muted-foreground">Optional. Used as the Slack profile picture for this agent.</p>
+            </div>
+
             <div className="flex items-center gap-2">
               <input type="checkbox" id="canWriteCode" checked={form.canWriteCode} onChange={(e) => setForm({ ...form, canWriteCode: e.target.checked })} />
               <Label htmlFor="canWriteCode">Can Write Code</Label>
@@ -178,17 +208,23 @@ function TemplateModal({ template, onClose }: { template: AgentTemplate | null; 
                 {showAieos ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
                 AIEOS v1.1 Identity (Advanced)
               </button>
-              {showAieos && template && (
+              {showAieos && (
                 <div className="mt-2 p-3 rounded-md border text-xs text-muted-foreground font-mono">
-                  <pre>{JSON.stringify(template.aieos_identity, null, 2)}</pre>
+                  {!template ? (
+                    <p className="italic">Save the template first — AIEOS identity is generated on creation.</p>
+                  ) : template.aieos_identity && Object.keys(template.aieos_identity).length > 0 ? (
+                    <pre>{JSON.stringify(template.aieos_identity, null, 2)}</pre>
+                  ) : (
+                    <p className="italic">No AIEOS identity generated yet for this template.</p>
+                  )}
                 </div>
               )}
             </div>
 
             <div className="flex gap-3 justify-end">
               <Button variant="outline" onClick={() => template ? setEditMode(false) : onClose()}>Cancel</Button>
-              <Button onClick={() => saveMutation.mutate()} disabled={saveMutation.isPending}>
-                {saveMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : "Save"}
+              <Button onClick={handleSave} disabled={saving}>
+                {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : "Save"}
               </Button>
             </div>
           </div>
@@ -199,21 +235,21 @@ function TemplateModal({ template, onClose }: { template: AgentTemplate | null; 
 }
 
 export default function TemplatesPage() {
-  const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
   const [roleFilter, setRoleFilter] = useState("all");
   const [selected, setSelected] = useState<AgentTemplate | null | undefined>(undefined);
+  const [templates, setTemplates] = useState<AgentTemplate[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const { data: templates = [], isLoading } = useQuery({
-    queryKey: KEYS.templates(),
-    queryFn: () => axiosGet<AgentTemplate[]>("/api/templates"),
-    select: (data) => (Array.isArray(data) ? data : []),
-  });
+  const fetchTemplates = () => {
+    setLoading(true);
+    apiGet<AgentTemplate[]>("/api/templates")
+      .then((data) => setTemplates(Array.isArray(data) ? data : []))
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  };
 
-  const importMutation = useMutation({
-    mutationFn: (data: Partial<AgentTemplate>) => axiosPost("/api/templates", data),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: KEYS.templates() }),
-  });
+  useEffect(() => { fetchTemplates(); }, []);
 
   const filtered = templates.filter((t) => {
     const matchSearch = t.displayName.toLowerCase().includes(search.toLowerCase()) || t.tags.some(tag => tag.includes(search.toLowerCase()));
@@ -237,7 +273,12 @@ export default function TemplatesPage() {
       if (!file) return;
       const text = await file.text();
       const data = JSON.parse(text) as Partial<AgentTemplate>;
-      importMutation.mutate(data);
+      try {
+        await apiPost("/api/templates", data);
+        fetchTemplates();
+      } catch {
+        // silently fail
+      }
     };
     input.click();
   };
@@ -271,7 +312,7 @@ export default function TemplatesPage() {
       </div>
 
       {/* Grid */}
-      {isLoading ? (
+      {loading ? (
         <div className="flex items-center justify-center py-16"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>
       ) : (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
@@ -295,7 +336,7 @@ export default function TemplatesPage() {
 
       {/* Modal */}
       {selected !== undefined && (
-        <TemplateModal template={selected} onClose={() => setSelected(undefined)} />
+        <TemplateModal template={selected} onClose={() => setSelected(undefined)} onSaved={fetchTemplates} />
       )}
     </div>
   );

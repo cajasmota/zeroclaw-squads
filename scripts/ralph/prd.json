@@ -246,8 +246,8 @@
         "pnpm --filter=frontend tsc --noEmit passes"
       ],
       "priority": 4,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Migrated to useState+useEffect+apiGet/apiPost. Removed useQuery/useMutation/queryClient/axiosGet/axiosPost/KEYS imports."
     },
     {
       "id": "US-005",
@@ -262,8 +262,8 @@
         "pnpm --filter=frontend tsc --noEmit passes"
       ],
       "priority": 5,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Migrated to useState+useEffect+apiGet/apiPost/apiPatch. TemplateModal receives onSaved callback to re-fetch after save. Import uses apiPost directly."
     },
     {
       "id": "US-006",
