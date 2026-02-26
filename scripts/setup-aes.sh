@@ -301,13 +301,12 @@ module.exports = {
     },
     {
       name: 'aes-frontend',
-      script: '${AES_DIR}/node_modules/.bin/next',
+      script: 'node_modules/next/dist/bin/next',
       args: 'start -p 3000',
       cwd: '${AES_DIR}/apps/frontend',
       env_file: '${AES_DIR}/.env',
       instances: 1,
       autorestart: true,
-      interpreter: 'none',
     },
   ],
 };
