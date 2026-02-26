@@ -2,6 +2,68 @@
   "project": "AES (Agentic Engineering System)",
   "branchName": "ralph/0000029-tanstack-query-axios",
   "description": "Migrate all raw fetch() calls in authenticated frontend pages to TanStack Query v5 + Axios, following the project convention defined in AGENTS.md.",
+
+  "storyReference": {
+    "id": "0000029",
+    "file": "plans/0000029 - Migrate Frontend Fetches to TanStack Query and Axios.md",
+    "epic": "EPIC-10: UI - Project Control Center",
+    "assignedTo": "Frontend Agent",
+    "status": "Not Started"
+  },
+
+  "dependencies": [
+    { "storyId": "0000024", "title": "Frontend Auth - Login Page, httpOnly Cookie, Route Protection, App Shell", "reason": "QueryClientProvider must wrap the same authenticated layout shell" },
+    { "storyId": "0000026", "title": "Global Settings API + LLM Key Hierarchy + /settings Global UI", "reason": "lib/api/client.ts baseline — client.ts already uses relative /api/* paths after this fix" }
+  ],
+
+  "knowledgeBase": [
+    { "file": "plans/knowledge-base/03-technology-stack.md", "relevance": "Full tech stack — Next.js App Router, NestJS, MongoDB, supported LLM providers" },
+    { "file": "plans/knowledge-base/08-ui-design-system.md", "relevance": "UI routes, component library (Shadcn UI), design conventions" }
+  ],
+
+  "referencedFiles": {
+    "toModify": [
+      { "path": "apps/frontend/app/(authenticated)/layout.tsx", "reason": "Add QueryClientProvider wrapper" },
+      { "path": "apps/frontend/lib/api/client.ts", "reason": "Reimplement apiGet/apiPost/apiPatch/apiDelete using Axios instance" },
+      { "path": "apps/frontend/app/(authenticated)/projects/page.tsx", "reason": "Migrate fetch('/api/projects') and fetch('/api/templates') to useQuery hooks" },
+      { "path": "apps/frontend/app/(authenticated)/templates/page.tsx", "reason": "Migrate all template fetches to useQuery/useMutation" },
+      { "path": "apps/frontend/app/(authenticated)/settings/users/page.tsx", "reason": "Migrate all user fetches to useQuery/useMutation" },
+      { "path": "apps/frontend/app/(authenticated)/settings/models/page.tsx", "reason": "Migrate model fetch/delete to useQuery/useMutation" },
+      { "path": "apps/frontend/app/(authenticated)/projects/[id]/page.tsx", "reason": "Largest file — migrate ~40 raw fetch() calls across AgentsTab, BacklogTab, KanbanTab, TicketDialogueTab, BlueprintsTab, RequirementsTab, ProjectSettingsTab" },
+      { "path": "apps/frontend/app/(authenticated)/projects/[id]/blueprints/page.tsx", "reason": "Migrate workflow fetch to useQuery" }
+    ],
+    "toCreate": [
+      { "path": "apps/frontend/lib/api/axios.ts", "reason": "Shared Axios instance with 401 redirect interceptor and typed helper functions" },
+      { "path": "apps/frontend/lib/api/query-keys.ts", "reason": "Centralised query key factory constants" },
+      { "path": "apps/frontend/hooks/use-projects.ts", "reason": "useProjects, useProject, useCreateProject hooks" },
+      { "path": "apps/frontend/hooks/use-templates.ts", "reason": "useTemplates, useSaveTemplate, useDeleteTemplate hooks" },
+      { "path": "apps/frontend/hooks/use-agents.ts", "reason": "useAgents, useSaveAgent, useSyncAgent hooks" },
+      { "path": "apps/frontend/hooks/use-stories.ts", "reason": "useStories, useEpics, useSprints and related mutation hooks" },
+      { "path": "apps/frontend/hooks/use-ticket-dialogue.ts", "reason": "useStoryComments, usePostComment, useApproveStory, useAnswerStory hooks" },
+      { "path": "apps/frontend/hooks/use-workflows.ts", "reason": "useWorkflows, useTriggerWorkflow hooks" },
+      { "path": "apps/frontend/hooks/use-requirements.ts", "reason": "useRequirements, useCreateRequirement, useUpdateRequirement hooks" },
+      { "path": "apps/frontend/hooks/use-users.ts", "reason": "useUsers, useCreateUser, useUpdateUser, useDeleteUser hooks" },
+      { "path": "apps/frontend/hooks/use-models.ts", "reason": "useModels, useDeleteModel hooks" }
+    ],
+    "toLeave": [
+      { "path": "apps/frontend/app/login/page.tsx", "reason": "Pre-auth page — runs before QueryClientProvider exists, keep plain fetch()" },
+      { "path": "apps/frontend/app/api/**", "reason": "Next.js server-side proxy routes — these are server handlers, not client fetches" }
+    ]
+  },
+
+  "conventions": {
+    "packageManager": "pnpm — always use pnpm --filter=frontend, never npm or yarn",
+    "framework": "Next.js App Router — no Pages Router, no getServerSideProps",
+    "uiComponents": "Shadcn UI only — do not install other component libraries",
+    "apiCalls": "Always through /api/* proxy routes — never call backend port directly",
+    "queryClientConfig": "staleTime: 30_000 (30s) as project default",
+    "queryKeyConvention": "All keys from KEYS.* constants in lib/api/query-keys.ts — never inline strings",
+    "arrayGuard": "All useQuery queryFn responses that return arrays must guard: Array.isArray(d) ? d : []",
+    "mutationInvalidation": "Every useMutation onSuccess must call queryClient.invalidateQueries({ queryKey: KEYS.xxx() })",
+    "hookLocation": "All custom data hooks in apps/frontend/hooks/ — one file per resource domain",
+    "typecheck": "Run pnpm --filter=frontend tsc --noEmit after each story to verify no TypeScript errors"
+  },
+
   "userStories": [
     {
       "id": "US-001",
