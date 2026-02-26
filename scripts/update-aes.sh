@@ -91,12 +91,70 @@ rebuild() {
 }
 
 # ---------------------------------------------------------------------------
+# Regenerate ecosystem.config.js from current .env
+# ---------------------------------------------------------------------------
+regenerate_ecosystem() {
+  info "Regenerating ecosystem.config.js from .env..."
+  # shellcheck source=/dev/null
+  set -o allexport; . "${AES_DIR}/.env"; set +o allexport
+
+  cat > "${AES_DIR}/ecosystem.config.js" <<EOF
+module.exports = {
+  apps: [
+    {
+      name: 'aes-backend',
+      script: 'apps/backend/dist/main.js',
+      cwd: '${AES_DIR}',
+      instances: 1,
+      autorestart: true,
+      watch: false,
+      env: {
+        NODE_ENV: 'production',
+        APP_NAME: '${APP_NAME}',
+        MONGODB_URI: '${MONGODB_URI}',
+        JWT_SECRET: '${JWT_SECRET}',
+        JWT_EXPIRES_IN: '${JWT_EXPIRES_IN:-7d}',
+        AES_ENCRYPTION_KEY: '${AES_ENCRYPTION_KEY}',
+        ZEROCLAW_BINARY_PATH: '${ZEROCLAW_BINARY_PATH}',
+        OLLAMA_ENDPOINT: '${OLLAMA_ENDPOINT}',
+        ARTIFACTS_ROOT: '${ARTIFACTS_ROOT}',
+        ADMIN_EMAIL: '${ADMIN_EMAIL}',
+        ADMIN_PASSWORD: '${ADMIN_PASSWORD}',
+        ADMIN_NAME: '${ADMIN_NAME}',
+        BACKEND_PORT: '${BACKEND_PORT:-3001}',
+        FRONTEND_URL: 'https://${DOMAIN:-localhost}',
+      },
+    },
+    {
+      name: 'aes-frontend',
+      script: 'node_modules/next/dist/bin/next',
+      args: 'start -p 3000',
+      cwd: '${AES_DIR}/apps/frontend',
+      instances: 1,
+      autorestart: true,
+      env: {
+        NODE_ENV: 'production',
+        APP_NAME: '${APP_NAME}',
+        NEXT_PUBLIC_APP_NAME: '${APP_NAME}',
+        JWT_SECRET: '${JWT_SECRET}',
+        BACKEND_URL: '${BACKEND_URL:-http://localhost:3001}',
+        NEXT_PUBLIC_BACKEND_WS_URL: '${NEXT_PUBLIC_BACKEND_WS_URL}',
+        PORT: '${FRONTEND_PORT:-3000}',
+      },
+    },
+  ],
+};
+EOF
+  success "ecosystem.config.js regenerated."
+}
+
+# ---------------------------------------------------------------------------
 # Zero-downtime restart
 # ---------------------------------------------------------------------------
 restart() {
   info "Reloading pm2 processes (zero-downtime)..."
   cd "${AES_DIR}"
-  pm2 reload ecosystem.config.js || pm2 restart ecosystem.config.js
+  pm2 reload ecosystem.config.js --update-env || pm2 restart ecosystem.config.js --update-env
   success "pm2 reloaded."
 }
 
@@ -126,6 +184,7 @@ main() {
   pull_code
   check_tools
   rebuild
+  regenerate_ecosystem
   restart
   verify
 }
