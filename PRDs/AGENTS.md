@@ -51,7 +51,7 @@ Always match the story ID from `plans/INDEX.md`.
 
 ---
 
-## `storyReference` — Link to the plans/ story
+## `storyReference` — Human-readable tracking only
 
 ```json
 "storyReference": {
@@ -63,8 +63,16 @@ Always match the story ID from `plans/INDEX.md`.
 }
 ```
 
-- `id` matches the zero-padded number from `plans/INDEX.md`
-- `file` is the relative path to the full story markdown
+**This field is for humans only.** The agent does not use it to decide what to implement.
+The `prd.json` itself — specifically `userStories`, `conventions`, `referencedFiles`, and
+`description` — is the **single source of truth** for what the agent builds.
+
+The `plans/` story file is a design document written before coding started. The PRD.json
+may diverge from it as you refine scope. That is fine — the agent follows the PRD.json.
+Do not instruct the agent to "read the story file first" or to reconcile differences;
+that introduces confusion. The `storyReference.file` is purely for your own cross-referencing.
+
+- `status` is updated by the human author as stories complete — not by Ralph
 - `assignedTo` reflects the agent type: `"Frontend Agent"`, `"Backend Agent"`, or `"Backend + Frontend"`
 
 ---
@@ -118,9 +126,7 @@ Always match the story ID from `plans/INDEX.md`.
 
 ---
 
-## `referencedFiles` — Precise file inventory
-
-Split into three buckets so the agent knows exactly what to touch:
+## `referencedFiles` — Starting point, not a constraint
 
 ```json
 "referencedFiles": {
@@ -145,9 +151,23 @@ Split into three buckets so the agent knows exactly what to touch:
 }
 ```
 
-- `toLeave` is as important as the others — it **prevents accidental regressions**
-- Be specific about `reason` for every entry; the agent reads these as instructions
-- For backend stories, list schema files, service files, controller files, and DTO files separately
+**This field is a helpful head-start, not a hard constraint.**
+The agent is free — and expected — to read, modify, or create any additional files
+needed to make the acceptance criteria pass. `referencedFiles` exists to:
+
+1. Quickly orient a fresh-context agent to *where* the relevant code lives
+2. Flag files that should **not** be touched (the `toLeave` bucket is the only one that carries a real constraint)
+3. Help you as the author think through scope before writing acceptance criteria
+
+If the agent discovers during implementation that it needs to touch a file not listed
+here, it should do so without hesitation. The acceptance criteria are what matter —
+not the file list.
+
+- `toLeave` **is** a real guard — include files that must not be broken or changed
+- `toModify` and `toCreate` are informational hints only
+- For backend stories, listing schema / service / controller / DTO files here helps
+  the agent orient faster, but it does not prevent it from creating additional DTOs,
+  interfaces, or utility files as needed
 
 ---
 
@@ -250,37 +270,110 @@ canonical example. It demonstrates:
 
 ---
 
-## Running Ralph
+## How to run a PRD with Ralph — full prompt example
 
-Once your `prd.json` is ready:
+Ralph requires a `prd.json` at the **repo root** (or the path your `ralph.sh` script
+expects). Copy or symlink the PRD file before running:
 
 ```bash
-# From the repo root
-./scripts/ralph/ralph.sh --tool claude 20   # 20 iterations max
-./scripts/ralph/ralph.sh --tool amp 20
+# From repo root — copy the PRD you want to run into prd.json
+cp PRDs/0000029-migrate-frontend-fetches-to-tanstack-query-and-axios.json prd.json
+
+# Then run Ralph (adjust iterations as needed)
+./scripts/ralph/ralph.sh --tool claude 20
 ```
 
-Ralph will:
-1. Create branch `branchName` from current HEAD
-2. Pick highest-priority story where `passes: false`
-3. Implement it, run quality checks (typecheck, tests)
-4. Commit if checks pass, mark `passes: true`, append learnings to `progress.txt`
-5. Repeat until all stories pass or max iterations reached
+### The prompt Ralph passes to each agent iteration
+
+Ralph reads `prd.json` and constructs a prompt for each iteration automatically.
+But when you **manually** start a Ralph-style session (e.g. in Windsurf/Cursor/Claude),
+use the following prompt template. Copy it verbatim and fill in the bracketed parts:
+
+---
+
+```
+You are an autonomous coding agent working on the AES (Agentic Engineering System) codebase.
+Your ONLY job this session is to implement ONE user story from the PRD below and make all
+its acceptance criteria pass. Do not implement any other stories.
+
+SOURCE OF TRUTH: prd.json (the file below). Ignore any other planning documents
+unless they are listed in the PRD's knowledgeBase array.
+
+--- PRD ---
+[paste the full contents of the prd.json here]
+-----------
+
+INSTRUCTIONS:
+1. Read the full PRD above. Note the `conventions` and `referencedFiles.toLeave` fields —
+   these are hard constraints. Everything else is a guide.
+2. Find the lowest-priority user story where `passes` is false. That is your story.
+3. Read every file in `referencedFiles.toModify` and any files those reference before
+   writing a single line of code.
+4. Implement the story. You may read, modify, or create any file necessary to make
+   the acceptance criteria pass. You are NOT limited to the files in `referencedFiles`.
+5. After implementation, run the quality checks listed in acceptanceCriteria
+   (typecheck, tests, browser verification if applicable).
+6. If all checks pass:
+   a. Commit with message: "feat(US-XXX): [story title]"
+   b. Update prd.json: set `passes: true` on this story, add a one-sentence learning
+      to its `notes` field.
+   c. Output a brief summary of what you did and what you learned.
+7. If a check fails, fix the code — do not mark `passes: true` until all criteria pass.
+8. Stop after completing ONE story. Do not proceed to the next.
+```
+
+---
+
+### When to use the manual prompt vs. `ralph.sh`
+
+| Situation | Use |
+|-----------|-----|
+| Running the full automated loop unattended | `./scripts/ralph/ralph.sh --tool claude 20` |
+| Doing one story interactively with oversight | Paste the manual prompt above into your AI IDE |
+| Debugging a failing story | Paste the manual prompt, add the failure output at the end |
+| Resuming after a mid-loop failure | Just re-run `ralph.sh` — it skips stories where `passes: true` |
+
+### Tips for reliable Ralph runs
+
+- **Keep `prd.json` at root** — `ralph.sh` reads it from the working directory
+- **Commit before starting** — Ralph creates a branch from your current HEAD; a clean
+  git state prevents merge conflicts
+- **One PRD at a time** — only one `prd.json` exists at root at a time; swap files
+  between PRDs
+- **Watch `progress.txt`** — Ralph appends learnings after each iteration; read it
+  if something goes wrong to understand what the previous iteration discovered
+- **Bump `totalThoughts` if stories are failing** — if the agent is consistently
+  running out of context mid-story, split that story into two smaller ones in `prd.json`
+  and reset `passes: false`
 
 ---
 
 ## Checklist before saving a PRD
 
+**Structure**
 - [ ] File named `PRDs/{storyId}-{kebab-title}.json`
 - [ ] `branchName` follows `ralph/{storyId}-{short-description}`
-- [ ] `storyReference.id` matches the story in `plans/INDEX.md`
+- [ ] `storyReference.id` matches the story in `plans/INDEX.md` (for human tracking)
+- [ ] `description` is one clear sentence — the agent reads this as context for all stories
+
+**Context fields**
 - [ ] All blocking stories listed in `dependencies` with `reason`
-- [ ] Only relevant `knowledgeBase` files listed
-- [ ] Every file touched has an entry in `referencedFiles` (modify/create/leave)
+- [ ] Only relevant `knowledgeBase` files listed (don't pad with irrelevant docs)
+- [ ] `referencedFiles.toLeave` covers all files that must not be broken
+- [ ] `referencedFiles.toModify` and `toCreate` list the *likely* starting files (not exhaustive)
 - [ ] `conventions` covers the main footguns for this type of work
-- [ ] Each user story fits in one context window (no "refactor everything" stories)
+
+**User stories**
+- [ ] Each story fits in one context window (no "refactor everything" stories)
 - [ ] Every story has typecheck in acceptance criteria
-- [ ] Every UI story has browser verification in acceptance criteria
+- [ ] Every UI story has "Verify in browser" in acceptance criteria
+- [ ] Acceptance criteria are concrete and verifiable (no vague "works correctly")
 - [ ] All `passes` fields are `false`
-- [ ] `notes` fields are empty strings
-- [ ] Priority ordering respects dependencies between stories
+- [ ] All `notes` fields are empty strings `""`
+- [ ] Priority ordering: setup (1–N) → features → verification (last)
+- [ ] No story has a lower priority number than a story it depends on
+
+**Before running**
+- [ ] `git status` is clean
+- [ ] `cp PRDs/{file}.json prd.json` done
+- [ ] You know how many iterations to allow (`N stories × 1.5` is a safe estimate)
