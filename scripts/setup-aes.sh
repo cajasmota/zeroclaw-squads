@@ -313,10 +313,18 @@ configure_proxy() {
     fi
     $SUDO tee /etc/caddy/Caddyfile > /dev/null <<EOF
 ${caddy_host} {
-  handle /api/* { reverse_proxy localhost:3001 }
-  handle /webhooks/* { reverse_proxy localhost:3001 }
-  handle /socket.io/* { reverse_proxy localhost:3001 }
-  handle { reverse_proxy localhost:3000 }
+  handle /api/* {
+    reverse_proxy localhost:3001
+  }
+  handle /webhooks/* {
+    reverse_proxy localhost:3001
+  }
+  handle /socket.io/* {
+    reverse_proxy localhost:3001
+  }
+  handle {
+    reverse_proxy localhost:3000
+  }
 }
 EOF
     $SUDO systemctl enable caddy 2>/dev/null || true
