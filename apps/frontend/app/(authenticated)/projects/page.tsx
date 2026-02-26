@@ -69,7 +69,7 @@ function NewProjectWizard({ onClose, onCreated }: { onClose: () => void; onCreat
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    fetch("/api/templates").then((r) => r.json()).then(setTemplates).catch(console.error);
+    fetch("/api/templates").then((r) => r.json()).then((d) => setTemplates(Array.isArray(d) ? d : [])).catch(console.error);
   }, []);
 
   const generateSlug = (name: string) => name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 30);
@@ -273,7 +273,7 @@ export default function ProjectsPage() {
 
   const fetchProjects = () => {
     setLoading(true);
-    fetch("/api/projects").then((r) => r.json()).then(setProjects).catch(console.error).finally(() => setLoading(false));
+    fetch("/api/projects").then((r) => r.json()).then((d) => setProjects(Array.isArray(d) ? d : [])).catch(console.error).finally(() => setLoading(false));
   };
 
   useEffect(() => { fetchProjects(); }, []);

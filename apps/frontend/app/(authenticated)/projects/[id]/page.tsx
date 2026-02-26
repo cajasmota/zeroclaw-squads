@@ -254,8 +254,8 @@ function DashboardTab({ projectId, liveStatuses }: { projectId: string; liveStat
   const [librarianStatus, setLibrarianStatus] = useState<string>("idle");
 
   useEffect(() => {
-    fetch(`/api/projects/${projectId}/agents`).then(r => r.json()).then(setAgents).catch(console.error);
-    fetch(`/api/projects/${projectId}/stories`).then(r => r.json()).then(setStories).catch(console.error);
+    fetch(`/api/projects/${projectId}/agents`).then(r => r.json()).then(d => setAgents(Array.isArray(d) ? d : [])).catch(console.error);
+    fetch(`/api/projects/${projectId}/stories`).then(r => r.json()).then(d => setStories(Array.isArray(d) ? d : [])).catch(console.error);
     fetch(`/api/projects/${projectId}/librarian/status`).then(r => r.json()).then((d: { status: string }) => setLibrarianStatus(d.status)).catch(console.error);
   }, [projectId]);
 
@@ -366,7 +366,7 @@ export function AgentsTab({ projectId, liveStatuses }: { projectId: string; live
   const [syncToast, setSyncToast] = useState<string | null>(null);
 
   const fetchAgents = () => {
-    fetch(`/api/projects/${projectId}/agents`).then(r => r.json()).then(setAgents).catch(console.error).finally(() => setLoading(false));
+    fetch(`/api/projects/${projectId}/agents`).then(r => r.json()).then(d => setAgents(Array.isArray(d) ? d : [])).catch(console.error).finally(() => setLoading(false));
   };
 
   useEffect(() => {
@@ -1320,7 +1320,7 @@ function BlueprintsTab({ projectId }: { projectId: string }) {
   useEffect(() => {
     fetch(`/api/projects/${projectId}/workflows`)
       .then(r => r.json())
-      .then(setTemplates)
+      .then(d => setTemplates(Array.isArray(d) ? d : []))
       .catch(console.error)
       .finally(() => setLoading(false));
   }, [projectId]);

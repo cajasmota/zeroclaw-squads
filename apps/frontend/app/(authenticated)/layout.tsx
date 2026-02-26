@@ -13,10 +13,10 @@ import { cn } from "@/lib/utils";
 const APP_NAME = process.env.NEXT_PUBLIC_APP_NAME ?? "AES";
 
 const navItems = [
-  { href: "/projects", label: "Projects", icon: FolderOpen },
-  { href: "/templates", label: "Templates", icon: LayoutDashboard },
-  { href: "/settings/models", label: "Models", icon: Cpu },
-  { href: "/settings", label: "Settings", icon: Settings },
+  { href: "/projects", label: "Projects", icon: FolderOpen, exact: false },
+  { href: "/templates", label: "Templates", icon: LayoutDashboard, exact: true },
+  { href: "/settings/models", label: "Models", icon: Cpu, exact: false },
+  { href: "/settings", label: "Settings", icon: Settings, exact: true },
 ];
 
 function ModeToggle() {
@@ -60,8 +60,8 @@ function Sidebar({ open, onClose }: { open: boolean; onClose: () => void }) {
 
         {/* Nav */}
         <nav className="flex-1 space-y-1 px-2 py-4">
-          {navItems.map(({ href, label, icon: Icon }) => {
-            const isActive = pathname === href || (href !== "/" && pathname.startsWith(href));
+          {navItems.map(({ href, label, icon: Icon, exact }) => {
+            const isActive = exact ? pathname === href : (pathname === href || (href !== "/" && pathname.startsWith(href)));
             return (
               <Link
                 key={href}

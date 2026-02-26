@@ -38,7 +38,7 @@ export default function UsersPage() {
     setLoading(true);
     fetch("/api/users")
       .then((r) => r.json())
-      .then(setUsers)
+      .then((d) => setUsers(Array.isArray(d) ? d : []))
       .catch(console.error)
       .finally(() => setLoading(false));
   };

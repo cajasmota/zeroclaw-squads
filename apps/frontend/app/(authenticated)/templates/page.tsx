@@ -209,7 +209,7 @@ export default function TemplatesPage() {
     setLoading(true);
     fetch("/api/templates")
       .then((r) => r.json())
-      .then(setTemplates)
+      .then((d) => setTemplates(Array.isArray(d) ? d : []))
       .catch(console.error)
       .finally(() => setLoading(false));
   };
