@@ -278,8 +278,8 @@ module.exports = {
     },
     {
       name: 'aes-frontend',
-      script: 'pnpm',
-      args: 'start',
+      script: '${AES_DIR}/node_modules/.bin/next',
+      args: 'start -p 3000',
       cwd: '${AES_DIR}/apps/frontend',
       env_file: '${AES_DIR}/.env',
       instances: 1,
