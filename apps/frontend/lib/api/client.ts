@@ -1,7 +1,5 @@
-const BACKEND_URL = process.env.BACKEND_URL ?? process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://localhost:3001";
-
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
-  const res = await fetch(`${BACKEND_URL}${path}`, {
+  const res = await fetch(path, {
     ...options,
     headers: {
       "Content-Type": "application/json",
