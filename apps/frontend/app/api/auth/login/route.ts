@@ -5,7 +5,7 @@ const BACKEND_URL = process.env.BACKEND_URL ?? "http://localhost:3001";
 export async function POST(req: NextRequest) {
   const body = await req.json();
 
-  let data: { access_token?: string; user?: unknown };
+  let data: { accessToken?: string; user?: unknown };
   try {
     const res = await fetch(`${BACKEND_URL}/auth/login`, {
       method: "POST",
@@ -24,7 +24,7 @@ export async function POST(req: NextRequest) {
   }
 
   const response = NextResponse.json({ user: data.user });
-  response.cookies.set("accessToken", data.access_token ?? "", {
+  response.cookies.set("accessToken", data.accessToken ?? "", {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: "strict",
