@@ -40,6 +40,9 @@ export class GlobalSettingsService {
         if (obj.llmKeys[key]) obj.llmKeys[key] = SENSITIVE_MASK;
       }
     }
+    if (obj.slackToken) obj.slackToken = SENSITIVE_MASK;
+    if (obj.githubApp?.privateKey) obj.githubApp = { ...obj.githubApp, privateKey: SENSITIVE_MASK };
+    if (obj.githubApp?.webhookSecret) obj.githubApp = { ...obj.githubApp, webhookSecret: SENSITIVE_MASK };
     return obj;
   }
 
@@ -53,6 +56,19 @@ export class GlobalSettingsService {
         if (dto.llmKeys[key] && dto.llmKeys[key] !== SENSITIVE_MASK) {
           dto.llmKeys[key] = this.encryption.encrypt(dto.llmKeys[key]);
         }
+      }
+    }
+    // Encrypt Slack token
+    if (dto.slackToken && dto.slackToken !== SENSITIVE_MASK) {
+      dto.slackToken = this.encryption.encrypt(dto.slackToken);
+    }
+    // Encrypt GitHub App sensitive fields
+    if (dto.githubApp) {
+      if (dto.githubApp.privateKey && dto.githubApp.privateKey !== SENSITIVE_MASK) {
+        dto.githubApp = { ...dto.githubApp, privateKey: this.encryption.encrypt(dto.githubApp.privateKey) };
+      }
+      if (dto.githubApp.webhookSecret && dto.githubApp.webhookSecret !== SENSITIVE_MASK) {
+        dto.githubApp = { ...dto.githubApp, webhookSecret: this.encryption.encrypt(dto.githubApp.webhookSecret) };
       }
     }
     return this.settingsModel

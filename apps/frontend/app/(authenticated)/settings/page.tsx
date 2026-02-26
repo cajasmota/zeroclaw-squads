@@ -15,6 +15,15 @@ interface GlobalSettings {
   ollamaEndpoint: string;
   defaultOllamaModel: string;
   globalInviteUsers: string[];
+  slackToken: string;
+  githubApp: {
+    appId: string;
+    privateKey: string;
+    installationId: string;
+    webhookSecret: string;
+    repoOwner: string;
+    repoName: string;
+  };
   providers: {
     openai: boolean;
     anthropic: boolean;
@@ -58,6 +67,17 @@ export default function SettingsPage() {
   });
   const [llmKeys, setLlmKeys] = useState({ openai: "", anthropic: "", google: "" });
   const [inviteUsers, setInviteUsers] = useState<string[]>([]);
+  const [slackToken, setSlackToken] = useState("");
+  const [showSlackToken, setShowSlackToken] = useState(false);
+  const [githubApp, setGithubApp] = useState({
+    appId: "",
+    privateKey: "",
+    installationId: "",
+    webhookSecret: "",
+    repoOwner: "",
+    repoName: "",
+  });
+  const [showGhSecret, setShowGhSecret] = useState(false);
 
   async function load() {
     setLoading(true);
@@ -75,6 +95,15 @@ export default function SettingsPage() {
         google: data.llmKeys?.google || "",
       });
       setInviteUsers(data.globalInviteUsers ?? []);
+      setSlackToken(data.slackToken ?? "");
+      setGithubApp({
+        appId: data.githubApp?.appId ?? "",
+        privateKey: data.githubApp?.privateKey ?? "",
+        installationId: data.githubApp?.installationId ?? "",
+        webhookSecret: data.githubApp?.webhookSecret ?? "",
+        repoOwner: data.githubApp?.repoOwner ?? "",
+        repoName: data.githubApp?.repoName ?? "",
+      });
     } catch {
       setError("Failed to load settings");
     } finally {
@@ -95,6 +124,15 @@ export default function SettingsPage() {
         defaultOllamaModel,
         providers,
         globalInviteUsers: inviteUsers,
+        ...(slackToken && slackToken !== ENCRYPTED_MASK ? { slackToken } : {}),
+        githubApp: {
+          ...(githubApp.appId ? { appId: githubApp.appId } : {}),
+          ...(githubApp.privateKey && githubApp.privateKey !== ENCRYPTED_MASK ? { privateKey: githubApp.privateKey } : {}),
+          ...(githubApp.installationId ? { installationId: githubApp.installationId } : {}),
+          ...(githubApp.webhookSecret && githubApp.webhookSecret !== ENCRYPTED_MASK ? { webhookSecret: githubApp.webhookSecret } : {}),
+          ...(githubApp.repoOwner ? { repoOwner: githubApp.repoOwner } : {}),
+          ...(githubApp.repoName ? { repoName: githubApp.repoName } : {}),
+        },
       };
       // Only send keys that changed (not the mask)
       const keysToSend: Record<string, string> = {};
@@ -249,6 +287,118 @@ export default function SettingsPage() {
             )}
           </div>
         ))}
+      </section>
+
+      {/* Slack Integration */}
+      <section className="space-y-4 border rounded-lg p-6">
+        <h2 className="font-semibold text-sm uppercase tracking-wide text-muted-foreground">
+          Slack Integration
+        </h2>
+        <p className="text-xs text-muted-foreground">
+          Global fallback Slack bot token. Used when a project has no project-specific token configured.
+          See <code>docs/slack-app-setup.md</code> for setup instructions.
+        </p>
+        <div className="space-y-2">
+          <Label htmlFor="slackToken">Bot Token (xoxb-...)</Label>
+          <div className="relative">
+            <Input
+              id="slackToken"
+              type={showSlackToken ? "text" : "password"}
+              value={slackToken}
+              onChange={(e) => setSlackToken(e.target.value)}
+              placeholder="xoxb-..."
+              className="pr-10"
+            />
+            <button
+              type="button"
+              onClick={() => setShowSlackToken(!showSlackToken)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+              tabIndex={-1}
+            >
+              {showSlackToken ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+            </button>
+          </div>
+        </div>
+      </section>
+
+      {/* GitHub Integration */}
+      <section className="space-y-4 border rounded-lg p-6">
+        <h2 className="font-semibold text-sm uppercase tracking-wide text-muted-foreground">
+          GitHub Integration
+        </h2>
+        <p className="text-xs text-muted-foreground">
+          Global fallback GitHub App config. Used when a project has no project-specific GitHub App configured.
+          See <code>docs/github-app-setup.md</code> for setup instructions.
+        </p>
+        <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <Label htmlFor="ghRepoOwner">Repo Owner</Label>
+            <Input
+              id="ghRepoOwner"
+              value={githubApp.repoOwner}
+              onChange={(e) => setGithubApp({ ...githubApp, repoOwner: e.target.value })}
+              placeholder="my-org"
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="ghRepoName">Repo Name</Label>
+            <Input
+              id="ghRepoName"
+              value={githubApp.repoName}
+              onChange={(e) => setGithubApp({ ...githubApp, repoName: e.target.value })}
+              placeholder="my-repo"
+            />
+          </div>
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="ghAppId">GitHub App ID</Label>
+          <Input
+            id="ghAppId"
+            value={githubApp.appId}
+            onChange={(e) => setGithubApp({ ...githubApp, appId: e.target.value })}
+            placeholder="123456"
+          />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="ghInstallationId">Installation ID</Label>
+          <Input
+            id="ghInstallationId"
+            value={githubApp.installationId}
+            onChange={(e) => setGithubApp({ ...githubApp, installationId: e.target.value })}
+            placeholder="12345678"
+          />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="ghWebhookSecret">Webhook Secret</Label>
+          <div className="relative">
+            <Input
+              id="ghWebhookSecret"
+              type={showGhSecret ? "text" : "password"}
+              value={githubApp.webhookSecret}
+              onChange={(e) => setGithubApp({ ...githubApp, webhookSecret: e.target.value })}
+              placeholder="your-webhook-secret"
+              className="pr-10"
+            />
+            <button
+              type="button"
+              onClick={() => setShowGhSecret(!showGhSecret)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+              tabIndex={-1}
+            >
+              {showGhSecret ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+            </button>
+          </div>
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="ghPrivateKey">Private Key (.pem contents)</Label>
+          <textarea
+            id="ghPrivateKey"
+            className="flex min-h-[100px] w-full rounded-md border border-input bg-transparent px-3 py-2 text-xs font-mono shadow-sm resize-y"
+            value={githubApp.privateKey}
+            onChange={(e) => setGithubApp({ ...githubApp, privateKey: e.target.value })}
+            placeholder="-----BEGIN RSA PRIVATE KEY-----&#10;..."
+          />
+        </div>
       </section>
 
       {/* Slack Invite Users */}
