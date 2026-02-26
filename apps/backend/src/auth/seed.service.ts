@@ -37,25 +37,25 @@ export class SeedService implements OnApplicationBootstrap {
       this.logger.log(`Created default tenant: ${appName}`);
     }
 
+    const email = this.configService.get<string>(
+      'ADMIN_EMAIL',
+      'admin@aes.local',
+    );
+    const password = this.configService.get<string>(
+      'ADMIN_PASSWORD',
+      'changeme123!',
+    );
+    const name = this.configService.get<string>(
+      'ADMIN_NAME',
+      'Administrator',
+    );
+
     const adminExists = await this.userModel
-      .findOne({ tenantId: tenant!._id, role: 'admin' })
+      .findOne({ tenantId: tenant!._id, email })
       .lean()
       .exec();
 
     if (!adminExists) {
-      const email = this.configService.get<string>(
-        'ADMIN_EMAIL',
-        'admin@aes.local',
-      );
-      const password = this.configService.get<string>(
-        'ADMIN_PASSWORD',
-        'changeme123!',
-      );
-      const name = this.configService.get<string>(
-        'ADMIN_NAME',
-        'Administrator',
-      );
-
       const passwordHash = await bcrypt.hash(password, 12);
       await this.userModel.create({
         tenantId: tenant!._id,
