@@ -9,17 +9,6 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
-
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      staleTime: 30_000,
-    },
-  },
-});
-
 const APP_NAME = process.env.NEXT_PUBLIC_APP_NAME ?? "AES";
 
 const navItems = [
@@ -156,11 +145,8 @@ function AuthenticatedShell({ children }: { children: React.ReactNode }) {
 
 export default function AuthenticatedLayout({ children }: { children: React.ReactNode }) {
   return (
-    <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <AuthenticatedShell>{children}</AuthenticatedShell>
-      </AuthProvider>
-      {process.env.NODE_ENV === "development" && <ReactQueryDevtools initialIsOpen={false} />}
-    </QueryClientProvider>
+    <AuthProvider>
+      <AuthenticatedShell>{children}</AuthenticatedShell>
+    </AuthProvider>
   );
 }

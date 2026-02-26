@@ -229,8 +229,8 @@
         "pnpm --filter=frontend tsc --noEmit passes for layout.tsx (other files may still error)"
       ],
       "priority": 3,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Removed QueryClient, QueryClientProvider, ReactQueryDevtools imports and JSX wrappers. Children now rendered directly inside AuthProvider."
     },
     {
       "id": "US-004",
